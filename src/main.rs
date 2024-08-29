@@ -646,6 +646,7 @@ async fn query(request: &Request, connection: &Connection, cache: &Cache) -> Res
     match connection.client_code.as_str() {
         "dummy" => Dummy::request(request, connection, cache).await,
         "adwanji" => Adwanji::request(request, connection, cache).await,
+        "yiba" => Yiba::request(request, connection, cache).await,
         &_ => Err(ResultMessage {
             code: 999,
             message: "unknown client code".to_string(),
@@ -657,6 +658,7 @@ async fn bidding_notify_win(url: String, win_price: i32, next_price: i32, iv: &S
     match connection.client_code.as_str() {
         "dummy" => Dummy::bidding_notify_win(url, win_price, next_price, iv, connection).await,
         "adwanji" => Adwanji::bidding_notify_win(url, win_price, next_price, iv, connection).await,
+        "yiba" => Yiba::bidding_notify_win(url, win_price, next_price, iv, connection).await,
         &_ => (),
     }
 }
@@ -665,6 +667,7 @@ async fn bidding_notify_lose(url: String, lose_price: i32, lose_reason: i32, los
     match connection.client_code.as_str() {
         "dummy" => Dummy::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection).await,
         "adwanji" => Adwanji::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection).await,
+        "yiba" => Yiba::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection).await,
         &_ => (),
     }
 }
