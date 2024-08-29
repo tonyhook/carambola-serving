@@ -115,4 +115,6 @@ pub struct YibaAd {
     pub video_up_scroll_urls: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub video_down_scroll_urls: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub click_area_report_url: Option<String>,
 }

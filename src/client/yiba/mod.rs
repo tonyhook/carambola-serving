@@ -4,6 +4,7 @@ use aes::cipher::{block_padding::Pkcs7, BlockEncryptMut, KeyInit};
 use base64::prelude::*;
 use chrono::{Datelike, Local, Utc};
 use flate2::{Compression, write::GzEncoder};
+use reqwest::Url;
 use urlencoding::encode;
 
 use crate::{protocol::*, Assets, Cache, Client, Connection, Price, ResultMessage};
@@ -324,7 +325,10 @@ impl Client for Yiba {
             density: {
                 match request.context.device.pxratio {
                     Some(pxratio) => pxratio,
-                    None => 1.0,
+                    None => return Err(ResultMessage {
+                        code: 998,
+                        message: "request.context.device.pxratio is required for upstream".to_string(),
+                    }),
                 }
             },
             imsi: {
@@ -533,13 +537,37 @@ impl Client for Yiba {
             },
             sys_boot_time: {
                 match &request.context.device.boottime {
-                    Some(boottime) => boottime.clone(),
+                    Some(boottime) => boottime.split(".").nth(0).unwrap().to_string(),
                     None => "".to_string(),
                 }
             },
             sys_update_time: {
                 match &request.context.device.updatetime {
+                    Some(updatetime) => updatetime.split(".").nth(0).unwrap().to_string(),
+                    None => "".to_string(),
+                }
+            },
+            sys_init_time: {
+                match &request.context.device.birthtime {
+                    Some(birthtime) => birthtime.split(".").nth(0).unwrap().to_string(),
+                    None => "".to_string(),
+                }
+            },
+            sys_start_nano_sec: {
+                match &request.context.device.boottime {
+                    Some(boottime) => boottime.clone(),
+                    None => "".to_string(),
+                }
+            },
+            sys_update_nano_sec: {
+                match &request.context.device.updatetime {
                     Some(updatetime) => updatetime.clone(),
+                    None => "".to_string(),
+                }
+            },
+            sys_init_nano_sec: {
+                match &request.context.device.birthtime {
+                    Some(birthtime) => birthtime.clone(),
                     None => "".to_string(),
                 }
             },
@@ -612,7 +640,12 @@ impl Client for Yiba {
         match response_yiba_raw {
             Ok(response_yiba_raw) => {
                 let status = response_yiba_raw.status();
-                if status != 200 {
+                if status == 204 {
+                    return Err(ResultMessage {
+                        code: 993,
+                        message: "".to_string(),
+                    });
+                } else if status != 200 {
                     return Err(ResultMessage {
                         code: 992,
                         message: {
@@ -630,12 +663,6 @@ impl Client for Yiba {
                                     response_yiba = json;
 
                                     match response_yiba.code {
-                                        204 => {
-                                            return Err(ResultMessage {
-                                                code: 993,
-                                                message: "".to_string(),
-                                            });
-                                        },
                                         2001 => {
                                             return Err(ResultMessage {
                                                 code: 992,
@@ -848,7 +875,7 @@ impl Client for Yiba {
                                                                     mime: None,
                                                                     w: None,
                                                                     h: None,
-                                                                    imagetype: Some(3),
+                                                                    imagetype: Some(1),
                                                                 }),
                                                                 title: None,
                                                                 video: None,
@@ -1330,6 +1357,40 @@ impl Client for Yiba {
                                                         },
                                                         None => (),
                                                     }
+                                                    match &ad.click_area_report_url {
+                                                        Some(click_area_report_url) => {
+                                                            let parsed_url = Url::parse(click_area_report_url.as_str());
+                                                            match parsed_url {
+                                                                Ok(parsed_url) => {
+                                                                    let hash_query: HashMap<_, _> = parsed_url.query_pairs().into_owned().collect();
+                                                                    let sid = hash_query.get("sid");
+                                                                    let creative_id = hash_query.get("creative_id");
+                                                                    if sid.is_some() && creative_id.is_some() {
+                                                                        event_vec.push(Event {
+                                                                            eventtype: 502,
+                                                                            method: 502,
+                                                                            url: replace_macro(click_area_report_url),
+                                                                            header: None,
+                                                                            content: Some(format!("{{\
+                                                                                \"sld\":\"__SLD__\",\
+                                                                                \"width\":\"__WIDTH__\",\
+                                                                                \"height\":\"__HEIGHT__\",\
+                                                                                \"down_x\":\"__R_DOWN_X__\",\
+                                                                                \"down_y\":\"__R_DOWN_Y__\",\
+                                                                                \"up_x\":\"__R_UP_X__\",\
+                                                                                \"up_y\":\"__R_UP_Y__\",\
+                                                                                \"click_element\":\"__CLICKELEMENT__\",\
+                                                                                \"sid\":\"{}\",\
+                                                                                \"creative_id\":\"{}\"\
+                                                                            }}", sid.unwrap(), creative_id.unwrap()).to_string()),
+                                                                        });
+                                                                    }
+                                                                },
+                                                                Err(_) => (),
+                                                            }
+                                                        },
+                                                        None => (),
+                                                    }
 
                                                     event_vec
                                                 }
@@ -1382,9 +1443,9 @@ impl Client for Yiba {
             .encrypt_padded_mut::<Pkcs7>(&mut buffer, pos)
             .unwrap();
 
-        let base64 = BASE64_STANDARD.encode(cipher);
+        let message_base64 = BASE64_STANDARD.encode(cipher);
 
-        base64.replace("+", "-").replace("/", "_").replace("=", "")
+        message_base64.replace("+", "-").replace("/", "_").replace("=", "")
     }
 
 }
