@@ -4,6 +4,7 @@ pub mod result_message;
 pub mod client;
 pub mod dummy;
 pub mod adwanji;
+pub mod mfocus;
 pub mod richmob;
 pub mod yiba;
 
@@ -14,5 +15,6 @@ pub use client::Client;
 
 pub use dummy::Dummy;
 pub use adwanji::Adwanji;
+pub use mfocus::Mfocus;
 pub use richmob::Richmob;
 pub use yiba::Yiba;
