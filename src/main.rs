@@ -650,6 +650,7 @@ async fn query(request: &Request, connection: &Connection, cache: &Cache) -> Res
         "fwb" => Fwb::request(request, connection, cache).await,
         "kkmh" => Kkmh::request(request, connection, cache).await,
         "mfocus" => Mfocus::request(request, connection, cache).await,
+        "mobrtb" => Mobrtb::request(request, connection, cache).await,
         "richmob" => Richmob::request(request, connection, cache).await,
         "yiba" => Yiba::request(request, connection, cache).await,
         &_ => Err(ResultMessage {
@@ -667,6 +668,7 @@ async fn bidding_notify_win(url: String, win_price: i32, next_price: i32, iv: &S
         "fwb" => Fwb::bidding_notify_win(url, win_price, next_price, iv, connection).await,
         "kkmh" => Kkmh::bidding_notify_win(url, win_price, next_price, iv, connection).await,
         "mfocus" => Mfocus::bidding_notify_win(url, win_price, next_price, iv, connection).await,
+        "mobrtb" => Mobrtb::bidding_notify_win(url, win_price, next_price, iv, connection).await,
         "richmob" => Richmob::bidding_notify_win(url, win_price, next_price, iv, connection).await,
         "yiba" => Yiba::bidding_notify_win(url, win_price, next_price, iv, connection).await,
         &_ => (),
@@ -681,6 +683,7 @@ async fn bidding_notify_lose(url: String, lose_price: i32, lose_reason: i32, los
         "fwb" => Fwb::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection).await,
         "kkmh" => Kkmh::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection).await,
         "mfocus" => Mfocus::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection).await,
+        "mobrtb" => Mobrtb::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection).await,
         "richmob" => Richmob::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection).await,
         "yiba" => Yiba::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection).await,
         &_ => (),
