@@ -21,7 +21,8 @@ md5 = "0.7.0"
 mysql = "25.0.0"
 openssl-sys = "0.9.102"
 openssl = { version = "0.10.64", features = ["vendored"] }
-redis = { version = "0.25.3", features = ["aio", "tokio-comp"] }
+r2d2 = "0.8.10"
+redis = { version = "0.25.3", features = ["aio", "r2d2", "tokio-comp"] }
 reqwest = { version = "0.12.5", features = ["gzip", "json"] }
 serde = { version = "1.0.203", features = ["derive"] }
 serde-aux = "4.5.0"

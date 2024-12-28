@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use chrono::{DateTime, Timelike, Utc};
+use r2d2::Pool;
 use redis::Client;
 
 use crate::{EnvConfig, GLOBAL_CONFIG};
@@ -33,20 +34,22 @@ pub const PERFORMANCE_LOST_KEY_FIELD:       &str = "ZM";
 
 #[derive(Clone)]
 pub struct Cache {
-    pub pa: Arc<Mutex<Client>>, // performance
-    pub fa: Arc<Mutex<Client>>, // anti fraud
-    pub sa: Arc<Mutex<Client>>, // id generator
-    pub na: Arc<Mutex<Client>>, // notification url & cost
+    pub pa: Arc<Mutex<Pool<Client>>>, // performance
+    pub fa: Arc<Mutex<Pool<Client>>>, // anti fraud
+    pub sa: Arc<Mutex<Pool<Client>>>, // id generator
+    pub na: Arc<Mutex<Pool<Client>>>, // notification url & cost
 }
 
 impl Cache {
 
     pub fn new(config: &EnvConfig) -> Self {
+        redis::Client::open(config.performance_connection.clone()).unwrap();
+
         Self {
-            pa: Arc::new(Mutex::new(redis::Client::open(config.performance_connection.clone()).unwrap())),
-            fa: Arc::new(Mutex::new(redis::Client::open(config.flowcontrol_connection.clone()).unwrap())),
-            sa: Arc::new(Mutex::new(redis::Client::open(config.idgenerator_connection.clone()).unwrap())),
-            na: Arc::new(Mutex::new(redis::Client::open(config.notification_connection.clone()).unwrap())),
+            pa: Arc::new(Mutex::new(Pool::builder().build(redis::Client::open(config.performance_connection.clone()).unwrap()).unwrap())),
+            fa: Arc::new(Mutex::new(Pool::builder().build(redis::Client::open(config.flowcontrol_connection.clone()).unwrap()).unwrap())),
+            sa: Arc::new(Mutex::new(Pool::builder().build(redis::Client::open(config.idgenerator_connection.clone()).unwrap()).unwrap())),
+            na: Arc::new(Mutex::new(Pool::builder().build(redis::Client::open(config.notification_connection.clone()).unwrap()).unwrap())),
         }
     }
 
@@ -73,7 +76,7 @@ impl Cache {
         let connection = {
             let cl = self.pa.clone();
             let rs_client = cl.lock().unwrap();
-            rs_client.get_connection()
+            rs_client.get()
         };
 
         match connection {
@@ -107,7 +110,7 @@ impl Cache {
         let connection = {
             let cl = self.fa.clone();
             let rs_client = cl.lock().unwrap();
-            rs_client.get_connection()
+            rs_client.get()
         };
 
         match connection {
@@ -139,7 +142,7 @@ impl Cache {
         let connection = {
             let cl = self.fa.clone();
             let rs_client = cl.lock().unwrap();
-            rs_client.get_connection()
+            rs_client.get()
         };
 
         match connection {
@@ -168,7 +171,7 @@ impl Cache {
         let connection = {
             let cl = self.sa.clone();
             let rs_client = cl.lock().unwrap();
-            rs_client.get_connection()
+            rs_client.get()
         };
 
         match connection {
@@ -201,7 +204,7 @@ impl Cache {
         let connection = {
             let cl = self.na.clone();
             let rs_client = cl.lock().unwrap();
-            rs_client.get_connection()
+            rs_client.get()
         };
 
         match connection {
@@ -232,7 +235,7 @@ impl Cache {
         let connection = {
             let cl = self.na.clone();
             let rs_client = cl.lock().unwrap();
-            rs_client.get_connection()
+            rs_client.get()
         };
 
         match connection {
@@ -264,7 +267,7 @@ impl Cache {
         let connection = {
             let cl = self.na.clone();
             let rs_client = cl.lock().unwrap();
-            rs_client.get_connection()
+            rs_client.get()
         };
 
         match connection {
