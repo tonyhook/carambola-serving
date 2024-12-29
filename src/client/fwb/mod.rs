@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Duration};
+use std::time::Duration;
 
 use base64::prelude::*;
 use chrono::{Datelike, Local};
@@ -6,7 +6,7 @@ use hmac::{Hmac, Mac};
 use sha1::Sha1;
 use urlencoding::encode;
 
-use crate::{protocol::*, Assets, Cache, Client, Connection, Price, ResultMessage};
+use crate::{protocol::*, Assets, Cache, Client, Connection, Identifiers, Price, ResultMessage};
 
 type HmacSha1 = Hmac<Sha1>;
 
@@ -74,10 +74,6 @@ pub use video_format::FwbVideoFormat;
 
 pub struct Fwb {
 
-    // TODO: province / city is not available
-    // TODO: device name is not available
-    // TODO: miui version is not available
-    // TODO: card.comments is not available
     // TODO: step_play_urls is not available
 
 }
@@ -85,18 +81,10 @@ pub struct Fwb {
 impl Client for Fwb {
 
     async fn request(request: &Request, connection: &Connection, cache: &Cache) -> Result<Response, ResultMessage> {
-        let eids = &request.context.user.eids;
-        let mut id_map = HashMap::new();
-        for eid in eids {
-            let uids = &eid.uids;
-            for uid in uids {
-                id_map.insert(uid.atype, uid.id.clone());
-            }
-        }
-
         let request_id = cache.get_sequence();
 
         let assets = Assets::new(request);
+        let identifiers = Identifiers::new(request);
 
         let request_fwb = FwbRequest {
             id: {
@@ -453,87 +441,87 @@ impl Client for Fwb {
                     request.context.device.osv.clone()
                 },
                 did: {
-                    match id_map.get(&501) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(501, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 didmd5: {
-                    match id_map.get(&502) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(502, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 oid: {
-                    match id_map.get(&505) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(505, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 oidmd5: {
-                    match id_map.get(&506) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(506, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 androidid: {
-                    match id_map.get(&509) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(509, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 androididmd5: {
-                    match id_map.get(&510) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(510, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 ifa: {
-                    match id_map.get(&507) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(507, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 ifamd5: {
-                    match id_map.get(&508) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(508, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 caid: {
-                    match id_map.get(&513) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(513, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 caid_version: {
-                    match id_map.get(&601) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(513, 0) {
+                        Some(uid) => uid.ver.clone(),
                         None => None,
                     }
                 },
                 aaid: {
-                    match id_map.get(&514) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(514, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 openudid: None,
                 idfv: {
-                    match id_map.get(&515) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(515, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 mac: {
-                    match id_map.get(&511) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(511, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 macidmd5: {
-                    match id_map.get(&512) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(512, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
@@ -657,9 +645,9 @@ impl Client for Fwb {
                                         None => None,
                                     }
                                 },
-                                city: None,
-                                province: None,
-                                district: None,
+                                city: geo.city.clone(),
+                                province: geo.province.clone(),
+                                district: geo.district.clone(),
                             })
                         },
                         None => None,
@@ -687,20 +675,20 @@ impl Client for Fwb {
                     request.context.device.hmsv.clone()
                 },
                 wifi_mac: {
-                    match id_map.get(&522) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(522, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 imsi: {
-                    match id_map.get(&503) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(503, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 ssid: {
-                    match id_map.get(&524) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(524, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
@@ -708,13 +696,21 @@ impl Client for Fwb {
                     None
                 },
                 paid: {
-                    match id_map.get(&519) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(519, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 birth_time: {
-                    request.context.device.birthtime.clone()
+                    match &request.context.device.inittime {
+                        Some(inittime) => Some(inittime.clone()),
+                        None => {
+                            match &request.context.device.birthtime {
+                                Some(birthtime) => Some(birthtime.clone()),
+                                None => None,
+                            }
+                        },
+                    }
                 },
                 start_time_msec: {
                     request.context.device.boottime.clone()
@@ -735,7 +731,10 @@ impl Client for Fwb {
                     request.context.device.timezone.clone()
                 },
                 device_name_md5: {
-                    None
+                    match identifiers.get_id(528, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    }
                 },
                 cpu_num: {
                     request.context.device.syscpu
@@ -753,7 +752,7 @@ impl Client for Fwb {
                     request.context.device.skan.clone()
                 },
                 miuiversion: {
-                    None
+                    request.context.device.uiv.clone()
                 },
             },
             user: FwbUser {
@@ -986,6 +985,7 @@ impl Client for Fwb {
                                                                             req: asset_fwb.isrequired,
                                                                             title: Some(TitleAsset {
                                                                                 text: title_fwb.text.clone(),
+                                                                                subtitle: None,
                                                                                 desc: None,
                                                                                 len: None,
                                                                             }),
@@ -1214,7 +1214,8 @@ impl Client for Fwb {
                                                                             video: None,
                                                                             data: None,
                                                                             html: Some(HtmlAsset {
-                                                                                html: html.clone(),
+                                                                                html: Some(html.clone()),
+                                                                                link: None,
                                                                                 len: None,
                                                                             }),
                                                                             app: None,
@@ -1258,6 +1259,7 @@ impl Client for Fwb {
                                                                     req: 1,
                                                                     title: Some(TitleAsset {
                                                                         text: title.clone(),
+                                                                        subtitle: None,
                                                                         desc: None,
                                                                         len: None,
                                                                     }),
@@ -1351,6 +1353,27 @@ impl Client for Fwb {
                                                                         },
                                                                         len: None,
                                                                         datatype: Some(12),
+                                                                    }),
+                                                                    html: None,
+                                                                    app: None,
+                                                                };
+
+                                                                asset_vec.push(asset);
+                                                            },
+                                                            None => (),
+                                                        }
+                                                        match card.comments {
+                                                            Some(comments) => {
+                                                                let asset = Asset {
+                                                                    id: { index += 1; index },
+                                                                    req: 1,
+                                                                    title: None,
+                                                                    img: None,
+                                                                    video: None,
+                                                                    data: Some(DataAsset {
+                                                                        value: comments.to_string(),
+                                                                        len: None,
+                                                                        datatype: Some(501),
                                                                     }),
                                                                     html: None,
                                                                     app: None,

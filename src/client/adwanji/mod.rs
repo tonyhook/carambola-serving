@@ -1,9 +1,9 @@
-use std::{collections::HashMap, time::Duration};
+use std::time::Duration;
 
 use chrono::{Datelike, Local, TimeZone};
 use chrono_tz::Tz;
 
-use crate::{protocol::*, Assets, Cache, Client, Connection, Price, ResultMessage};
+use crate::{protocol::*, Assets, Cache, Client, Connection, Identifiers, Price, ResultMessage};
 
 pub mod app_asset;
 pub mod app;
@@ -46,18 +46,10 @@ pub struct Adwanji {
 impl Client for Adwanji {
 
     async fn request(request: &Request, connection: &Connection, cache: &Cache) -> Result<Response, ResultMessage> {
-        let eids = &request.context.user.eids;
-        let mut id_map = HashMap::new();
-        for eid in eids {
-            let uids = &eid.uids;
-            for uid in uids {
-                id_map.insert(uid.atype, uid.id.clone());
-            }
-        }
-
         let request_id = cache.get_sequence();
 
         let assets = Assets::new(request);
+        let identifiers = Identifiers::new(request);
 
         let request_adwanji = AdwanjiRequest {
             id: {
@@ -484,20 +476,20 @@ impl Client for Adwanji {
                     }
                 },
                 idfa: {
-                    match id_map.get(&507) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(507, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 idfamd5: {
-                    match id_map.get(&508) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(508, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 idfv: {
-                    match id_map.get(&515) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(515, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
@@ -505,74 +497,74 @@ impl Client for Adwanji {
                     None
                 },
                 imei: {
-                    match id_map.get(&501) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(501, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 imeimd5: {
-                    match id_map.get(&502) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(502, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 dpid: {
-                    match id_map.get(&514) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(514, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 aid: {
-                    match id_map.get(&509) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(509, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 aidmd5: {
-                    match id_map.get(&510) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(510, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 oaid: {
-                    match id_map.get(&505) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(505, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 oaidmd5: {
-                    match id_map.get(&506) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(506, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 caid: {
-                    match id_map.get(&513) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(513, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 caidver: {
-                    match id_map.get(&601) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(513, 0) {
+                        Some(uid) => uid.ver.clone(),
                         None => None,
                     }
                 },
                 mac: {
-                    match id_map.get(&511) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(511, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 macmd5: {
-                    match id_map.get(&512) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(512, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 meid: {
-                    match id_map.get(&520) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(520, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
@@ -609,8 +601,8 @@ impl Client for Adwanji {
                     }
                 },
                 imsi: {
-                    match id_map.get(&503) {
-                        Some(id) => id.clone(),
+                    match identifiers.get_id(503, 0) {
+                        Some(uid) => uid.id.clone(),
                         None => "".to_string(),
                     }
                 },
@@ -633,14 +625,14 @@ impl Client for Adwanji {
                     }
                 },
                 wifissid: {
-                    match id_map.get(&524) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(524, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 wifimac: {
-                    match id_map.get(&522) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(522, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
@@ -666,7 +658,7 @@ impl Client for Adwanji {
                     }
                 },
                 uiver: {
-                    None
+                    request.context.device.uiv.clone()
                 },
                 romver: {
                     match &request.context.device.romv {
@@ -727,12 +719,17 @@ impl Client for Adwanji {
                     }
                 },
                 birthtime: {
-                    match &request.context.device.birthtime {
-                        Some(birthtime) => birthtime.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.birthtime is required for upstream".to_string(),
-                        }),
+                    match &request.context.device.inittime {
+                        Some(inittime) => inittime.clone(),
+                        None => {
+                            match &request.context.device.birthtime {
+                                Some(birthtime) => birthtime.clone(),
+                                None => return Err(ResultMessage {
+                                    code: 998,
+                                    message: "request.context.device.inittime is required for upstream".to_string(),
+                                }),
+                            }
+                        },
                     }
                 },
                 osupdatetime: {
@@ -869,10 +866,16 @@ impl Client for Adwanji {
                     }
                 },
                 pre_caid: {
-                    None
+                    match identifiers.get_id(513, 1) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    }
                 },
                 pre_caid_version: {
-                    None
+                    match identifiers.get_id(513, 1) {
+                        Some(uid) => uid.ver.clone(),
+                        None => None,
+                    }
                 },
                 screen_size: {
                     match request.context.device.size {
@@ -884,22 +887,27 @@ impl Client for Adwanji {
                     None
                 },
                 caid_vendor: {
-                    match id_map.get(&602) {
-                        Some(id) => {
-                            match id.parse::<i32>() {
-                                Ok(id) => Some(id),
-                                Err(_) => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "caid_vendor should be 0/1/2 for upstream".to_string(),
-                                }),
+                    match identifiers.get_id(513, 0) {
+                        Some(uid) => {
+                            match &uid.vendor {
+                                Some(vendor) => {
+                                    match vendor.parse::<i32>() {
+                                        Ok(vendor) => Some(vendor),
+                                        Err(_) => return Err(ResultMessage {
+                                            code: 998,
+                                            message: "caid_vendor should be 0/1/2 for upstream".to_string(),
+                                        }),
+                                    }
+                                }
+                                None => None,
                             }
-                        }
+                        },
                         None => None,
                     }
                 },
                 paid: {
-                    match id_map.get(&519) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(519, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
@@ -1280,6 +1288,7 @@ impl Client for Adwanji {
                                                                     req: 0,
                                                                     title: Some(TitleAsset {
                                                                         text: video.ad_text.clone().unwrap(),
+                                                                        subtitle: None,
                                                                         desc: video.ad_description.clone(),
                                                                         len: Some(video.ad_text.clone().unwrap().clone().len() as i32),
                                                                     }),
@@ -1311,7 +1320,8 @@ impl Client for Adwanji {
                                                                     id: assets.video_end_html_asset.get(0).unwrap().id,
                                                                     req: 0,
                                                                     html: Some(HtmlAsset {
-                                                                        html: video.end_html.clone().unwrap(),
+                                                                        html: video.end_html.clone(),
+                                                                        link: None,
                                                                         len: Some(video.end_html.clone().unwrap().len() as i32),
                                                                     }),
                                                                     title: None,
@@ -1332,6 +1342,7 @@ impl Client for Adwanji {
                                                                     req: 1,
                                                                     title: Some(TitleAsset {
                                                                         text: feed.title.clone(),
+                                                                        subtitle: None,
                                                                         desc: Some(feed.desc.clone()),
                                                                         len: Some(feed.title.clone().len() as i32),
                                                                     }),

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Duration};
+use std::time::Duration;
 
 use aes::cipher::{block_padding::Pkcs7, BlockEncryptMut, KeyInit};
 use base64::prelude::*;
@@ -6,7 +6,7 @@ use chrono::TimeZone;
 use chrono_tz::Tz;
 use urlencoding::encode;
 
-use crate::{protocol::*, Assets, Cache, Client, Connection, Price, ResultMessage};
+use crate::{protocol::*, Assets, Cache, Client, Connection, Identifiers, Price, ResultMessage};
 
 type Aes128EcbEnc = ecb::Encryptor<aes::Aes128>;
 
@@ -39,18 +39,10 @@ pub struct Fanglin {
 impl Client for Fanglin {
 
     async fn request(request: &Request, connection: &Connection, cache: &Cache) -> Result<Response, ResultMessage> {
-        let eids = &request.context.user.eids;
-        let mut id_map = HashMap::new();
-        for eid in eids {
-            let uids =  &eid.uids;
-            for uid in uids {
-                id_map.insert(uid.atype, uid.id.clone());
-            }
-        }
-
         let request_id = cache.get_sequence();
 
         let assets = Assets::new(request);
+        let identifiers = Identifiers::new(request);
 
         let request_fanglin = FanglinRequest {
             req_id: {
@@ -241,44 +233,44 @@ impl Client for Fanglin {
                     }
                 },
                 imei: {
-                    match id_map.get(&501) {
-                        Some(id) => id.clone(),
+                    match identifiers.get_id(501, 0) {
+                        Some(uid) => uid.id.clone(),
                         None => "".to_string(),
                     }
                 },
                 oaid: {
-                    match id_map.get(&505) {
-                        Some(id) => id.clone(),
+                    match identifiers.get_id(505, 0) {
+                        Some(uid) => uid.id.clone(),
                         None => "".to_string(),
                     }
                 },
                 android_id: {
-                    match id_map.get(&509) {
-                        Some(id) => id.clone(),
+                    match identifiers.get_id(509, 0) {
+                        Some(uid) => uid.id.clone(),
                         None => "".to_string(),
                     }
                 },
                 idfa: {
-                    match id_map.get(&507) {
-                        Some(id) => id.clone(),
+                    match identifiers.get_id(507, 0) {
+                        Some(uid) => uid.id.clone(),
                         None => "".to_string(),
                     }
                 },
                 idfv: {
-                    match id_map.get(&515) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(515, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 imsi: {
-                    match id_map.get(&503) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(503, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 mac: {
-                    match id_map.get(&511) {
-                        Some(id) => id.clone(),
+                    match identifiers.get_id(511, 0) {
+                        Some(uid) => uid.id.clone(),
                         None => "".to_string(),
                     }
                 },
@@ -304,14 +296,14 @@ impl Client for Fanglin {
                     None
                 },
                 caid: {
-                    match id_map.get(&513) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(513, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 caid_ver: {
-                    match id_map.get(&601) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(513, 0) {
+                        Some(uid) => uid.ver.clone(),
                         None => None,
                     }
                 },
@@ -322,14 +314,14 @@ impl Client for Fanglin {
                     }
                 },
                 aaid: {
-                    match id_map.get(&514) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(514, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 paid: {
-                    match id_map.get(&519) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(519, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
@@ -346,7 +338,10 @@ impl Client for Fanglin {
                     }
                 },
                 device_name_md5: {
-                    "ad921d60486366258809553a3db49a4a".to_string()
+                    match identifiers.get_id(528, 0) {
+                        Some(uid) => uid.id.clone(),
+                        None => "".to_string(),
+                    }
                 },
                 hardware_machine: {
                     match &request.context.device.hwmachine {
@@ -431,12 +426,17 @@ impl Client for Fanglin {
                     }
                 },
                 birth_time: {
-                    match &request.context.device.birthtime {
-                        Some(birthtime) => birthtime.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.birthtime is required for upstream".to_string(),
-                        }),
+                    match &request.context.device.inittime {
+                        Some(inittime) => inittime.clone(),
+                        None => {
+                            match &request.context.device.birthtime {
+                                Some(birthtime) => birthtime.clone(),
+                                None => return Err(ResultMessage {
+                                    code: 998,
+                                    message: "request.context.device.inittime is required for upstream".to_string(),
+                                }),
+                            }
+                        },
                     }
                 },
                 os_com_time: {
@@ -802,59 +802,61 @@ impl Client for Fanglin {
                                                     None => (),
                                                 }
 
-                                                if assets.title_asset.len() > 0 {
-                                                    asset_vec.push(Asset {
-                                                        id: assets.title_asset.get(0).unwrap().id,
-                                                        req: 1,
-                                                        title: Some(TitleAsset {
-                                                            text: ad.title.clone().unwrap(),
-                                                            desc: ad.desc.clone(),
-                                                            len: Some(ad.title.clone().unwrap().len() as i32),
-                                                        }),
-                                                        img: None,
-                                                        video: None,
-                                                        data: None,
-                                                        html: None,
-                                                        app: None,
-                                                    });
-                                                }
-                                                for (i, asset) in assets.img_asset.iter().enumerate() {
-                                                    if i < ad.imgs.clone().unwrap().len() {
-                                                        asset_vec.push(Asset {
-                                                            id: asset.id,
-                                                            req: 1,
-                                                            img: {
-                                                                Some(ImageAsset {
-                                                                    url: ad.imgs.clone().unwrap()[i].clone(),
-                                                                    mime: None,
-                                                                    w: ad.width,
-                                                                    h: ad.height,
-                                                                    imagetype: Some(501),
-                                                                })
-                                                            },
-                                                            title: None,
-                                                            video: None,
-                                                            data: None,
-                                                            html: None,
-                                                            app: None,
-                                                        });
-                                                    }
-                                                }
-                                                if assets.html_asset.len() > 0 && ad.html.is_some() {
-                                                    asset_vec.push(Asset {
-                                                        id: assets.html_asset.get(0).unwrap().id,
-                                                        req: 0,
-                                                        html: Some(HtmlAsset {
-                                                            html: ad.html.clone().unwrap(),
-                                                            len: Some(ad.html.clone().unwrap().len() as i32),
-                                                        }),
-                                                        title: None,
-                                                        img: None,
-                                                        video: None,
-                                                        data: None,
-                                                        app: None,
-                                                    });
-                                                }
+                                                        if assets.title_asset.len() > 0 {
+                                                            asset_vec.push(Asset {
+                                                                id: assets.title_asset.get(0).unwrap().id,
+                                                                req: 1,
+                                                                title: Some(TitleAsset {
+                                                                    text: ad.title.clone().unwrap(),
+                                                                    subtitle: None,
+                                                                    desc: ad.desc.clone(),
+                                                                    len: Some(ad.title.clone().unwrap().len() as i32),
+                                                                }),
+                                                                img: None,
+                                                                video: None,
+                                                                data: None,
+                                                                html: None,
+                                                                app: None,
+                                                            });
+                                                        }
+                                                        for (i, asset) in assets.img_asset.iter().enumerate() {
+                                                            if i < ad.imgs.clone().unwrap().len() {
+                                                                asset_vec.push(Asset {
+                                                                    id: asset.id,
+                                                                    req: 1,
+                                                                    img: {
+                                                                        Some(ImageAsset {
+                                                                            url: ad.imgs.clone().unwrap()[i].clone(),
+                                                                            mime: None,
+                                                                            w: ad.width,
+                                                                            h: ad.height,
+                                                                            imagetype: Some(501),
+                                                                        })
+                                                                    },
+                                                                    title: None,
+                                                                    video: None,
+                                                                    data: None,
+                                                                    html: None,
+                                                                    app: None,
+                                                                });
+                                                            }
+                                                        }
+                                                        if assets.html_asset.len() > 0 && ad.html.is_some() {
+                                                            asset_vec.push(Asset {
+                                                                id: assets.html_asset.get(0).unwrap().id,
+                                                                req: 0,
+                                                                html: Some(HtmlAsset {
+                                                                    html: ad.html.clone(),
+                                                                    link: None,
+                                                                    len: Some(ad.html.clone().unwrap().len() as i32),
+                                                                }),
+                                                                title: None,
+                                                                img: None,
+                                                                video: None,
+                                                                data: None,
+                                                                app: None,
+                                                            });
+                                                        }
 
                                                 if ad.app_name.is_some() {
                                                     asset_vec.push(Asset {

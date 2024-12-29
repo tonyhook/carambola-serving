@@ -69,6 +69,7 @@ impl Client for Dummy {
                                                         req: 1,
                                                         title: Some(TitleAsset {
                                                             text: "test".to_string(),
+                                                            subtitle: None,
                                                             desc: Some("test".to_string()),
                                                             len: Some(4),
                                                         }),
@@ -134,6 +135,7 @@ impl Client for Dummy {
                                                                                         req: 1,
                                                                                         title: Some(TitleAsset {
                                                                                             text: "test".to_string(),
+                                                                                            subtitle: None,
                                                                                             desc: Some("test".to_string()),
                                                                                             len: Some(4),
                                                                                         }),

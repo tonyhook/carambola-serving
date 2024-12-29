@@ -7,7 +7,7 @@ use flate2::{Compression, write::GzEncoder};
 use reqwest::Url;
 use urlencoding::encode;
 
-use crate::{protocol::*, Assets, Cache, Client, Connection, Price, ResultMessage};
+use crate::{protocol::*, Assets, Cache, Client, Connection, Identifiers, Price, ResultMessage};
 
 type Aes128EcbEnc = ecb::Encryptor<aes::Aes128>;
 
@@ -29,18 +29,10 @@ impl Client for Yiba {
         let ad_id = connection.client_tag_id.split("|").nth(0).unwrap();
         let secret = connection.client_tag_id.split("|").nth(1).unwrap();
 
-        let eids = &request.context.user.eids;
-        let mut id_map = HashMap::new();
-        for eid in eids {
-            let uids = &eid.uids;
-            for uid in uids {
-                id_map.insert(uid.atype, uid.id.clone());
-            }
-        }
-
         let request_id = cache.get_sequence();
 
         let assets = Assets::new(request);
+        let identifiers = Identifiers::new(request);
 
         let timestamp = Utc::now().timestamp_millis();
         let sign = format!("{:x}", md5::compute(format!("{}&{}", timestamp, secret).as_bytes()));
@@ -128,62 +120,62 @@ impl Client for Yiba {
                 }
             },
             imei: {
-                match id_map.get(&501) {
-                    Some(id) => id.clone(),
+                match identifiers.get_id(501, 0) {
+                    Some(uid) => uid.id.clone(),
                     None => "".to_string(),
                 }
             },
             imei_md5: {
-                match id_map.get(&502) {
-                    Some(id) => Some(id.clone()),
+                match identifiers.get_id(502, 0) {
+                    Some(uid) => Some(uid.id.clone()),
                     None => None,
                 }
             },
             oaid: {
-                match id_map.get(&505) {
-                    Some(id) => id.clone(),
+                match identifiers.get_id(505, 0) {
+                    Some(uid) => uid.id.clone(),
                     None => "".to_string(),
                 }
             },
             oaid_md5: {
-                match id_map.get(&506) {
-                    Some(id) => id.clone(),
+                match identifiers.get_id(506, 0) {
+                    Some(uid) => uid.id.clone(),
                     None => "".to_string(),
                 }
             },
             android_id: {
-                match id_map.get(&509) {
-                    Some(id) => id.clone(),
+                match identifiers.get_id(509, 0) {
+                    Some(uid) => uid.id.clone(),
                     None => "".to_string(),
                 }
             },
             android_id_md5: {
-                match id_map.get(&510) {
-                    Some(id) => id.clone(),
+                match identifiers.get_id(510, 0) {
+                    Some(uid) => uid.id.clone(),
                     None => "".to_string(),
                 }
             },
             idfa: {
-                match id_map.get(&507) {
-                    Some(id) => id.clone(),
+                match identifiers.get_id(507, 0) {
+                    Some(uid) => uid.id.clone(),
                     None => "".to_string(),
                 }
             },
             idfa_md5: {
-                match id_map.get(&508) {
-                    Some(id) => id.clone(),
+                match identifiers.get_id(508, 0) {
+                    Some(uid) => uid.id.clone(),
                     None => "".to_string(),
                 }
             },
             idfv: {
-                match id_map.get(&515) {
-                    Some(id) => id.clone(),
+                match identifiers.get_id(515, 0) {
+                    Some(uid) => uid.id.clone(),
                     None => "".to_string(),
                 }
             },
             caid: {
-                match id_map.get(&513) {
-                    Some(id) => id.clone(),
+                match identifiers.get_id(513, 0) {
+                    Some(uid) => uid.id.clone(),
                     None => "".to_string(),
                 }
             },
@@ -212,8 +204,8 @@ impl Client for Yiba {
                 request.context.device.ua.clone()
             },
             mac: {
-                match id_map.get(&511) {
-                    Some(id) => id.clone(),
+                match identifiers.get_id(511, 0) {
+                    Some(uid) => uid.id.clone(),
                     None => "".to_string(),
                 }
             },
@@ -302,14 +294,14 @@ impl Client for Yiba {
                 }
             },
             paid: {
-                match id_map.get(&519) {
-                    Some(id) => id.clone(),
+                match identifiers.get_id(519, 0) {
+                    Some(uid) => uid.id.clone(),
                     None => "".to_string(),
                 }
             },
             aaid: {
-                match id_map.get(&514) {
-                    Some(id) => id.clone(),
+                match identifiers.get_id(514, 0) {
+                    Some(uid) => uid.id.clone(),
                     None => "".to_string(),
                 }
             },
@@ -332,8 +324,8 @@ impl Client for Yiba {
                 }
             },
             imsi: {
-                match id_map.get(&503) {
-                    Some(id) => id.clone(),
+                match identifiers.get_id(503, 0) {
+                    Some(uid) => uid.id.clone(),
                     None => "".to_string(),
                 }
             },
@@ -548,9 +540,14 @@ impl Client for Yiba {
                 }
             },
             sys_init_time: {
-                match &request.context.device.birthtime {
-                    Some(birthtime) => birthtime.split(".").nth(0).unwrap().to_string(),
-                    None => "".to_string(),
+                match &request.context.device.inittime {
+                    Some(inittime) => inittime.split(".").nth(0).unwrap().to_string(),
+                    None => {
+                        match &request.context.device.birthtime {
+                            Some(birthtime) => birthtime.split(".").nth(0).unwrap().to_string(),
+                            None => "".to_string(),
+                        }
+                    },
                 }
             },
             sys_start_nano_sec: {
@@ -566,9 +563,14 @@ impl Client for Yiba {
                 }
             },
             sys_init_nano_sec: {
-                match &request.context.device.birthtime {
-                    Some(birthtime) => birthtime.clone(),
-                    None => "".to_string(),
+                match &request.context.device.inittime {
+                    Some(inittime) => inittime.clone(),
+                    None => {
+                        match &request.context.device.birthtime {
+                            Some(birthtime) => birthtime.clone(),
+                            None => "".to_string(),
+                        }
+                    },
                 }
             },
             sys_memory_size: {
@@ -905,7 +907,8 @@ impl Client for Yiba {
                                                                 id: assets.video_end_html_asset.get(0).unwrap().id,
                                                                 req: 0,
                                                                 html: Some(HtmlAsset {
-                                                                    html: ad.video_end_html.clone().unwrap(),
+                                                                    html: ad.video_end_html.clone(),
+                                                                    link: None,
                                                                     len: Some(ad.video_end_html.clone().unwrap().len() as i32),
                                                                 }),
                                                                 title: None,
@@ -921,6 +924,7 @@ impl Client for Yiba {
                                                                 req: 1,
                                                                 title: Some(TitleAsset {
                                                                     text: ad.title.clone().unwrap(),
+                                                                    subtitle: None,
                                                                     desc: ad.desc.clone(),
                                                                     len: Some(ad.title.clone().unwrap().len() as i32),
                                                                 }),
@@ -958,7 +962,8 @@ impl Client for Yiba {
                                                                 id: assets.html_asset.get(0).unwrap().id,
                                                                 req: 0,
                                                                 html: Some(HtmlAsset {
-                                                                    html: ad.html.clone().unwrap(),
+                                                                    html: ad.html.clone(),
+                                                                    link: None,
                                                                     len: Some(ad.html.clone().unwrap().len() as i32),
                                                                 }),
                                                                 title: None,

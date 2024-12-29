@@ -1,10 +1,10 @@
-use std::{collections::HashMap, io::Write, time::Duration};
+use std::{io::Write, time::Duration};
 
 use chrono::TimeZone;
 use chrono_tz::Tz;
 use flate2::{Compression, write::GzEncoder};
 
-use crate::{protocol::*, Assets, Cache, Client, Connection, Price, ResultMessage};
+use crate::{protocol::*, Assets, Cache, Client, Connection, Identifiers, Price, ResultMessage};
 
 pub mod adm;
 pub mod app;
@@ -50,23 +50,11 @@ pub use video::KkmhVideo;
 
 pub struct Kkmh {
 
-    // TODO: country / province / city is not available
-    // TODO: device name is not available
-
 }
 
 impl Client for Kkmh {
 
     async fn request(request: &Request, connection: &Connection, cache: &Cache) -> Result<Response, ResultMessage> {
-        let eids = &request.context.user.eids;
-        let mut id_map = HashMap::new();
-        for eid in eids {
-            let uids = &eid.uids;
-            for uid in uids {
-                id_map.insert(uid.atype, uid.id.clone());
-            }
-        }
-
         let request_id = cache.get_sequence();
 
         let assets = Assets::new(request);
@@ -76,6 +64,7 @@ impl Client for Kkmh {
         let mut icon_index = 0;
         let mut video_index = 0;
         let mut video_cover_index = 0;
+        let identifiers = Identifiers::new(request);
 
         let request_kkmh = KkmhRequest {
             id: {
@@ -229,9 +218,9 @@ impl Client for Kkmh {
                                     }),
                                 }
                             },
-                            country: None,
-                            province: None,
-                            city: None,
+                            country: geo.country.clone(),
+                            province: geo.province.clone(),
+                            city: geo.city.clone(),
                         }),
                         None => None,
                     }
@@ -330,67 +319,70 @@ impl Client for Kkmh {
 
                 },
                 imei: {
-                    match id_map.get(&501) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(501, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 imeimd5: {
-                    match id_map.get(&502) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(502, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 oaid: {
-                    match id_map.get(&505) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(505, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 idfa: {
-                    match id_map.get(&507) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(507, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 idfamd5: {
-                    match id_map.get(&508) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(508, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 paid: {
-                    match id_map.get(&519) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(519, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 caids: {
-                    match id_map.get(&513) {
-                        Some(id) => Some([KkmhCaid {
-                            caid: id.clone(),
-                            caid_version: {
-                                match id_map.get(&601) {
-                                    Some(id) => id.clone(),
-                                    None => return Err(ResultMessage {
-                                        code: 998,
-                                        message: "caid version is required for upstream".to_string(),
-                                    }),
-                                }
-                            },
-                        }].to_vec()),
+                    match identifiers.get_ids(513) {
+                        Some(uids) => {
+                            let mut caids = vec![];
+                            for uid in uids {
+                                caids.push(KkmhCaid {
+                                    caid: uid.id.clone(),
+                                    caid_version: {
+                                        match &uid.ver {
+                                            Some(ver) => ver.clone(),
+                                            None => "".to_string(),
+                                        }
+                                    }
+                                });
+                            }
+                            Some(caids)
+                        },
                         None => None,
                     }
                 },
                 mac: {
-                    match id_map.get(&511) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(511, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 macmd5: {
-                    match id_map.get(&512) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(512, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
@@ -401,9 +393,14 @@ impl Client for Kkmh {
                     request.context.device.updatemark.clone()
                 },
                 device_init_sec: {
-                    match &request.context.device.birthtime {
-                        Some(birthtime) => Some(birthtime.split(".").nth(0).unwrap().to_string()),
-                        None => None,
+                    match &request.context.device.inittime {
+                        Some(inittime) => Some(inittime.split(".").nth(0).unwrap().to_string()),
+                        None => {
+                            match &request.context.device.birthtime {
+                                Some(birthtime) => Some(birthtime.split(".").nth(0).unwrap().to_string()),
+                                None => None,
+                            }
+                        },
                     }
                 },
                 device_start_sec: {
@@ -413,7 +410,10 @@ impl Client for Kkmh {
                     }
                 },
                 device_name_md5: {
-                    None
+                    match identifiers.get_id(528, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    }
                 },
                 hardware_machine: {
                     request.context.device.hwmachine.clone()
@@ -463,20 +463,20 @@ impl Client for Kkmh {
                 },
                 ext: Some(KkmhDeviceExt {
                     android_id: {
-                        match id_map.get(&509) {
-                            Some(id) => Some(id.clone()),
+                        match identifiers.get_id(509, 0) {
+                            Some(uid) => Some(uid.id.clone()),
                             None => None,
                         }
                     },
                     android_id_md5: {
-                        match id_map.get(&510) {
-                            Some(id) => Some(id.clone()),
+                        match identifiers.get_id(510, 0) {
+                            Some(uid) => Some(uid.id.clone()),
                             None => None,
                         }
                     },
                     idfv: {
-                        match id_map.get(&515) {
-                            Some(id) => Some(id.clone()),
+                        match identifiers.get_id(515, 0) {
+                            Some(uid) => Some(uid.id.clone()),
                             None => None,
                         }
                     },
@@ -750,6 +750,7 @@ impl Client for Kkmh {
                                                             req: 1,
                                                             title: Some(TitleAsset {
                                                                 text: title.clone(),
+                                                                subtitle: None,
                                                                 desc: {
                                                                     match &bid_kkmh.adms[0].desc {
                                                                         Some(desc) => Some(desc.clone()),

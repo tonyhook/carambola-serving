@@ -4,6 +4,7 @@ use super::Geo;
 
 #[derive(Serialize)]
 #[derive(Deserialize)]
+#[derive(Clone)]
 pub struct Device {
     #[serde(rename(deserialize = "type", serialize = "type"))]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -37,6 +38,8 @@ pub struct Device {
     pub romtime: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hmsv: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub uiv: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub storename: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -93,6 +96,10 @@ pub struct Device {
     #[serde(deserialize_with = "convert_string_from_number")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub birthtime: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "convert_string_from_number")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub inittime: Option<String>,
     #[serde(default)]
     #[serde(deserialize_with = "convert_string_from_number")]
     #[serde(skip_serializing_if = "Option::is_none")]

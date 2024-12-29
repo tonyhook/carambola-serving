@@ -1,6 +1,6 @@
-use std::{collections::HashMap, time::Duration};
+use std::time::Duration;
 
-use crate::{protocol::*, Assets, Cache, Client, Connection, ResultMessage};
+use crate::{protocol::*, Assets, Cache, Client, Connection, Identifiers, ResultMessage};
 
 pub mod ad_content;
 pub mod request;
@@ -25,18 +25,10 @@ impl Client for Mfocus {
         let vdid = connection.client_tag_id.split("|").nth(1).unwrap();
         let dealid = connection.client_tag_id.split("|").nth(2).unwrap();
 
-        let eids = &request.context.user.eids;
-        let mut id_map = HashMap::new();
-        for eid in eids {
-            let uids = &eid.uids;
-            for uid in uids {
-                id_map.insert(uid.atype, uid.id.clone());
-            }
-        }
-
         let request_id = cache.get_sequence();
 
         let assets = Assets::new(request);
+        let identifiers = Identifiers::new(request);
 
         let request_mfocus = MfocusRequest {
             id: {
@@ -77,58 +69,58 @@ impl Client for Mfocus {
                 "v3.0.1".to_string()
             },
             idfa: {
-                match id_map.get(&507) {
-                    Some(id) => id.clone(),
+                match identifiers.get_id(507, 0) {
+                    Some(uid) => uid.id.clone(),
                     None => "".to_string(),
                 }
             },
             idfa_md5: {
-                match id_map.get(&508) {
-                    Some(id) => id.clone(),
+                match identifiers.get_id(508, 0) {
+                    Some(uid) => uid.id.clone(),
                     None => "".to_string(),
                 }
             },
             caid: {
-                match id_map.get(&513) {
-                    Some(id) => id.clone(),
+                match identifiers.get_id(513, 0) {
+                    Some(uid) => uid.id.clone(),
                     None => "".to_string(),
                 }
             },
             caid_md5: {
-                match id_map.get(&513) {
-                    Some(id) => {
-                        format!("{:x}", md5::compute(format!("{}", id.clone()).as_bytes()))
+                match identifiers.get_id(513, 0) {
+                    Some(uid) => {
+                        format!("{:x}", md5::compute(format!("{}", uid.id.clone()).as_bytes()))
                     }
                     None => "".to_string(),
                 }
             },
             imei: {
-                match id_map.get(&501) {
-                    Some(id) => id.clone(),
+                match identifiers.get_id(501, 0) {
+                    Some(uid) => uid.id.clone(),
                     None => "".to_string(),
                 }
             },
             imei_md5: {
-                match id_map.get(&502) {
-                    Some(id) => id.clone(),
+                match identifiers.get_id(502, 0) {
+                    Some(uid) => uid.id.clone(),
                     None => "".to_string(),
                 }
             },
             oaid: {
-                match id_map.get(&505) {
-                    Some(id) => id.clone(),
+                match identifiers.get_id(505, 0) {
+                    Some(uid) => uid.id.clone(),
                     None => "".to_string(),
                 }
             },
             oaid_md5: {
-                match id_map.get(&506) {
-                    Some(id) => id.clone(),
+                match identifiers.get_id(506, 0) {
+                    Some(uid) => uid.id.clone(),
                     None => "".to_string(),
                 }
             },
             androidid_md5: {
-                match id_map.get(&510) {
-                    Some(id) => id.clone(),
+                match identifiers.get_id(510, 0) {
+                    Some(uid) => uid.id.clone(),
                     None => "".to_string(),
                 }
             },
@@ -136,8 +128,8 @@ impl Client for Mfocus {
                 request.context.device.ua.clone()
             },
             mac: {
-                match id_map.get(&511) {
-                    Some(id) => id.clone(),
+                match identifiers.get_id(511, 0) {
+                    Some(uid) => uid.id.clone(),
                     None => "".to_string(),
                 }
             },
@@ -535,6 +527,7 @@ impl Client for Mfocus {
                                                                     req: 1,
                                                                     title: Some(TitleAsset {
                                                                         text: ad_content.title.clone().unwrap(),
+                                                                        subtitle: None,
                                                                         desc: ad_content.text.clone(),
                                                                         len: Some(ad_content.title.clone().unwrap().len() as i32),
                                                                     }),

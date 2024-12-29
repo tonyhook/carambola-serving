@@ -4,7 +4,7 @@ use chrono::{Datelike, Local};
 use reqwest::Url;
 use urlencoding::encode;
 
-use crate::{protocol::*, Assets, Cache, Client, Connection, Price, ResultMessage};
+use crate::{protocol::*, Assets, Cache, Client, Connection, Identifiers, Price, ResultMessage};
 
 pub mod ad_format;
 pub mod ad;
@@ -28,9 +28,6 @@ pub use video::MobrtbVideo;
 
 pub struct Mobrtb {
 
-    // TODO: multiple caid is not available
-    // TODO: html_url is not available
-
 }
 
 impl Client for Mobrtb {
@@ -38,15 +35,6 @@ impl Client for Mobrtb {
     async fn request(request: &Request, connection: &Connection, cache: &Cache) -> Result<Response, ResultMessage> {
         let unit_token = connection.client_tag_id.split("|").nth(0).unwrap();
         let media_token = connection.client_tag_id.split("|").nth(1).unwrap();
-
-        let eids = &request.context.user.eids;
-        let mut id_map = HashMap::new();
-        for eid in eids {
-            let uids = &eid.uids;
-            for uid in uids {
-                id_map.insert(uid.atype, uid.id.clone());
-            }
-        }
 
         let request_id = cache.get_sequence();
 
@@ -57,6 +45,7 @@ impl Client for Mobrtb {
         let mut video_index = 0;
         let mut video_cover_index = 0;
         let mut html_index = 0;
+        let identifiers = Identifiers::new(request);
 
         let request_mobrtb = MobrtbRequest {
             id: {
@@ -237,14 +226,14 @@ impl Client for Mobrtb {
                     }
                 },
                 mac: {
-                    match id_map.get(&511) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(511, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 mac_md5: {
-                    match id_map.get(&512) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(512, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
@@ -287,57 +276,57 @@ impl Client for Mobrtb {
                     }
                 },
                 ssid: {
-                    match id_map.get(&524) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(524, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 wifi_mac: {
-                    match id_map.get(&522) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(522, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 imei: {
-                    match id_map.get(&501) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(501, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 imei_md5: {
-                    match id_map.get(&502) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(502, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 android_id: {
-                    match id_map.get(&509) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(509, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 android_id_md5: {
-                    match id_map.get(&510) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(510, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 imsi: {
-                    match id_map.get(&503) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(503, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 android_advertising_id: None,
                 oaid: {
-                    match id_map.get(&505) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(505, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 oaid_md5: {
-                    match id_map.get(&506) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(506, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
@@ -357,56 +346,81 @@ impl Client for Mobrtb {
                     }
                 },
                 idfa: {
-                    match id_map.get(&507) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(507, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 idfa_md5: {
-                    match id_map.get(&508) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(508, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 idfv: {
-                    match id_map.get(&515) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(515, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 caid: {
-                    match id_map.get(&513) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(513, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 caid_md5: {
-                    match id_map.get(&513) {
-                        Some(id) => Some(format!("{:x}", md5::compute(id.as_bytes()))),
+                    match identifiers.get_id(513, 0) {
+                        Some(uid) => Some(format!("{:x}", md5::compute(uid.id.as_bytes()))),
                         None => None,
                     }
                 },
                 caid_version: {
-                    match id_map.get(&601) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(513, 0) {
+                        Some(uid) => uid.ver.clone(),
                         None => None,
                     }
                 },
-                caid2: None,
-                caid2_md5: None,
-                caid2_version: None,
+                caid2: {
+                    match identifiers.get_id(513, 1) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    }
+                },
+                caid2_md5: {
+                    match identifiers.get_id(513, 1) {
+                        Some(uid) => Some(format!("{:x}", md5::compute(uid.id.as_bytes()))),
+                        None => None,
+                    }
+                },
+                caid2_version: {
+                    match identifiers.get_id(513, 1) {
+                        Some(uid) => uid.ver.clone(),
+                        None => None,
+                    }
+                },
                 openudid: None,
                 boot_mark: request.context.device.bootmark.clone(),
                 update_mark: request.context.device.updatemark.clone(),
                 paid: {
-                    match id_map.get(&519) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(519, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 device_startup_time: request.context.device.boottime.clone(),
                 system_update_time: request.context.device.updatetime.clone(),
-                system_init_time: request.context.device.birthtime.clone(),
+                system_init_time: {
+                    match &request.context.device.inittime {
+                        Some(inittime) => Some(inittime.clone()),
+                        None => {
+                            match &request.context.device.birthtime {
+                                Some(birthtime) => Some(birthtime.clone()),
+                                None => None,
+                            }
+                        },
+                    }
+                },
             },
             user: Some(MobrtbUser {
                 age: {
@@ -591,6 +605,7 @@ impl Client for Mobrtb {
                                                     req: 1,
                                                     title: Some(TitleAsset {
                                                         text: title.clone(),
+                                                        subtitle: ad_mobrtb.subtitle.clone(),
                                                         desc: {
                                                             match &ad_mobrtb.description {
                                                                 Some(description) => Some(description.clone()),
@@ -848,7 +863,31 @@ impl Client for Mobrtb {
                                                     video: None,
                                                     data: None,
                                                     html: Some(HtmlAsset {
-                                                        html: html_snippet.clone(),
+                                                        html: Some(html_snippet.clone()),
+                                                        link: None,
+                                                        len: None,
+                                                    }),
+                                                    app: None,
+                                                });
+
+                                                html_index += 1;
+                                            }
+                                        }
+                                        None => (),
+                                    }
+                                    match &ad_mobrtb.html_url {
+                                        Some(html_url) => {
+                                            if assets.html_asset.len() - html_index > 0 {
+                                                asset_vec.push(Asset {
+                                                    id: assets.html_asset.get(html_index).unwrap().id,
+                                                    req: 1,
+                                                    title: None,
+                                                    img: None,
+                                                    video: None,
+                                                    data: None,
+                                                    html: Some(HtmlAsset {
+                                                        html: None,
+                                                        link: Some(html_url.clone()),
                                                         len: None,
                                                     }),
                                                     app: None,

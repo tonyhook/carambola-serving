@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Duration};
+use std::time::Duration;
 
 use aes::cipher::{block_padding::Pkcs7, BlockEncryptMut, KeyInit};
 use base64::prelude::*;
@@ -6,7 +6,7 @@ use chrono::{Datelike, Local, TimeZone, Utc};
 use chrono_tz::Tz;
 use urlencoding::encode;
 
-use crate::{protocol::*, Assets, Cache, Client, Connection, Price, ResultMessage};
+use crate::{protocol::*, Assets, Cache, Client, Connection, Identifiers, Price, ResultMessage};
 
 type Aes128EcbEnc = ecb::Encryptor<aes::Aes128>;
 
@@ -43,18 +43,10 @@ pub struct Richmob {
 impl Client for Richmob {
 
     async fn request(request: &Request, connection: &Connection, cache: &Cache) -> Result<Response, ResultMessage> {
-        let eids = &request.context.user.eids;
-        let mut id_map = HashMap::new();
-        for eid in eids {
-            let uids = &eid.uids;
-            for uid in uids {
-                id_map.insert(uid.atype, uid.id.clone());
-            }
-        }
-
         let request_id = cache.get_sequence();
 
         let assets = Assets::new(request);
+        let identifiers = Identifiers::new(request);
 
         let request_richmob = RichmobRequest {
             request_id: {
@@ -174,48 +166,48 @@ impl Client for Richmob {
             },
             device: RichmobDevice {
                 device_id: {
-                    match id_map.get(&507) {
-                        Some(id) => id.clone(),
+                    match identifiers.get_id(507, 0) {
+                        Some(uid) => uid.id.clone(),
                         None => {
-                            match id_map.get(&509) {
-                                Some(id) => id.clone(),
+                            match identifiers.get_id(509, 0) {
+                                Some(uid) => uid.id.clone(),
                                 None => "".to_string(),
                             }
                         },
                     }
                 },
                 device_id_md5: {
-                    match id_map.get(&508) {
-                        Some(id) => id.clone(),
+                    match identifiers.get_id(508, 0) {
+                        Some(uid) => uid.id.clone(),
                         None => {
-                            match id_map.get(&510) {
-                                Some(id) => id.clone(),
+                            match identifiers.get_id(510, 0) {
+                                Some(uid) => uid.id.clone(),
                                 None => "".to_string(),
                             }
                         },
                     }
                 },
                 imei: {
-                    match id_map.get(&501) {
-                        Some(id) => id.clone(),
+                    match identifiers.get_id(501, 0) {
+                        Some(uid) => uid.id.clone(),
                         None => "".to_string(),
                     }
                 },
                 imei_md5: {
-                    match id_map.get(&502) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(502, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 oaid: {
-                    match id_map.get(&505) {
-                        Some(id) => id.clone(),
+                    match identifiers.get_id(505, 0) {
+                        Some(uid) => uid.id.clone(),
                         None => "".to_string(),
                     }
                 },
                 oaid_md5: {
-                    match id_map.get(&506) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(506, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
@@ -223,26 +215,26 @@ impl Client for Richmob {
                     None
                 },
                 ssid: {
-                    match id_map.get(&524) {
-                        Some(id) => id.clone(),
+                    match identifiers.get_id(524, 0) {
+                        Some(uid) => uid.id.clone(),
                         None => "".to_string(),
                     }
                 },
                 wifi_mac: {
-                    match id_map.get(&522) {
-                        Some(id) => id.clone(),
+                    match identifiers.get_id(522, 0) {
+                        Some(uid) => uid.id.clone(),
                         None => "".to_string(),
                     }
                 },
                 phone_name: {
-                    match id_map.get(&517) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(517, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
                 phone_name_md5: {
-                    match id_map.get(&518) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(518, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
@@ -262,20 +254,20 @@ impl Client for Richmob {
                     }
                 },
                 mac: {
-                    match id_map.get(&511) {
-                        Some(id) => id.clone(),
+                    match identifiers.get_id(511, 0) {
+                        Some(uid) => uid.id.clone(),
                         None => "".to_string(),
                     }
                 },
                 mac_md5: {
-                    match id_map.get(&512) {
-                        Some(id) => id.clone(),
+                    match identifiers.get_id(512, 0) {
+                        Some(uid) => uid.id.clone(),
                         None => "".to_string(),
                     }
                 },
                 imsi: {
-                    match id_map.get(&503) {
-                        Some(id) => id.clone(),
+                    match identifiers.get_id(503, 0) {
+                        Some(uid) => uid.id.clone(),
                         None => "".to_string(),
                     }
                 },
@@ -611,8 +603,8 @@ impl Client for Richmob {
                     }
                 },
                 caid: {
-                    match id_map.get(&513) {
-                        Some(id) => id.clone(),
+                    match identifiers.get_id(513, 0) {
+                        Some(uid) => uid.id.clone(),
                         None => "".to_string(),
                     }
                 },
@@ -620,22 +612,32 @@ impl Client for Richmob {
                     None
                 },
                 caid_version: {
-                    match id_map.get(&601) {
-                        Some(id) => id.clone(),
+                    match identifiers.get_id(513, 0) {
+                        Some(uid) => {
+                            match &uid.ver {
+                                Some(ver) => ver.clone(),
+                                None => "".to_string(),
+                            }
+                        }
                         None => "".to_string(),
                     }
                 },
                 caid_vendor: {
-                    match id_map.get(&602) {
-                        Some(id) => {
-                            match id.parse::<i32>() {
-                                Ok(id) => Some(id),
-                                Err(_) => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "caid_vendor should be 0/1/2 for upstream".to_string(),
-                                }),
+                    match identifiers.get_id(513, 0) {
+                        Some(uid) => {
+                            match &uid.vendor {
+                                Some(vendor) => {
+                                    match vendor.parse::<i32>() {
+                                        Ok(vendor) => Some(vendor),
+                                        Err(_) => return Err(ResultMessage {
+                                            code: 998,
+                                            message: "caid_vendor should be 0/1/2 for upstream".to_string(),
+                                        }),
+                                    }
+                                }
+                                None => None,
                             }
-                        }
+                        },
                         None => None,
                     }
                 },
@@ -682,8 +684,8 @@ impl Client for Richmob {
                     }
                 },
                 idfv: {
-                    match id_map.get(&515) {
-                        Some(id) => id.clone(),
+                    match identifiers.get_id(515, 0) {
+                        Some(uid) => uid.id.clone(),
                         None => "".to_string(),
                     }
                 },
@@ -716,9 +718,14 @@ impl Client for Richmob {
                     }
                 },
                 sys_init_time: {
-                    match &request.context.device.birthtime {
-                        Some(birthtime) => Some(birthtime.clone()),
-                        None => None,
+                    match &request.context.device.inittime {
+                        Some(inittime) => Some(inittime.clone()),
+                        None => {
+                            match &request.context.device.birthtime {
+                                Some(birthtime) => Some(birthtime.clone()),
+                                None => None,
+                            }
+                        },
                     }
                 },
                 api_level: {
@@ -731,8 +738,8 @@ impl Client for Richmob {
                     }
                 },
                 paid: {
-                    match id_map.get(&519) {
-                        Some(id) => Some(id.clone()),
+                    match identifiers.get_id(519, 0) {
+                        Some(uid) => Some(uid.id.clone()),
                         None => None,
                     }
                 },
@@ -1111,6 +1118,7 @@ impl Client for Richmob {
                                                                     req: 1,
                                                                     title: Some(TitleAsset {
                                                                         text: title.clone(),
+                                                                        subtitle: None,
                                                                         desc: adv.descriptions.clone(),
                                                                         len: Some(title.clone().len() as i32),
                                                                     }),
@@ -1276,7 +1284,8 @@ impl Client for Richmob {
                                                                             id: assets.video_end_html_asset.get(0).unwrap().id,
                                                                             req: 0,
                                                                             html: Some(HtmlAsset {
-                                                                                html: end_html.clone(),
+                                                                                html: Some(end_html.clone()),
+                                                                                link: None,
                                                                                 len: Some(end_html.clone().len() as i32),
                                                                             }),
                                                                             title: None,
