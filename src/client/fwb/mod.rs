@@ -6,7 +6,7 @@ use hmac::{Hmac, Mac};
 use sha1::Sha1;
 use urlencoding::encode;
 
-use crate::{protocol::*, Assets, Cache, Client, Connection, Identifiers, Price, ResultMessage};
+use crate::{protocol::*, Assets, Cache, Client, Connection, HttpPool, Identifiers, Price, ResultMessage};
 
 type HmacSha1 = Hmac<Sha1>;
 
@@ -80,7 +80,7 @@ pub struct Fwb {
 
 impl Client for Fwb {
 
-    async fn request(request: &Request, connection: &Connection, cache: &Cache) -> Result<Response, ResultMessage> {
+    async fn request(request: &Request, connection: &Connection, pool: &HttpPool, cache: &Cache) -> Result<Response, ResultMessage> {
         let request_id = cache.get_sequence();
 
         let assets = Assets::new(request);
@@ -773,11 +773,11 @@ impl Client for Fwb {
 
         let response_fwb: FwbResponse;
 
-        let client = reqwest::ClientBuilder::new()
-            .gzip(true)
-            .no_brotli()
-            .no_deflate()
-            .build().unwrap();
+        let client = {
+            let pool_fwb_lock = pool.pool_fwb.clone();
+            let pool_fwb = pool_fwb_lock.read().unwrap();
+            pool_fwb.clone()
+        };
         let response_fwb_raw = client.post("https://req.adx.xlqeai.com/awesome")
             .json(&request_fwb)
             .header("Accept-Encoding", "gzip")
@@ -832,12 +832,12 @@ impl Client for Fwb {
                 if error.is_timeout() {
                     return Err(ResultMessage {
                         code: 991,
-                        message: "upstream request timeout".to_string(),
+                        message: format!("upstream request timeout"),
                     });
                 } else {
                     return Err(ResultMessage {
                         code: 992,
-                        message: format!("upstream request failed: {}", error.to_string()),
+                        message: format!("upstream request failed: {:?}", error),
                     });
                 }
             }
@@ -1725,17 +1725,20 @@ impl Client for Fwb {
         Ok(response)
     }
 
-    async fn bidding_notify_win(url: String, win_price: i32, _next_price: i32, iv: &String, connection: &Connection) {
+    async fn bidding_notify_win(url: String, win_price: i32, _next_price: i32, iv: &String, connection: &Connection, pool: &HttpPool) {
         let encrypt_price = Self::encrypt_price(win_price, iv, connection);
         let replaced_url = url
             .replace("__WIN_PRICE__", &encode(encrypt_price.as_str()));
 
-        let client = reqwest::ClientBuilder::new()
-            .build().unwrap();
+        let client = {
+            let pool_fwb_lock = pool.pool_fwb.clone();
+            let pool_fwb = pool_fwb_lock.read().unwrap();
+            pool_fwb.clone()
+        };
         let _ = client.get(replaced_url).send().await;
     }
 
-    async fn bidding_notify_lose(_url: String, _lose_price: i32, _lose_reason: i32, _lose_adn_name: &String, _iv: &String, _connection: &Connection) {
+    async fn bidding_notify_lose(_url: String, _lose_price: i32, _lose_reason: i32, _lose_adn_name: &String, _iv: &String, _connection: &Connection, _pool: &HttpPool) {
 
     }
 

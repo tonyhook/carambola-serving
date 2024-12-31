@@ -3,7 +3,7 @@ use std::time::Duration;
 use chrono::{Datelike, Local, TimeZone};
 use chrono_tz::Tz;
 
-use crate::{protocol::*, Assets, Cache, Client, Connection, Identifiers, Price, ResultMessage};
+use crate::{protocol::*, Assets, Cache, Client, Connection, HttpPool, Identifiers, Price, ResultMessage};
 
 pub mod app_asset;
 pub mod app;
@@ -45,7 +45,7 @@ pub struct Adwanji {
 
 impl Client for Adwanji {
 
-    async fn request(request: &Request, connection: &Connection, cache: &Cache) -> Result<Response, ResultMessage> {
+    async fn request(request: &Request, connection: &Connection, pool: &HttpPool, cache: &Cache) -> Result<Response, ResultMessage> {
         let request_id = cache.get_sequence();
 
         let assets = Assets::new(request);
@@ -964,11 +964,11 @@ impl Client for Adwanji {
 
         let response_adwanji: AdwanjiResponse;
 
-        let client = reqwest::ClientBuilder::new()
-            .gzip(true)
-            .no_brotli()
-            .no_deflate()
-            .build().unwrap();
+        let client = {
+            let pool_adwanji_lock = pool.pool_adwanji.clone();
+            let pool_adwanji = pool_adwanji_lock.read().unwrap();
+            pool_adwanji.clone()
+        };
         let response_adwanji_raw = client.post("https://api.adwanji.com/ad/v5/")
             .json(&request_adwanji)
             .header("Accept-Encoding", "gzip")
@@ -1044,12 +1044,12 @@ impl Client for Adwanji {
                 if error.is_timeout() {
                     return Err(ResultMessage {
                         code: 991,
-                        message: "upstream request timeout".to_string(),
+                        message: format!("upstream request timeout"),
                     });
                 } else {
                     return Err(ResultMessage {
                         code: 992,
-                        message: format!("upstream request failed: {}", error.to_string()),
+                        message: format!("upstream request failed: {:?}", error),
                     });
                 }
             }
@@ -1880,11 +1880,11 @@ impl Client for Adwanji {
         Ok(response)
     }
 
-    async fn bidding_notify_win(_url: String, _win_price: i32, _next_price: i32, _iv: &String, _connection: &Connection) {
+    async fn bidding_notify_win(_url: String, _win_price: i32, _next_price: i32, _iv: &String, _connection: &Connection, _pool: &HttpPool) {
 
     }
 
-    async fn bidding_notify_lose(_url: String, _lose_price: i32, _lose_reason: i32, _lose_adn_name: &String, _iv: &String, _connection: &Connection) {
+    async fn bidding_notify_lose(_url: String, _lose_price: i32, _lose_reason: i32, _lose_adn_name: &String, _iv: &String, _connection: &Connection, _pool: &HttpPool) {
 
     }
 

@@ -6,7 +6,7 @@ use chrono::{Datelike, Local, TimeZone, Utc};
 use chrono_tz::Tz;
 use urlencoding::encode;
 
-use crate::{protocol::*, Assets, Cache, Client, Connection, Identifiers, Price, ResultMessage};
+use crate::{protocol::*, Assets, Cache, Client, Connection, HttpPool, Identifiers, Price, ResultMessage};
 
 type Aes128EcbEnc = ecb::Encryptor<aes::Aes128>;
 
@@ -42,7 +42,7 @@ pub struct Richmob {
 
 impl Client for Richmob {
 
-    async fn request(request: &Request, connection: &Connection, cache: &Cache) -> Result<Response, ResultMessage> {
+    async fn request(request: &Request, connection: &Connection, pool: &HttpPool, cache: &Cache) -> Result<Response, ResultMessage> {
         let request_id = cache.get_sequence();
 
         let assets = Assets::new(request);
@@ -856,11 +856,11 @@ impl Client for Richmob {
 
         let response_richmob: RichmobResponse;
 
-        let client = reqwest::ClientBuilder::new()
-            .gzip(true)
-            .no_brotli()
-            .no_deflate()
-            .build().unwrap();
+        let client = {
+            let pool_richmob_lock = pool.pool_richmob.clone();
+            let pool_richmob = pool_richmob_lock.read().unwrap();
+            pool_richmob.clone()
+        };
         let response_richmob_raw = client.post("http://ad.richmob.cn/api/ad")
             .json(&request_richmob)
             .header("Accept-Encoding", "gzip")
@@ -974,12 +974,12 @@ impl Client for Richmob {
                 if error.is_timeout() {
                     return Err(ResultMessage {
                         code: 991,
-                        message: "upstream request timeout".to_string(),
+                        message: format!("upstream request timeout"),
                     });
                 } else {
                     return Err(ResultMessage {
                         code: 992,
-                        message: format!("upstream request failed: {}", error.to_string()),
+                        message: format!("upstream request failed: {:?}", error),
                     });
                 }
             }
@@ -2298,23 +2298,29 @@ impl Client for Richmob {
         Ok(response)
     }
 
-    async fn bidding_notify_win(url: String, win_price: i32, _next_price: i32, iv: &String, connection: &Connection) {
+    async fn bidding_notify_win(url: String, win_price: i32, _next_price: i32, iv: &String, connection: &Connection, pool: &HttpPool) {
         let encrypt_price = Self::encrypt_price(win_price, iv, connection);
         let replaced_url = url
             .replace("__WIN_PRICE__", &encode(encrypt_price.as_str()));
 
-        let client = reqwest::ClientBuilder::new()
-            .build().unwrap();
+        let client = {
+            let pool_richmob_lock = pool.pool_richmob.clone();
+            let pool_richmob = pool_richmob_lock.read().unwrap();
+            pool_richmob.clone()
+        };
         let _ = client.get(replaced_url).send().await;
     }
 
-    async fn bidding_notify_lose(url: String, lose_price: i32, _lose_reason: i32, _lose_adn_name: &String, iv: &String, connection: &Connection) {
+    async fn bidding_notify_lose(url: String, lose_price: i32, _lose_reason: i32, _lose_adn_name: &String, iv: &String, connection: &Connection, pool: &HttpPool) {
         let encrypt_price = Self::encrypt_price(lose_price, iv, connection);
         let replaced_url = url
             .replace("__LOSE_PRICE__", &encode(encrypt_price.as_str()));
 
-        let client = reqwest::ClientBuilder::new()
-            .build().unwrap();
+        let client = {
+            let pool_richmob_lock = pool.pool_richmob.clone();
+            let pool_richmob = pool_richmob_lock.read().unwrap();
+            pool_richmob.clone()
+        };
         let _ = client.get(replaced_url).send().await;
     }
 

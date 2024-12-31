@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use crate::{protocol::*, Assets, Cache, Client, Connection, Identifiers, ResultMessage};
+use crate::{protocol::*, Assets, Cache, Client, Connection, HttpPool, Identifiers, ResultMessage};
 
 pub mod ad_content;
 pub mod request;
@@ -20,7 +20,7 @@ pub struct Mfocus {
 
 impl Client for Mfocus {
 
-    async fn request(request: &Request, connection: &Connection, cache: &Cache) -> Result<Response, ResultMessage> {
+    async fn request(request: &Request, connection: &Connection, pool: &HttpPool, cache: &Cache) -> Result<Response, ResultMessage> {
         let id = connection.client_tag_id.split("|").nth(0).unwrap();
         let vdid = connection.client_tag_id.split("|").nth(1).unwrap();
         let dealid = connection.client_tag_id.split("|").nth(2).unwrap();
@@ -221,11 +221,11 @@ impl Client for Mfocus {
 
         let response_mfocus: MfocusResponse;
 
-        let client = reqwest::ClientBuilder::new()
-            .gzip(true)
-            .no_brotli()
-            .no_deflate()
-            .build().unwrap();
+        let client = {
+            let pool_mfocus_lock = pool.pool_mfocus.clone();
+            let pool_mfocus = pool_mfocus_lock.read().unwrap();
+            pool_mfocus.clone()
+        };
         let response_mfocus_raw = client.post(if connection.test { "http://test.m-focus.cn/v1/api/vender/ad" } else { "https://yjdsp.m-focus.cn/v1/api/vender/ad" })
             .json(&request_mfocus)
             .header("Accept-Encoding", "gzip")
@@ -344,12 +344,12 @@ impl Client for Mfocus {
                 if error.is_timeout() {
                     return Err(ResultMessage {
                         code: 991,
-                        message: "upstream request timeout".to_string(),
+                        message: format!("upstream request timeout"),
                     });
                 } else {
                     return Err(ResultMessage {
                         code: 992,
-                        message: format!("upstream request failed: {}", error.to_string()),
+                        message: format!("upstream request failed: {:?}", error),
                     });
                 }
             }
@@ -689,11 +689,11 @@ impl Client for Mfocus {
         Ok(response)
     }
 
-    async fn bidding_notify_win(_url: String, _win_price: i32, _next_price: i32, _iv: &String, _connection: &Connection) {
+    async fn bidding_notify_win(_url: String, _win_price: i32, _next_price: i32, _iv: &String, _connection: &Connection, _pool: &HttpPool) {
 
     }
 
-    async fn bidding_notify_lose(_url: String, _lose_price: i32, _lose_reason: i32, _lose_adn_name: &String, _iv: &String, _connection: &Connection) {
+    async fn bidding_notify_lose(_url: String, _lose_price: i32, _lose_reason: i32, _lose_adn_name: &String, _iv: &String, _connection: &Connection, _pool: &HttpPool) {
 
     }
 

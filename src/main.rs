@@ -54,6 +54,7 @@ async fn main() {
 
     let database = Database::new(&GLOBAL_CONFIG.get().unwrap().db_connection);
     let cache = Cache::new(&GLOBAL_CONFIG.get().unwrap());
+    let pool = HttpPool::new();
 
     let sched = JobScheduler::new().await.unwrap();
     let database_for_cron = database.clone();
@@ -77,7 +78,7 @@ async fn main() {
         .route("/api/win/:connection_id/:request_id", get(win))
         .route("/api/lose/:connection_id/:request_id", get(lose))
         .layer(comression_layer)
-        .with_state((database, cache));
+        .with_state((database, cache, pool));
 
     let listener = tokio::net::TcpListener::bind(format!("{}:{}", GLOBAL_CONFIG.get().unwrap().listen_address, GLOBAL_CONFIG.get().unwrap().listen_port))
         .await
@@ -89,7 +90,7 @@ async fn main() {
 }
 
 async fn handler(
-    State((database, cache)): State<(Database, Cache)>,
+    State((database, cache, pool)): State<(Database, Cache, HttpPool)>,
     headers: HeaderMap,
     Json(request): Json<Request>)
 -> Result<Json<Response>, (StatusCode, String)> {
@@ -226,7 +227,7 @@ async fn handler(
         cache.set_request_amount(client_port, vendor_port.0);
 
         // build request
-        let request = AssertUnwindSafe(query(&request, connection, &cache)).catch_unwind();
+        let request = AssertUnwindSafe(query(&request, connection, &pool, &cache)).catch_unwind();
 
         requests.push(request);
         request_connections.push(connection);
@@ -346,7 +347,7 @@ async fn handler(
                     match &bid.lurl {
                         Some(lurl) => {
                             for url in lurl.iter() {
-                                bidding_notify_lose(url.clone(), connection.default_price, 1, &"".to_string(), &"".to_string(), connection).await;
+                                bidding_notify_lose(url.clone(), connection.default_price, 1, &"".to_string(), &"".to_string(), connection, &pool).await;
                             }
                         },
                         None => (),
@@ -395,7 +396,7 @@ async fn handler(
                         Some(lurl) => {
                             for url in lurl.iter() {
                                 let lose_price = best_client_price;
-                                bidding_notify_lose(url.clone(), lose_price, 2, &"".to_string(), &"".to_string(), connection).await;
+                                bidding_notify_lose(url.clone(), lose_price, 2, &"".to_string(), &"".to_string(), connection, &pool).await;
                             }
                         },
                         None => (),
@@ -410,7 +411,7 @@ async fn handler(
                 match &best_seatbid[0].bid[0].burl {
                     Some(burl) => {
                         for url in burl.iter() {
-                            bidding_notify_win(url.clone(), best_client_price, best_client_price - 1, &"".to_string(), best_connection).await;
+                            bidding_notify_win(url.clone(), best_client_price, best_client_price - 1, &"".to_string(), best_connection, &pool).await;
                         }
                     },
                     None => (),
@@ -503,7 +504,7 @@ async fn handler(
 }
 
 async fn win(
-    State((database, cache)): State<(Database, Cache)>,
+    State((database, cache, pool)): State<(Database, Cache, HttpPool)>,
     Path((connection_id, request_id)): Path<(i32, String)>,
     Query(query): Query<HashMap<String, String>>) {
     let connection = {
@@ -551,7 +552,7 @@ async fn win(
                                     if burl.len() > 0 {
                                         for url in burl.iter() {
                                             if url.len() > 0 {
-                                                bidding_notify_win(url.clone(), client_win_price, client_next_price, &"".to_string(), &connection).await;
+                                                bidding_notify_win(url.clone(), client_win_price, client_next_price, &"".to_string(), &connection, &pool).await;
                                             }
                                         }
                                     }
@@ -575,7 +576,7 @@ async fn win(
 }
 
 async fn lose(
-    State((database, cache)): State<(Database, Cache)>,
+    State((database, cache, pool)): State<(Database, Cache, HttpPool)>,
     Path((connection_id, request_id)): Path<(i32, String)>,
     Query(query): Query<HashMap<String, String>>) {
     let connection = {
@@ -629,7 +630,7 @@ async fn lose(
                 Some(lurl) => {
                     for url in lurl.iter() {
                         if url.len() > 0 {
-                            bidding_notify_lose(url.clone(), client_lose_price, lose_reason, &lose_adn_name, &"".to_string(), &connection).await;
+                            bidding_notify_lose(url.clone(), client_lose_price, lose_reason, &lose_adn_name, &"".to_string(), &connection, &pool).await;
                         }
                     }
 
@@ -642,17 +643,17 @@ async fn lose(
     }
 }
 
-async fn query(request: &Request, connection: &Connection, cache: &Cache) -> Result<Response, ResultMessage> {
+async fn query(request: &Request, connection: &Connection, pool: &HttpPool, cache: &Cache) -> Result<Response, ResultMessage> {
     match connection.client_code.as_str() {
-        "dummy" => Dummy::request(request, connection, cache).await,
-        "adwanji" => Adwanji::request(request, connection, cache).await,
-        "fanglin" => Fanglin::request(request, connection, cache).await,
-        "fwb" => Fwb::request(request, connection, cache).await,
-        "kkmh" => Kkmh::request(request, connection, cache).await,
-        "mfocus" => Mfocus::request(request, connection, cache).await,
-        "mobrtb" => Mobrtb::request(request, connection, cache).await,
-        "richmob" => Richmob::request(request, connection, cache).await,
-        "yiba" => Yiba::request(request, connection, cache).await,
+        "dummy" => Dummy::request(request, connection, pool, cache).await,
+        "adwanji" => Adwanji::request(request, connection, pool, cache).await,
+        "fanglin" => Fanglin::request(request, connection, pool, cache).await,
+        "fwb" => Fwb::request(request, connection, pool, cache).await,
+        "kkmh" => Kkmh::request(request, connection, pool, cache).await,
+        "mfocus" => Mfocus::request(request, connection, pool, cache).await,
+        "mobrtb" => Mobrtb::request(request, connection, pool, cache).await,
+        "richmob" => Richmob::request(request, connection, pool, cache).await,
+        "yiba" => Yiba::request(request, connection, pool, cache).await,
         &_ => Err(ResultMessage {
             code: 999,
             message: "unknown client code".to_string(),
@@ -660,32 +661,32 @@ async fn query(request: &Request, connection: &Connection, cache: &Cache) -> Res
     }
 }
 
-async fn bidding_notify_win(url: String, win_price: i32, next_price: i32, iv: &String, connection: &Connection) {
+async fn bidding_notify_win(url: String, win_price: i32, next_price: i32, iv: &String, connection: &Connection, pool: &HttpPool) {
     match connection.client_code.as_str() {
-        "dummy" => Dummy::bidding_notify_win(url, win_price, next_price, iv, connection).await,
-        "adwanji" => Adwanji::bidding_notify_win(url, win_price, next_price, iv, connection).await,
-        "fanglin" => Fanglin::bidding_notify_win(url, win_price, next_price, iv, connection).await,
-        "fwb" => Fwb::bidding_notify_win(url, win_price, next_price, iv, connection).await,
-        "kkmh" => Kkmh::bidding_notify_win(url, win_price, next_price, iv, connection).await,
-        "mfocus" => Mfocus::bidding_notify_win(url, win_price, next_price, iv, connection).await,
-        "mobrtb" => Mobrtb::bidding_notify_win(url, win_price, next_price, iv, connection).await,
-        "richmob" => Richmob::bidding_notify_win(url, win_price, next_price, iv, connection).await,
-        "yiba" => Yiba::bidding_notify_win(url, win_price, next_price, iv, connection).await,
+        "dummy" => Dummy::bidding_notify_win(url, win_price, next_price, iv, connection, pool).await,
+        "adwanji" => Adwanji::bidding_notify_win(url, win_price, next_price, iv, connection, pool).await,
+        "fanglin" => Fanglin::bidding_notify_win(url, win_price, next_price, iv, connection, pool).await,
+        "fwb" => Fwb::bidding_notify_win(url, win_price, next_price, iv, connection, pool).await,
+        "kkmh" => Kkmh::bidding_notify_win(url, win_price, next_price, iv, connection, pool).await,
+        "mfocus" => Mfocus::bidding_notify_win(url, win_price, next_price, iv, connection, pool).await,
+        "mobrtb" => Mobrtb::bidding_notify_win(url, win_price, next_price, iv, connection, pool).await,
+        "richmob" => Richmob::bidding_notify_win(url, win_price, next_price, iv, connection, pool).await,
+        "yiba" => Yiba::bidding_notify_win(url, win_price, next_price, iv, connection, pool).await,
         &_ => (),
     }
 }
 
-async fn bidding_notify_lose(url: String, lose_price: i32, lose_reason: i32, lose_adn_name: &String, iv: &String, connection: &Connection) {
+async fn bidding_notify_lose(url: String, lose_price: i32, lose_reason: i32, lose_adn_name: &String, iv: &String, connection: &Connection, pool: &HttpPool) {
     match connection.client_code.as_str() {
-        "dummy" => Dummy::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection).await,
-        "adwanji" => Adwanji::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection).await,
-        "fanglin" => Fanglin::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection).await,
-        "fwb" => Fwb::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection).await,
-        "kkmh" => Kkmh::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection).await,
-        "mfocus" => Mfocus::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection).await,
-        "mobrtb" => Mobrtb::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection).await,
-        "richmob" => Richmob::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection).await,
-        "yiba" => Yiba::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection).await,
+        "dummy" => Dummy::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection, pool).await,
+        "adwanji" => Adwanji::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection, pool).await,
+        "fanglin" => Fanglin::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection, pool).await,
+        "fwb" => Fwb::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection, pool).await,
+        "kkmh" => Kkmh::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection, pool).await,
+        "mfocus" => Mfocus::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection, pool).await,
+        "mobrtb" => Mobrtb::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection, pool).await,
+        "richmob" => Richmob::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection, pool).await,
+        "yiba" => Yiba::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection, pool).await,
         &_ => (),
     }
 }

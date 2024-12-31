@@ -4,7 +4,7 @@ use chrono::TimeZone;
 use chrono_tz::Tz;
 use flate2::{Compression, write::GzEncoder};
 
-use crate::{protocol::*, Assets, Cache, Client, Connection, Identifiers, Price, ResultMessage};
+use crate::{protocol::*, Assets, Cache, Client, Connection, HttpPool, Identifiers, Price, ResultMessage};
 
 pub mod adm;
 pub mod app;
@@ -54,7 +54,7 @@ pub struct Kkmh {
 
 impl Client for Kkmh {
 
-    async fn request(request: &Request, connection: &Connection, cache: &Cache) -> Result<Response, ResultMessage> {
+    async fn request(request: &Request, connection: &Connection, pool: &HttpPool, cache: &Cache) -> Result<Response, ResultMessage> {
         let request_id = cache.get_sequence();
 
         let assets = Assets::new(request);
@@ -537,11 +537,11 @@ impl Client for Kkmh {
 
         let response_kkmh: KkmhResponse;
 
-        let client = reqwest::ClientBuilder::new()
-            .gzip(true)
-            .no_brotli()
-            .no_deflate()
-            .build().unwrap();
+        let client = {
+            let pool_kkmh_lock = pool.pool_kkmh.clone();
+            let pool_kkmh = pool_kkmh_lock.read().unwrap();
+            pool_kkmh.clone()
+        };
         let response_kkmh_raw = client.post("https://api.kkmh.com/ad/union/api/req/")
             .body(compressed_bytes)
             .header("Accept-Encoding", "gzip")
@@ -648,12 +648,12 @@ impl Client for Kkmh {
                 if error.is_timeout() {
                     return Err(ResultMessage {
                         code: 991,
-                        message: "upstream request timeout".to_string(),
+                        message: format!("upstream request timeout"),
                     });
                 } else {
                     return Err(ResultMessage {
                         code: 992,
-                        message: format!("upstream request failed: {}", error.to_string()),
+                        message: format!("upstream request failed: {:?}", error),
                     });
                 }
             }
@@ -1091,11 +1091,11 @@ impl Client for Kkmh {
         Ok(response)
     }
 
-    async fn bidding_notify_win(_url: String, _win_price: i32, _next_price: i32, _iv: &String, _connection: &Connection) {
+    async fn bidding_notify_win(_url: String, _win_price: i32, _next_price: i32, _iv: &String, _connection: &Connection, _pool: &HttpPool) {
 
     }
 
-    async fn bidding_notify_lose(_url: String, _lose_price: i32, _lose_reason: i32, _lose_adn_name: &String, _iv: &String, _connection: &Connection) {
+    async fn bidding_notify_lose(_url: String, _lose_price: i32, _lose_reason: i32, _lose_adn_name: &String, _iv: &String, _connection: &Connection, _pool: &HttpPool) {
 
     }
 

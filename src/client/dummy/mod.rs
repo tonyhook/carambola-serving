@@ -2,7 +2,7 @@ use base64::prelude::*;
 use hmac::{Hmac, Mac};
 use sha1::Sha1;
 
-use crate::{protocol::*, Cache, Client, Connection, Request, Response, ResultMessage};
+use crate::{protocol::*, Cache, Client, Connection, HttpPool, Request, Response, ResultMessage};
 
 type HmacSha1 = Hmac<Sha1>;
 
@@ -12,7 +12,7 @@ pub struct Dummy {
 
 impl Client for Dummy {
 
-    async fn request(request: &Request, connection: &Connection, cache: &Cache) -> Result<Response, ResultMessage> {
+    async fn request(request: &Request, connection: &Connection, _pool: &HttpPool, cache: &Cache) -> Result<Response, ResultMessage> {
         let request_id = cache.get_sequence();
 
         let response = Response {
@@ -240,11 +240,11 @@ impl Client for Dummy {
         Ok(response)
     }
 
-    async fn bidding_notify_win(_url: String, _win_price: i32, _next_price: i32, _iv: &String, _connection: &Connection) {
+    async fn bidding_notify_win(_url: String, _win_price: i32, _next_price: i32, _iv: &String, _connection: &Connection, _pool: &HttpPool) {
 
     }
 
-    async fn bidding_notify_lose(_url: String, _lose_price: i32, _lose_reason: i32, _lose_adn_name: &String, _iv: &String, _connection: &Connection) {
+    async fn bidding_notify_lose(_url: String, _lose_price: i32, _lose_reason: i32, _lose_adn_name: &String, _iv: &String, _connection: &Connection, _pool: &HttpPool) {
 
     }
 
