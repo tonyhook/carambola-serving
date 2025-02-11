@@ -53,24 +53,25 @@ impl Cache {
         }
     }
 
-    pub fn update_performance(&self, client_port: i32, vendor_port: i32, event: &str) {
+    pub fn update_performance(&self, client_port: i32, vendor_port: i32, bundle: &String, event: &str) {
         let cache = self.clone();
+        let bundle = Arc::new(bundle.to_string());
         let event = Arc::new(event.to_string());
         tokio::spawn({
             async move {
-                cache.update_performance_async(client_port, vendor_port, &event).await;
+                cache.update_performance_async(client_port, vendor_port, &bundle, &event).await;
             }
         });
     }
 
-    async fn update_performance_async(&self, client_port: i32, vendor_port: i32, event: &str) {
+    async fn update_performance_async(&self, client_port: i32, vendor_port: i32, bundle: &String, event: &str) {
         let utc: DateTime<Utc> = Utc::now();
         let hour = utc.hour();
         let minute_aligned = utc.minute() / GLOBAL_CONFIG.get().unwrap().performance_interval * GLOBAL_CONFIG.get().unwrap().performance_interval;
         let minute_fragment = utc.minute() - minute_aligned;
         let second = utc.second();
 
-        let key = format!("P{:0>2}{:0>2}:{}:{}:{}", hour, minute_aligned, client_port, vendor_port, event);
+        let key = format!("P{:0>2}{:0>2}:{}:{}:{}:{}", hour, minute_aligned, client_port, vendor_port, bundle.replace(":", "_"), event);
         let expire = 14400 - minute_fragment * 60 - second - GLOBAL_CONFIG.get().unwrap().performance_interval * 60;
 
         let connection = {
@@ -100,7 +101,65 @@ impl Cache {
         }
     }
 
-    pub fn get_request_amount(&self, client_port: i32, vendor_port: i32) -> i32 {
+    pub fn get_bundle(&self, request_id: &String) -> Option<String> {
+        let connection = {
+            let cl = self.na.clone();
+            let rs_client = cl.lock().unwrap();
+            rs_client.get()
+        };
+
+        match connection {
+            Ok(mut connection) => {
+                let key = format!("bundle:{}", request_id);
+
+                let result = redis::cmd("GET").arg(&key).query::<Option<String>>(&mut connection);
+                match result {
+                    Ok(result) => {
+                        return result;
+                    },
+                    Err(_) => {
+                        return None;
+                    }
+                }
+            },
+            Err(_) => {
+                return None;
+            },
+        }
+    }
+
+    pub fn set_bundle(&self, request_id: &String, bundle: &String) {
+        let connection = {
+            let cl = self.na.clone();
+            let rs_client = cl.lock().unwrap();
+            rs_client.get()
+        };
+
+        match connection {
+            Ok(mut connection) => {
+                let key = format!("bundle:{}", request_id);
+                let value = format!("{}", bundle.replace(":", "_"));
+
+                let result = redis::cmd("SET").arg(&key).arg(&value).query::<Option<i32>>(&mut connection);
+                match result {
+                    Ok(result) => {
+                        match result {
+                            Some(result) => {
+                                if result == 1 {
+                                    let _ = redis::cmd("EXPIRE").arg(&key).arg(86400).query::<Option<u32>>(&mut connection);
+                                }
+                            },
+                            None => (),
+                        }
+                    },
+                    Err(_) => (),
+                }
+            },
+            Err(_) => (),
+        }
+    }
+
+    pub fn get_request_amount_connection(&self, client_port: i32, vendor_port: i32) -> i32 {
         let utc: DateTime<Utc> = Utc::now();
         let hour = utc.hour();
         let minute = utc.minute();
@@ -130,13 +189,79 @@ impl Cache {
         }
     }
 
-    pub fn set_request_amount(&self, client_port: i32, vendor_port: i32) {
+    pub fn set_request_amount_connection(&self, client_port: i32, vendor_port: i32) {
         let utc: DateTime<Utc> = Utc::now();
         let hour = utc.hour();
         let minute = utc.minute();
         let second = utc.second();
 
         let key = format!("Q{:0>2}{:0>2}:{}:{}", hour, minute, client_port, vendor_port);
+        let expire = 60 - second + GLOBAL_CONFIG.get().unwrap().performance_interval * 60;
+
+        let connection = {
+            let cl = self.fa.clone();
+            let rs_client = cl.lock().unwrap();
+            rs_client.get()
+        };
+
+        match connection {
+            Ok(mut connection) => {
+                let result = redis::cmd("INCR").arg(&key).query::<Option<i32>>(&mut connection);
+                match result {
+                    Ok(result) => {
+                        match result {
+                            Some(result) => {
+                                if result == 1 {
+                                    let _ = redis::cmd("EXPIRE").arg(&key).arg(expire).query::<Option<u32>>(&mut connection);
+                                }
+                            },
+                            None => (),
+                        }
+                    },
+                    Err(_) => (),
+                }
+            },
+            Err(_) => (),
+        }
+    }
+
+    pub fn get_request_amount_bundle(&self, client_port: i32, vendor_port: i32, bundle: &str) -> i32 {
+        let utc: DateTime<Utc> = Utc::now();
+        let hour = utc.hour();
+        let minute = utc.minute();
+
+        let key = format!("Q{:0>2}{:0>2}:{}:{}:{}", hour, minute, client_port, vendor_port, bundle.replace(":", "_"));
+
+        let connection = {
+            let cl = self.fa.clone();
+            let rs_client = cl.lock().unwrap();
+            rs_client.get()
+        };
+
+        match connection {
+            Ok(mut connection) => {
+                let result = redis::cmd("GET").arg(key).query::<Option<i32>>(&mut connection);
+                match result {
+                    Ok(amount) => {
+                        match amount {
+                            Some(amount) => amount,
+                            None => 0,
+                        }
+                    },
+                    Err(_) => std::i32::MAX,
+                }
+            },
+            Err(_) => std::i32::MAX,
+        }
+    }
+
+    pub fn set_request_amount_bundle(&self, client_port: i32, vendor_port: i32, bundle: &str) {
+        let utc: DateTime<Utc> = Utc::now();
+        let hour = utc.hour();
+        let minute = utc.minute();
+        let second = utc.second();
+
+        let key = format!("Q{:0>2}{:0>2}:{}:{}:{}", hour, minute, client_port, vendor_port, bundle.replace(":", "_"));
         let expire = 60 - second + GLOBAL_CONFIG.get().unwrap().performance_interval * 60;
 
         let connection = {

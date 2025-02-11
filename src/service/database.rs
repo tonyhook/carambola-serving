@@ -8,10 +8,21 @@ use crate::entity::{Configuration, Connection};
 pub struct Database {
     pub conn_pool: Pool,
 
+    // connection map: vendor_port => connection list
     pub cma: Arc<RwLock<HashMap<i32, Vec<Connection>>>>,
-    pub cpla: Arc<RwLock<HashMap<String, (i32, String, i32)>>>,
-    pub vpla: Arc<RwLock<HashMap<String, (i32, String, i32)>>>,
+
+    // connection map: id => connection
     pub cla: Arc<RwLock<HashMap<i32, Connection>>>,
+
+    // client port map: tag_id => (id, tag_id, mode)
+    pub cpla: Arc<RwLock<HashMap<String, (i32, String, i32)>>>,
+
+    // vendor port map: tag_id => (id, tag_id, mode)
+    pub vpla: Arc<RwLock<HashMap<String, (i32, String, i32)>>>,
+
+    // bundle qps map: client_port + "|" + vendor_port + "|" + bundle => qps
+    pub qpsla: Arc<RwLock<HashMap<String, i32>>>,
+
 }
 
 impl Database {
@@ -20,13 +31,17 @@ impl Database {
         Self {
             conn_pool: Pool::new(db_url).unwrap(),
             cma: Arc::new(RwLock::new(HashMap::<i32, Vec<Connection>>::new())),
+            cla: Arc::new(RwLock::new(HashMap::<i32, Connection>::new())),
             cpla: Arc::new(RwLock::new(HashMap::<String, (i32, String, i32)>::new())),
             vpla: Arc::new(RwLock::new(HashMap::<String, (i32, String, i32)>::new())),
-            cla: Arc::new(RwLock::new(HashMap::<i32, Connection>::new())),
+            qpsla: Arc::new(RwLock::new(HashMap::<String, i32>::new())),
         }
     }
 
     pub fn get_connections(&self) {
+        // use query_map if there's no boolean type in result
+        // otherwise, use query_iter
+
         let mut conn = match self.conn_pool.get_conn() {
             Ok(conn) => {
                 conn
@@ -105,37 +120,6 @@ impl Database {
             configurations.push(configuration);
         }
 
-        // let configurations = conn.query_map(
-        //     "SELECT
-        //         id,
-        //         log_transaction,
-        //         limit_request_frequency,
-        //         af_ip_frequency_hourly,
-        //         af_ip_frequency_daily,
-        //         af_id_frequency_hourly,
-        //         af_id_frequency_daily,
-        //         af_ua_per_id_hourly,
-        //         af_ua_per_id_daily,
-        //         af_ip_per_id_hourly,
-        //         af_ip_per_id_daily
-        //     FROM ad_configuration",
-        //     | (id, log_transaction, limit_request_frequency, af_ip_frequency_hourly, af_ip_frequency_daily, af_id_frequency_hourly, af_id_frequency_daily, af_ua_per_id_hourly, af_ua_per_id_daily, af_ip_per_id_hourly, af_ip_per_id_daily)
-        //         : (i32, Vec<u8>, i32, i32, i32, i32, i32, i32, i32, i32, i32)
-        //     | Configuration {
-        //         id,
-        //         log_transaction: log_transaction[0] == 1,
-        //         limit_request_frequency,
-        //         af_ip_frequency_hourly,
-        //         af_ip_frequency_daily,
-        //         af_id_frequency_hourly,
-        //         af_id_frequency_daily,
-        //         af_ua_per_id_hourly,
-        //         af_ua_per_id_daily,
-        //         af_ip_per_id_hourly,
-        //         af_ip_per_id_daily
-        //     }
-        // ).unwrap();
-
         let mut connections = Vec::<Connection>::new();
 
         let result = conn.query_iter(
@@ -199,59 +183,6 @@ impl Database {
             connections.push(connection);
         }
 
-        // let connections = conn.query_map(
-        //     "SELECT
-        //         ad_connection.id,
-        //         ad_client.code,
-        //         ad_client_port.id,
-        //         ad_client_port.tag_id,
-        //         ad_client_port.mode,
-        //         ad_client_port.ekey,
-        //         ad_client_port.ikey,
-        //         ad_connection.test,
-        //         ad_vendor_port.id,
-        //         ad_vendor_port.mode,
-        //         ad_vendor.ekey,
-        //         ad_vendor.ikey,
-        //         ad_vendor_port.timeout,
-        //         ad_connection.priority,
-        //         ad_connection.cost_ratio,
-        //         ad_connection.default_price,
-        //         configuration_id
-        //     FROM ad_connection, ad_client, ad_client_port, ad_vendor, ad_vendor_media, ad_vendor_port
-        //     WHERE ad_connection.enabled AND NOT ad_connection.deleted
-        //     AND ad_connection.valid_from <= NOW()
-        //     AND ad_connection.valid_to >= NOW()
-        //     AND ad_connection.client_port_id = ad_client_port.id
-        //     AND ad_client_port.client_id = ad_client.id
-        //     AND ad_connection.vendor_port_id = ad_vendor_port.id
-        //     AND ad_vendor_port.vendor_media_id = ad_vendor_media.id
-        //     AND ad_vendor_media.vendor_id = ad_vendor.id;",
-        //     | (id, client_code, client_port, client_tag_id, client_mode, client_ekey, client_ikey, test, vendor_port, vendor_mode, vendor_ekey, vendor_ikey, timeout, priority, cost_ratio, default_price, configuration_id)
-        //         : (i32, String, i32, String, i32, String, String, Vec<u8>, i32, i32, String, String, u64, i32, f64, i32, i32)
-        //     | Connection {
-        //         id,
-        //         client_code,
-        //         client_port,
-        //         client_tag_id,
-        //         client_mode,
-        //         client_ekey,
-        //         client_ikey,
-        //         test: test[0] == 1,
-        //         vendor_port,
-        //         vendor_mode,
-        //         vendor_ekey,
-        //         vendor_ikey,
-        //         timeout,
-        //         priority,
-        //         cost_ratio,
-        //         default_price,
-        //         configuration: {
-        //             *configurations.iter().find(|c|c.id == configuration_id).unwrap()
-        //         },
-        //     }
-        // ).unwrap();
-
         let cml = self.cma.clone();
         let mut cm = cml.write().unwrap();
         cm.clear();
@@ -269,6 +200,21 @@ impl Database {
         cl.clear();
         for connection in connections.iter() {
             cl.insert(connection.id, connection.clone());
+        }
+
+        let qpss = conn.query_map(
+            "SELECT ad_traffic_control.client_port, ad_traffic_control.vendor_port, ad_traffic_control.bundle, ad_traffic_control.qps
+            FROM ad_traffic_control;",
+            | (client_port, vendor_port, bundle, qps)
+                : (i32, i32, String, i32)
+            | (client_port, vendor_port, bundle, qps),
+        ).unwrap();
+
+        let qpsll = self.qpsla.clone();
+        let mut qpsl = qpsll.write().unwrap();
+        qpsl.clear();
+        for qps in qpss.iter() {
+            qpsl.insert(format!("{}|{}|{}", qps.0, qps.1, qps.2), qps.3);
         }
     }
 

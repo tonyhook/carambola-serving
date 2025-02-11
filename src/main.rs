@@ -110,20 +110,28 @@ async fn handler(
     match version {
         Ok(version) => {
             if !version.starts_with("1.") {
-                cache.update_performance(-1, -1, PERFORMANCE_BAD_PROTOCOL_VER);
+                cache.update_performance(-1, -1, &"".to_string(), PERFORMANCE_BAD_PROTOCOL_VER);
                 return Err((StatusCode::BAD_REQUEST, "BAD PROTOCOL IDENTIFICATION".to_string()));
             }
         },
         Err(_) => {
-            cache.update_performance(-1, -1, PERFORMANCE_NO_PROTOCOL);
+            cache.update_performance(-1, -1, &"".to_string(), PERFORMANCE_NO_PROTOCOL);
             return Err((StatusCode::BAD_REQUEST, "BAD PROTOCOL IDENTIFICATION".to_string()));
         },
     }
 
     // step 2: check item
     if request.item.len() == 0 {
-        cache.update_performance(-1, -1, PERFORMANCE_NO_ITEM);
+        cache.update_performance(-1, -1, &"".to_string(), PERFORMANCE_NO_ITEM);
         return Err((StatusCode::BAD_REQUEST, "NO ITEM".to_string()));
+    }
+
+    let mut bundle: String = "UNKNOWN".to_string();
+    match &request.context.app {
+        Some(app) => {
+            bundle = app.name.clone();
+        },
+        None => (),
     }
 
     // step 3: check vendor port
@@ -137,7 +145,7 @@ async fn handler(
         vpl.clone()
     };
     if !vps.contains_key(tagid) {
-        cache.update_performance(-1, -1, PERFORMANCE_NOT_REGISTERED);
+        cache.update_performance(-1, -1, &bundle, PERFORMANCE_NOT_REGISTERED);
         return Err((StatusCode::BAD_REQUEST, "NO VALID TAG ID".to_string()));
     } else {
         vendor_port = vps.get(tagid).unwrap();
@@ -155,14 +163,14 @@ async fn handler(
                 c.clone()
             },
             None => {
-                cache.update_performance(-1, vendor_port.0, PERFORMANCE_NO_MATCH_CONNECTION);
+                cache.update_performance(-1, vendor_port.0, &bundle, PERFORMANCE_NO_MATCH_CONNECTION);
                 return Err((StatusCode::BAD_REQUEST, "NO MATCHED CONNECTION".to_string()));
             },
         }
     };
 
     if connections.len() == 0 {
-        cache.update_performance(-1, vendor_port.0, PERFORMANCE_NO_MATCH_CONNECTION);
+        cache.update_performance(-1, vendor_port.0, &bundle, PERFORMANCE_NO_MATCH_CONNECTION);
         return Err((StatusCode::BAD_REQUEST, "NO MATCHED CONNECTION".to_string()));
     }
 
@@ -189,7 +197,7 @@ async fn handler(
                     connections.retain(|connection| connection.client_mode == PORT_TYPE_BIDDING);
 
                     if connections.len() == 0 {
-                        cache.update_performance(-1, vendor_port.0, PERFORMANCE_NO_MATCH_CONNECTION);
+                        cache.update_performance(-1, vendor_port.0, &bundle, PERFORMANCE_NO_MATCH_CONNECTION);
                         return Err((StatusCode::BAD_REQUEST, "NO MATCHED CONNECTION".to_string()));
                     }
 
@@ -201,7 +209,7 @@ async fn handler(
             connections.retain(|connection| connection.client_mode == PORT_TYPE_BIDDING);
 
             if connections.len() == 0 {
-                cache.update_performance(-1, vendor_port.0, PERFORMANCE_NO_MATCH_CONNECTION);
+                cache.update_performance(-1, vendor_port.0, &bundle, PERFORMANCE_NO_MATCH_CONNECTION);
                 return Err((StatusCode::BAD_REQUEST, "NO MATCHED CONNECTION".to_string()));
             }
 
@@ -216,15 +224,48 @@ async fn handler(
     for connection in connections.iter() {
         let client_port = connection.client_port;
 
-        // check qps limitation
-        let q = cache.get_request_amount(client_port, vendor_port.0);
+        // check qps limitation for connection
+        let q = cache.get_request_amount_connection(client_port, vendor_port.0);
 
         if q >= connection.configuration.limit_request_frequency * 60 {
-            cache.update_performance(client_port, vendor_port.0, PERFORMANCE_BEYOND_CLIENT_QPS);
+            cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_BEYOND_CLIENT_QPS);
             continue;
         }
 
-        cache.set_request_amount(client_port, vendor_port.0);
+        cache.set_request_amount_connection(client_port, vendor_port.0);
+
+        // check qps limitation for bundle
+        let qps = {
+            let qpsl = database.qpsla.clone();
+            let qps = qpsl.read().unwrap();
+
+            let limitation = qps.get(&format!("{}|{}|{}", client_port, vendor_port.0, &bundle));
+
+            match limitation {
+                Some(&limitation) => {
+                    limitation
+                },
+                None => {
+                    -1
+                },
+            }
+        };
+
+        if qps == 0 {
+            cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_BEYOND_CLIENT_QPS);
+            continue;
+        }
+
+        if qps > 0 {
+            let q = cache.get_request_amount_bundle(client_port, vendor_port.0, &bundle);
+
+            if q >= qps * 60 {
+                cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_BEYOND_CLIENT_QPS);
+                continue;
+            }
+
+            cache.set_request_amount_bundle(client_port, vendor_port.0, &bundle);
+        }
 
         // build request
         let request = AssertUnwindSafe(query(&request, connection, &pool, &cache)).catch_unwind();
@@ -272,31 +313,31 @@ async fn handler(
                 if asset > 0 {
                     valid_responses.push((response, connection));
                 } else {
-                    cache.update_performance(client_port, vendor_port.0, PERFORMANCE_NOT_BIDDING);
+                    cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_NOT_BIDDING);
                 }
             },
             Ok(Err(result_message)) => {
                 match result_message.code {
                     991 => {
-                        cache.update_performance(client_port, vendor_port.0, PERFORMANCE_TIMEOUT);
+                        cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_TIMEOUT);
                     },
                     992 => {
-                        cache.update_performance(client_port, vendor_port.0, PERFORMANCE_REQUEST_FAILED);
+                        cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_REQUEST_FAILED);
                     },
                     993 => {
-                        cache.update_performance(client_port, vendor_port.0, PERFORMANCE_NOT_BIDDING);
+                        cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_NOT_BIDDING);
                     },
                     997 => {
-                        cache.update_performance(client_port, vendor_port.0, PERFORMANCE_TRANS_FROM_FAILED);
+                        cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_TRANS_FROM_FAILED);
                     },
                     998 => {
-                        cache.update_performance(client_port, vendor_port.0, PERFORMANCE_TRANS_TO_FAILED);
+                        cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_TRANS_TO_FAILED);
                     },
                     999 => {
-                        cache.update_performance(client_port, vendor_port.0, PERFORMANCE_UNKNOWN_CLIENT);
+                        cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_UNKNOWN_CLIENT);
                     },
                     _ => {
-                        cache.update_performance(client_port, vendor_port.0, PERFORMANCE_REQUEST_FAILED);
+                        cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_REQUEST_FAILED);
                     }
                 }
                 if result_message.message.len() > 0 {
@@ -304,13 +345,13 @@ async fn handler(
                 }
             },
             Err(_) => {
-                cache.update_performance(client_port, vendor_port.0, PERFORMANCE_REQUEST_FAILED);
+                cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_REQUEST_FAILED);
             },
         }
     }
 
     if valid_responses.len() == 0 {
-        cache.update_performance(-1, vendor_port.0, PERFORMANCE_NO_RESPONSE);
+        cache.update_performance(-1, vendor_port.0, &bundle, PERFORMANCE_NO_RESPONSE);
         if errors.len() == 0 {
             return Err((StatusCode::NO_CONTENT, "".to_string()));
         } else {
@@ -333,8 +374,8 @@ async fn handler(
             best_client_price = best_client.unwrap().0.clone().seatbid.unwrap()[0].bid[0].price;
             best_vendor_price = Price::to_vendor(best_client.unwrap().1, Some(best_client_price));
 
-            cache.update_performance(best_client.unwrap().1.client_port, vendor_port.0, PERFORMANCE_SHARE_SUCCESS);
-            cache.update_performance(best_client.unwrap().1.client_port, vendor_port.0, PERFORMANCE_SHARE_OK);
+            cache.update_performance(best_client.unwrap().1.client_port, vendor_port.0, &bundle, PERFORMANCE_SHARE_SUCCESS);
+            cache.update_performance(best_client.unwrap().1.client_port, vendor_port.0, &bundle, PERFORMANCE_SHARE_OK);
         },
         PORT_TYPE_BIDDING => {
             // generate price
@@ -352,7 +393,7 @@ async fn handler(
                         },
                         None => (),
                     }
-                    cache.update_performance(connection.client_port, vendor_port.0, PERFORMANCE_BIDDING_INVALID);
+                    cache.update_performance(connection.client_port, vendor_port.0, &bundle, PERFORMANCE_BIDDING_INVALID);
                     continue;
                 }
 
@@ -364,11 +405,11 @@ async fn handler(
                     next_client_price = price;
                 }
 
-                cache.update_performance(connection.client_port, vendor_port.0, PERFORMANCE_BIDDING_OK);
+                cache.update_performance(connection.client_port, vendor_port.0, &bundle, PERFORMANCE_BIDDING_OK);
             }
 
             if best_client.is_none() {
-                cache.update_performance(-1, vendor_port.0, PERFORMANCE_NO_RESPONSE);
+                cache.update_performance(-1, vendor_port.0, &bundle, PERFORMANCE_NO_RESPONSE);
                 if errors.len() == 0 {
                     return Err((StatusCode::NO_CONTENT, "".to_string()));
                 } else {
@@ -385,12 +426,12 @@ async fn handler(
             }
             best_vendor_price = Price::to_vendor(best_connection, Some(best_client_price));
 
-            cache.update_performance(best_client.unwrap().1.client_port, vendor_port.0, PERFORMANCE_BIDDING_SUCCESS);
+            cache.update_performance(best_client.unwrap().1.client_port, vendor_port.0, &bundle, PERFORMANCE_BIDDING_SUCCESS);
 
             // bidding lose notification
             for &(response, connection) in valid_responses.iter() {
                 if connection.id != best_connection.id {
-                    cache.update_performance(connection.client_port, vendor_port.0, PERFORMANCE_BIDDING_LOSE);
+                    cache.update_performance(connection.client_port, vendor_port.0, &bundle, PERFORMANCE_BIDDING_LOSE);
 
                     match &response.clone().seatbid.unwrap()[0].bid[0].lurl {
                         Some(lurl) => {
@@ -406,7 +447,7 @@ async fn handler(
 
             if best_connection.vendor_mode == PORT_TYPE_SHARE {
                 // bidding win notification directly
-                cache.update_performance(best_connection.client_port, vendor_port.0, PERFORMANCE_BIDDING_WIN);
+                cache.update_performance(best_connection.client_port, vendor_port.0, &bundle, PERFORMANCE_BIDDING_WIN);
 
                 match &best_seatbid[0].bid[0].burl {
                     Some(burl) => {
@@ -463,12 +504,15 @@ async fn handler(
         final_seatbid[0].bid[0].lurl = best_lurl;
     }
 
-    // step 10: update cost
+    // step 10: prepare bundle name for tracking
+    cache.set_bundle(&final_seatbid[0].bid[0].id.clone().unwrap(), &bundle);
+
+    // step 11: update cost
     // save price early avoiding no win notice call
     let client_port = best_client.unwrap().1.client_port;
     cache.set_notification_cost(&final_seatbid[0].bid[0].id.clone().unwrap().as_str(), client_port, vendor_port.0, best_client_price, best_vendor_price);
 
-    // step 11: update tracking
+    // step 12: update tracking
     let request_id = &final_seatbid[0].bid[0].id.clone().unwrap();
     let event = &mut final_seatbid[0].bid[0].media.display.event;
     event.push(Event {
@@ -560,7 +604,9 @@ async fn win(
                                 None => (),
                             }
 
-                            cache.update_performance(connection.client_port, connection.vendor_port, PERFORMANCE_BIDDING_WIN);
+                            let bundle = cache.get_bundle(&request_id).unwrap_or("UNKNOWN".to_string());
+
+                            cache.update_performance(connection.client_port, connection.vendor_port, &bundle, PERFORMANCE_BIDDING_WIN);
 
                             // update the final price from win notice
                             cache.set_notification_cost(request_id.as_str(), connection.client_port, connection.vendor_port, client_win_price, vendor_win_price);
@@ -634,7 +680,9 @@ async fn lose(
                         }
                     }
 
-                    cache.update_performance(connection.client_port, connection.vendor_port, PERFORMANCE_BIDDING_LOSE);
+                    let bundle = cache.get_bundle(&request_id).unwrap_or("UNKNOWN".to_string());
+
+                    cache.update_performance(connection.client_port, connection.vendor_port, &bundle, PERFORMANCE_BIDDING_LOSE);
                 },
                 None => (),
             }
