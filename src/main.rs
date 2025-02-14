@@ -8,10 +8,13 @@ use axum::{extract::{Path, Query, State}, http::{HeaderMap, StatusCode}, routing
 use base64::prelude::*;
 use futures::{future::join_all, FutureExt};
 use hmac::{Hmac, Mac};
+use hyper_util::{rt::{TokioExecutor, TokioIo}, server};
+use hyper::body::Incoming;
 use serde::{Deserialize, Serialize};
 use sha1::Sha1;
 use tokio_cron_scheduler::{Job, JobScheduler};
 use tower_http::compression::CompressionLayer;
+use tower::Service;
 
 type HmacSha1 = Hmac<Sha1>;
 
@@ -75,8 +78,8 @@ async fn main() {
 
     let app = Router::new()
         .route("/api/ps", post(handler))
-        .route("/api/win/:connection_id/:request_id", get(win))
-        .route("/api/lose/:connection_id/:request_id", get(lose))
+        .route("/api/win/{connection_id}/{request_id}", get(win))
+        .route("/api/lose/{connection_id}/{request_id}", get(lose))
         .layer(comression_layer)
         .with_state((database, cache, pool));
 
@@ -84,9 +87,23 @@ async fn main() {
         .await
         .unwrap();
 
-    axum::serve(listener, app)
-        .await
-        .unwrap();
+    loop {
+        let (socket, _remote_addr) = listener.accept().await.unwrap();
+        let tower_service = app.clone();
+
+        tokio::spawn(async move {
+            let socket = TokioIo::new(socket);
+            let hyper_service = hyper::service::service_fn(move |request: hyper::Request<Incoming>| {
+                tower_service.clone().call(request)
+            });
+
+            let _ = server::conn::auto::Builder::new(TokioExecutor::new())
+                .http1()
+                .keep_alive(true)
+                .serve_connection(socket, hyper_service)
+                .await;
+        });
+    }
 }
 
 async fn handler(
