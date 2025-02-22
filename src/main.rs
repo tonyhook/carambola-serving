@@ -115,6 +115,33 @@ async fn handler(
     headers: HeaderMap,
     Json(request): Json<Request>)
 -> Result<Json<Response>, (StatusCode, String)> {
+    let qps = {
+        let qpsl = database.qpsla.clone();
+        let qps = qpsl.read().unwrap();
+
+        let limitation = qps.get(&format!("{}|{}|{}", -1, -1, "GLOBAL"));
+
+        match limitation {
+            Some(&limitation) => {
+                limitation
+            },
+            None => {
+                -1
+            },
+        }
+    };
+
+    if qps > 0 {
+        let q = cache.get_request_amount_connection_sec(-1, -1);
+
+        if q >= qps {
+            cache.update_performance(-1, -1, &"GLOBAL".to_string(), PERFORMANCE_BEYOND_VENDOR_QPS);
+            return Err((StatusCode::TOO_MANY_REQUESTS, "BEYOND QPS".to_string()));
+        }
+
+        cache.set_request_amount_connection_sec(-1, -1);
+    }
+
     // step 1: check protocol
     let version = match headers.get("x-carambola-version") {
         Some(version) => {
