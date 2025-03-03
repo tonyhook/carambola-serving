@@ -10,6 +10,7 @@ pub mod fwb;
 pub mod kkmh;
 pub mod mfocus;
 pub mod mobrtb;
+pub mod mygolbs;
 pub mod richmob;
 pub mod yiba;
 
@@ -26,5 +27,6 @@ pub use fwb::Fwb;
 pub use kkmh::Kkmh;
 pub use mfocus::Mfocus;
 pub use mobrtb::Mobrtb;
+pub use mygolbs::Mygolbs;
 pub use richmob::Richmob;
 pub use yiba::Yiba;
