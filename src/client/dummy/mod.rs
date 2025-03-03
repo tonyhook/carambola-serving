@@ -229,6 +229,8 @@ impl Client for Dummy {
                                     event_vec
                                 }
                             },
+                            advertiser: None,
+                            advertisericon: None,
                         },
                     };
                     bids.push(bid);

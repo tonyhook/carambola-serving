@@ -949,6 +949,8 @@ impl Client for Kkmh {
                                                         req: 0,
                                                         app: Some(AppAsset {
                                                             name: appinfo.name.clone(),
+                                                            desc: None,
+                                                            descurl: None,
                                                             domain: None,
                                                             bundle: Some(appinfo.bundle.clone()),
                                                             ver: Some(appinfo.version.clone()),
@@ -959,8 +961,11 @@ impl Client for Kkmh {
                                                             paid: 0,
                                                             size: None,
                                                             md5: None,
+                                                            registration: None,
                                                             privacy: None,
+                                                            privacyurl: None,
                                                             permission: None,
+                                                            permissionurl: None,
                                                         }),
                                                         title: None,
                                                         img: None,
@@ -1075,6 +1080,8 @@ impl Client for Kkmh {
                                         event_vec
                                     }
                                 },
+                                advertiser: None,
+                                advertisericon: None,
                             },
                         });
                     }

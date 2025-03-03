@@ -858,32 +858,37 @@ impl Client for Fanglin {
                                                             });
                                                         }
 
-                                                if ad.app_name.is_some() {
-                                                    asset_vec.push(Asset {
-                                                        id: 0,
-                                                        req: 0,
-                                                        app: Some(AppAsset {
-                                                            name: ad.app_name.clone().unwrap(),
-                                                            domain: None,
-                                                            bundle: ad.app_bundle.clone(),
-                                                            ver: ad.app_version.clone(),
-                                                            developer: None,
-                                                            icon: None,
-                                                            storeid: None,
-                                                            storeurl: None,
-                                                            paid: 0,
-                                                            size: ad.app_size,
-                                                            md5: None,
-                                                            privacy: None,
-                                                            permission: None,
-                                                        }),
-                                                        title: None,
-                                                        img: None,
-                                                        video: None,
-                                                        data: None,
-                                                        html: None,
-                                                    });
-                                                }
+                                                        if ad.app_name.is_some() {
+                                                            asset_vec.push(Asset {
+                                                                id: 0,
+                                                                req: 0,
+                                                                app: Some(AppAsset {
+                                                                    name: ad.app_name.clone().unwrap(),
+                                                                    desc:  None,
+                                                                    descurl:  None,
+                                                                    domain: None,
+                                                                    bundle: ad.app_bundle.clone(),
+                                                                    ver: ad.app_version.clone(),
+                                                                    developer: None,
+                                                                    icon: None,
+                                                                    storeid: None,
+                                                                    storeurl: None,
+                                                                    paid: 0,
+                                                                    size: ad.app_size,
+                                                                    md5: None,
+                                                                    registration: None,
+                                                                    privacy: None,
+                                                                    privacyurl: None,
+                                                                    permission: None,
+                                                                    permissionurl:  None,
+                                                                }),
+                                                                title: None,
+                                                                img: None,
+                                                                video: None,
+                                                                data: None,
+                                                                html: None,
+                                                            });
+                                                        }
 
                                                 Some(Native {
                                                     asset: asset_vec,
@@ -1116,6 +1121,8 @@ impl Client for Fanglin {
                                             event_vec
                                         }
                                     },
+                                    advertiser: ad.ad_text.clone(),
+                                    advertisericon: ad.ad_logo.clone(),
                                 },
                             };
 

@@ -1405,6 +1405,8 @@ impl Client for Fwb {
                                             html: None,
                                             app: Some(AppAsset {
                                                 name: app.name.clone().unwrap_or("".to_string()),
+                                                desc: None,
+                                                descurl: None,
                                                 domain: None,
                                                 bundle: app.package.clone(),
                                                 ver: app.version.clone(),
@@ -1415,8 +1417,11 @@ impl Client for Fwb {
                                                 paid: 0,
                                                 size: app.size,
                                                 md5: app.md5.clone(),
-                                                privacy: app.privacy_link.clone(),
-                                                permission: app.permission_link.clone(),
+                                                registration: None,
+                                                privacy: None,
+                                                privacyurl: app.privacy_link.clone(),
+                                                permission: None,
+                                                permissionurl: app.permission_link.clone(),
                                             }),
                                         };
 
@@ -1709,6 +1714,8 @@ impl Client for Fwb {
 
                                 display
                             },
+                            advertiser: None,
+                            advertisericon: None,
                         },
                     };
 

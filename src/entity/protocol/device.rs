@@ -116,6 +116,10 @@ pub struct Device {
     #[serde(deserialize_with = "convert_string_from_number")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bootmark: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "convert_string_from_number")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub initmark: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub geo: Option<Geo>,
 }

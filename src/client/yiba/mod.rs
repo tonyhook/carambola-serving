@@ -980,6 +980,8 @@ impl Client for Yiba {
                                                                 req: 0,
                                                                 app: Some(AppAsset {
                                                                     name: ad.app_name.clone().unwrap(),
+                                                                    desc:  None,
+                                                                    descurl:  None,
                                                                     domain: None,
                                                                     bundle: ad.app_package.clone(),
                                                                     ver: None,
@@ -990,8 +992,11 @@ impl Client for Yiba {
                                                                     paid: 0,
                                                                     size: None,
                                                                     md5: None,
+                                                                    registration: None,
                                                                     privacy: ad.app_privacy_policy.clone(),
+                                                                    privacyurl:  None,
                                                                     permission: ad.app_permission.clone(),
+                                                                    permissionurl:  None,
                                                                 }),
                                                                 title: None,
                                                                 img: None,
@@ -1400,6 +1405,8 @@ impl Client for Yiba {
                                                     event_vec
                                                 }
                                             },
+                                            advertiser: None,
+                                            advertisericon: None,
                                         },
                                     };
 

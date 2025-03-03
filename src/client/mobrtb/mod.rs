@@ -912,6 +912,8 @@ impl Client for Mobrtb {
                                             html: None,
                                             app: Some(AppAsset {
                                                 name: download_app_name.clone(),
+                                                desc: None,
+                                                descurl: None,
                                                 domain: None,
                                                 bundle: ad_mobrtb.download_app_bundle.clone(),
                                                 ver: ad_mobrtb.download_app_version.clone(),
@@ -922,8 +924,11 @@ impl Client for Mobrtb {
                                                 paid: 0,
                                                 size: ad_mobrtb.download_app_size,
                                                 md5: None,
-                                                privacy: ad_mobrtb.privacy_url.clone(),
-                                                permission: ad_mobrtb.permission_url.clone(),
+                                                registration: None,
+                                                privacy: None,
+                                                privacyurl: ad_mobrtb.privacy_url.clone(),
+                                                permission: None,
+                                                permissionurl: ad_mobrtb.permission_url.clone(),
                                             }),
                                         };
 
@@ -1166,6 +1171,8 @@ impl Client for Mobrtb {
 
                                 display
                             },
+                            advertiser: ad_mobrtb.advertiser_name.clone(),
+                            advertisericon: None,
                         },
                     };
 

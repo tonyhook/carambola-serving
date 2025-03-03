@@ -1309,6 +1309,8 @@ impl Client for Richmob {
                                                                 req: 0,
                                                                 app: Some(AppAsset {
                                                                     name: app_name.clone(),
+                                                                    desc: None,
+                                                                    descurl: None,
                                                                     domain: None,
                                                                     bundle: adv.package_name.clone(),
                                                                     ver: adv.app_version.clone(),
@@ -1319,7 +1321,9 @@ impl Client for Richmob {
                                                                     paid: 0,
                                                                     size: None,
                                                                     md5: None,
-                                                                    privacy: {
+                                                                    registration: None,
+                                                                    privacy: None,
+                                                                    privacyurl: {
                                                                         match &adv.app_privacy_urls {
                                                                             Some(app_privacy_urls) => {
                                                                                 if app_privacy_urls.len() > 0 {
@@ -1331,7 +1335,8 @@ impl Client for Richmob {
                                                                             None => None,
                                                                         }
                                                                     },
-                                                                    permission: {
+                                                                    permission: None,
+                                                                    permissionurl: {
                                                                         match &adv.app_permission_urls {
                                                                             Some(app_permission_urls) => {
                                                                                 if app_permission_urls.len() > 0 {
@@ -2282,6 +2287,8 @@ impl Client for Richmob {
                                                 event_vec
                                             }
                                         },
+                                        advertiser: None,
+                                        advertisericon: None,
                                     },
                                 };
                                 bids.push(bid);

@@ -664,6 +664,8 @@ impl Client for Mfocus {
                                                         event_vec
                                                     }
                                                 },
+                                                advertiser: None,
+                                                advertisericon: None,
                                             },
                                         };
 

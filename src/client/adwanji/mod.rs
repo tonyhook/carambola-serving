@@ -1386,6 +1386,8 @@ impl Client for Adwanji {
                                                                 req: 0,
                                                                 app: Some(AppAsset {
                                                                     name: app.name.clone(),
+                                                                    desc: None,
+                                                                    descurl: None,
                                                                     domain: None,
                                                                     bundle: Some(app.pack.clone()),
                                                                     ver: app.vers.clone(),
@@ -1396,8 +1398,11 @@ impl Client for Adwanji {
                                                                     paid: 0,
                                                                     size: app.size,
                                                                     md5: app.md5.clone(),
+                                                                    registration: None,
                                                                     privacy: None,
+                                                                    privacyurl: None,
                                                                     permission: None,
+                                                                    permissionurl: None,
                                                                 }),
                                                                 title: None,
                                                                 img: None,
@@ -1863,6 +1868,8 @@ impl Client for Adwanji {
                                                 event_vec
                                             }
                                         },
+                                        advertiser: None,
+                                        advertisericon: None,
                                     },
                                 };
 
