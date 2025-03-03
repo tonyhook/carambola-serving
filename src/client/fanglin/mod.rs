@@ -41,7 +41,7 @@ impl Client for Fanglin {
     async fn request(request: &Request, connection: &Connection, pool: &HttpPool, cache: &Cache) -> Result<Response, ResultMessage> {
         let request_id = cache.get_sequence();
 
-        let assets = Assets::new(request);
+        let mut assets = Assets::new(request);
         let identifiers = Identifiers::new(request);
 
         let request_fanglin = FanglinRequest {
@@ -756,7 +756,7 @@ impl Client for Fanglin {
                                             ad.height
                                         },
                                         banner: {
-                                            if request.item[0].spec.display.displayfmt.is_some() {
+                                            if assets.get_banner_size() > 0 {
                                                 Some(Banner {
                                                     img: {
                                                         let imgs = ad.imgs.clone().unwrap();
@@ -769,14 +769,14 @@ impl Client for Fanglin {
                                             }
                                         },
                                         native: {
-                                            if request.item[0].spec.display.nativefmt.is_some() {
+                                            if assets.get_asset_total_size() > 0 {
                                                 let mut asset_vec = vec![];
 
                                                 match &ad.video {
                                                     Some(video) => {
-                                                        if assets.video_asset.len() > 0 {
+                                                        if assets.get_asset_size("video") > 0 {
                                                             asset_vec.push(Asset {
-                                                                id: assets.video_asset.get(0).unwrap().id,
+                                                                id: assets.consume_asset("video"),
                                                                 req: 1,
                                                                 video: Some(VideoAsset {
                                                                     url: video.video_url.clone(),
@@ -802,15 +802,17 @@ impl Client for Fanglin {
                                                     None => (),
                                                 }
 
-                                                        if assets.title_asset.len() > 0 {
+                                                match &ad.title {
+                                                    Some(title) => {
+                                                        if assets.get_asset_size("title") > 0 {
                                                             asset_vec.push(Asset {
-                                                                id: assets.title_asset.get(0).unwrap().id,
+                                                                id: assets.consume_asset("title"),
                                                                 req: 1,
                                                                 title: Some(TitleAsset {
-                                                                    text: ad.title.clone().unwrap(),
+                                                                    text: title.clone(),
                                                                     subtitle: None,
                                                                     desc: ad.desc.clone(),
-                                                                    len: Some(ad.title.clone().unwrap().len() as i32),
+                                                                    len: Some(title.len() as i32),
                                                                 }),
                                                                 img: None,
                                                                 video: None,
@@ -819,20 +821,24 @@ impl Client for Fanglin {
                                                                 app: None,
                                                             });
                                                         }
-                                                        for (i, asset) in assets.img_asset.iter().enumerate() {
-                                                            if i < ad.imgs.clone().unwrap().len() {
+                                                    },
+                                                    None => (),
+                                                }
+
+                                                match &ad.imgs {
+                                                    Some(imgs) => {
+                                                        if assets.get_asset_size("img") > 0 {
+                                                            for img in imgs.iter() {
                                                                 asset_vec.push(Asset {
-                                                                    id: asset.id,
+                                                                    id: assets.consume_asset("img"),
                                                                     req: 1,
-                                                                    img: {
-                                                                        Some(ImageAsset {
-                                                                            url: ad.imgs.clone().unwrap()[i].clone(),
-                                                                            mime: None,
-                                                                            w: ad.width,
-                                                                            h: ad.height,
-                                                                            imagetype: Some(501),
-                                                                        })
-                                                                    },
+                                                                    img: Some(ImageAsset {
+                                                                        url: img.clone(),
+                                                                        mime: None,
+                                                                        w: ad.width,
+                                                                        h: ad.height,
+                                                                        imagetype: Some(3),
+                                                                    }),
                                                                     title: None,
                                                                     video: None,
                                                                     data: None,
@@ -841,14 +847,40 @@ impl Client for Fanglin {
                                                                 });
                                                             }
                                                         }
-                                                        if assets.html_asset.len() > 0 && ad.html.is_some() {
+                                                        if assets.get_asset_size("thumb") > 0 {
+                                                            for img in imgs.iter() {
+                                                                asset_vec.push(Asset {
+                                                                    id: assets.consume_asset("thumb"),
+                                                                    req: 1,
+                                                                    img: Some(ImageAsset {
+                                                                        url: img.clone(),
+                                                                        mime: None,
+                                                                        w: ad.width,
+                                                                        h: ad.height,
+                                                                        imagetype: Some(3),
+                                                                    }),
+                                                                    title: None,
+                                                                    video: None,
+                                                                    data: None,
+                                                                    html: None,
+                                                                    app: None,
+                                                                });
+                                                            }
+                                                        }
+                                                    },
+                                                    None => (),
+                                                }
+
+                                                match &ad.html {
+                                                    Some(html) => {
+                                                        if assets.get_asset_size("html") > 0 {
                                                             asset_vec.push(Asset {
-                                                                id: assets.html_asset.get(0).unwrap().id,
-                                                                req: 0,
+                                                                id: assets.consume_asset("html"),
+                                                                req: 1,
                                                                 html: Some(HtmlAsset {
-                                                                    html: ad.html.clone(),
+                                                                    html: Some(html.clone()),
                                                                     link: None,
-                                                                    len: Some(ad.html.clone().unwrap().len() as i32),
+                                                                    len: Some(html.len() as i32),
                                                                 }),
                                                                 title: None,
                                                                 img: None,
@@ -857,38 +889,44 @@ impl Client for Fanglin {
                                                                 app: None,
                                                             });
                                                         }
+                                                    },
+                                                    None => (),
+                                                }
 
-                                                        if ad.app_name.is_some() {
-                                                            asset_vec.push(Asset {
-                                                                id: 0,
-                                                                req: 0,
-                                                                app: Some(AppAsset {
-                                                                    name: ad.app_name.clone().unwrap(),
-                                                                    desc:  None,
-                                                                    descurl:  None,
-                                                                    domain: None,
-                                                                    bundle: ad.app_bundle.clone(),
-                                                                    ver: ad.app_version.clone(),
-                                                                    developer: None,
-                                                                    icon: None,
-                                                                    storeid: None,
-                                                                    storeurl: None,
-                                                                    paid: 0,
-                                                                    size: ad.app_size,
-                                                                    md5: None,
-                                                                    registration: None,
-                                                                    privacy: None,
-                                                                    privacyurl: None,
-                                                                    permission: None,
-                                                                    permissionurl:  None,
-                                                                }),
-                                                                title: None,
-                                                                img: None,
-                                                                video: None,
-                                                                data: None,
-                                                                html: None,
-                                                            });
-                                                        }
+                                                match &ad.app_name {
+                                                    Some(app_name) => {
+                                                        asset_vec.push(Asset {
+                                                            id: assets.consume_asset("app"),
+                                                            req: 0,
+                                                            app: Some(AppAsset {
+                                                                name: app_name.clone(),
+                                                                desc: None,
+                                                                descurl: None,
+                                                                domain: None,
+                                                                bundle: ad.app_bundle.clone(),
+                                                                ver: ad.app_version.clone(),
+                                                                developer: None,
+                                                                icon: None,
+                                                                storeid: None,
+                                                                storeurl: None,
+                                                                paid: 0,
+                                                                size: ad.app_size,
+                                                                md5: None,
+                                                                registration: None,
+                                                                privacy: None,
+                                                                privacyurl: None,
+                                                                permission: None,
+                                                                permissionurl: None,
+                                                            }),
+                                                            title: None,
+                                                            img: None,
+                                                            video: None,
+                                                            data: None,
+                                                            html: None,
+                                                        });
+                                                    },
+                                                    None => (),
+                                                }
 
                                                 Some(Native {
                                                     asset: asset_vec,

@@ -83,7 +83,7 @@ impl Client for Fwb {
     async fn request(request: &Request, connection: &Connection, pool: &HttpPool, cache: &Cache) -> Result<Response, ResultMessage> {
         let request_id = cache.get_sequence();
 
-        let assets = Assets::new(request);
+        let mut assets = Assets::new(request);
         let identifiers = Identifiers::new(request);
 
         let request_fwb = FwbRequest {
@@ -269,7 +269,7 @@ impl Client for Fwb {
                             layout: {
                                 let mut layout = 3;
 
-                                if request.item[0].spec.display.displayfmt.is_some() {
+                                if assets.get_banner_size() > 0 {
                                     if request.item[0].spec.display.instl == 0 {
                                         layout = 501;
                                     } else {
@@ -965,7 +965,7 @@ impl Client for Fwb {
                                                 match &native.assets {
                                                     Some(assets_fwb) => {
                                                         for asset_fwb in assets_fwb {
-                                                            if request.item[0].spec.display.displayfmt.is_some() {
+                                                            if assets.get_banner_size() > 0 {
                                                                 match &asset_fwb.img {
                                                                     Some(img_fwb) => {
                                                                         display.banner = Some(Banner {
@@ -977,7 +977,7 @@ impl Client for Fwb {
                                                                     None => (),
                                                                 }
                                                             }
-                                                            if request.item[0].spec.display.nativefmt.is_some() {
+                                                            if assets.get_asset_total_size() > 0 {
                                                                 match &asset_fwb.title {
                                                                     Some(title_fwb) => {
                                                                         let asset = Asset {
@@ -1396,7 +1396,7 @@ impl Client for Fwb {
                                 match &bid_fwb.app {
                                     Some(app) => {
                                         let asset = Asset {
-                                            id:(assets.asset_size + 1) as i32,
+                                            id: assets.consume_asset("app"),
                                             req: 0,
                                             title: None,
                                             img: None,
@@ -1430,7 +1430,7 @@ impl Client for Fwb {
                                     None => (),
                                 }
 
-                                if request.item[0].spec.display.nativefmt.is_some() {
+                                if assets.get_asset_total_size() > 0 {
                                     display.native = Some(Native {
                                         asset: asset_vec,
                                         link: Some(link_asset.clone()),

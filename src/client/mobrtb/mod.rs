@@ -38,13 +38,7 @@ impl Client for Mobrtb {
 
         let request_id = cache.get_sequence();
 
-        let assets = Assets::new(request);
-        let mut title_index = 0;
-        let mut img_index = 0;
-        let mut icon_index = 0;
-        let mut video_index = 0;
-        let mut video_cover_index = 0;
-        let mut html_index = 0;
+        let mut assets = Assets::new(request);
         let identifiers = Identifiers::new(request);
 
         let request_mobrtb = MobrtbRequest {
@@ -580,7 +574,7 @@ impl Client for Mobrtb {
 
                                 let mut asset_vec = vec![];
 
-                                if request.item[0].spec.display.displayfmt.is_some() {
+                                if assets.get_banner_size() > 0 {
                                     match &ad_mobrtb.images {
                                         Some(images) => {
                                             display.w = Some(ad_mobrtb.width);
@@ -596,42 +590,38 @@ impl Client for Mobrtb {
                                         None => (),
                                     }
                                 }
-                                if request.item[0].spec.display.nativefmt.is_some() {
+                                if assets.get_asset_total_size() > 0 {
                                     match &ad_mobrtb.title {
                                         Some(title) => {
-                                            if assets.title_asset.len() - title_index > 0 {
-                                                asset_vec.push(Asset {
-                                                    id: assets.title_asset.get(title_index).unwrap().id,
-                                                    req: 1,
-                                                    title: Some(TitleAsset {
-                                                        text: title.clone(),
-                                                        subtitle: ad_mobrtb.subtitle.clone(),
-                                                        desc: {
-                                                            match &ad_mobrtb.description {
-                                                                Some(description) => Some(description.clone()),
-                                                                None => None,
-                                                            }
-                                                        },
-                                                        len: Some(title.clone().len() as i32),
-                                                    }),
-                                                    img: None,
-                                                    video: None,
-                                                    data: None,
-                                                    html: None,
-                                                    app: None,
-                                                });
-
-                                                title_index += 1;
-                                            }
+                                            asset_vec.push(Asset {
+                                                id: assets.consume_asset("title"),
+                                                req: 1,
+                                                title: Some(TitleAsset {
+                                                    text: title.clone(),
+                                                    subtitle: ad_mobrtb.subtitle.clone(),
+                                                    desc: {
+                                                        match &ad_mobrtb.description {
+                                                            Some(description) => Some(description.clone()),
+                                                            None => None,
+                                                        }
+                                                    },
+                                                    len: Some(title.clone().len() as i32),
+                                                }),
+                                                img: None,
+                                                video: None,
+                                                data: None,
+                                                html: None,
+                                                app: None,
+                                            });
                                         },
                                         None => (),
                                     }
                                     match &ad_mobrtb.images {
                                         Some(images) => {
-                                            for image in images {
-                                                if assets.img_asset.len() - img_index > 0 {
+                                            if assets.get_asset_size("img") > 0 {
+                                                for image in images {
                                                     asset_vec.push(Asset {
-                                                        id: assets.img_asset.get(img_index).unwrap().id,
+                                                        id: assets.consume_asset("img"),
                                                         req: 1,
                                                         title: None,
                                                         img: Some(ImageAsset {
@@ -646,8 +636,26 @@ impl Client for Mobrtb {
                                                         html: None,
                                                         app: None,
                                                     });
-
-                                                    img_index += 1;
+                                                }
+                                            }
+                                            if assets.get_asset_size("thumb") > 0 {
+                                                for image in images {
+                                                    asset_vec.push(Asset {
+                                                        id: assets.consume_asset("thumb"),
+                                                        req: 1,
+                                                        title: None,
+                                                        img: Some(ImageAsset {
+                                                            url: image.url.clone(),
+                                                            mime: None,
+                                                            w: image.width,
+                                                            h: image.height,
+                                                            imagetype: Some(501),
+                                                        }),
+                                                        video: None,
+                                                        data: None,
+                                                        html: None,
+                                                        app: None,
+                                                    });
                                                 }
                                             }
                                         },
@@ -655,105 +663,89 @@ impl Client for Mobrtb {
                                     }
                                     match &ad_mobrtb.icon {
                                         Some(icon) => {
-                                            if assets.icon_asset.len() - icon_index > 0 {
-                                                asset_vec.push(Asset {
-                                                    id: assets.icon_asset.get(icon_index).unwrap().id,
-                                                    req: 1,
-                                                    title: None,
-                                                    img: Some(ImageAsset {
-                                                        url: icon.url.clone(),
-                                                        mime: None,
-                                                        w: icon.width,
-                                                        h: icon.height,
-                                                        imagetype: Some(1),
-                                                    }),
-                                                    video: None,
-                                                    data: None,
-                                                    html: None,
-                                                    app: None,
-                                                });
-
-                                                icon_index += 1;
-                                            }
+                                            asset_vec.push(Asset {
+                                                id: assets.consume_asset("icon"),
+                                                req: 1,
+                                                title: None,
+                                                img: Some(ImageAsset {
+                                                    url: icon.url.clone(),
+                                                    mime: None,
+                                                    w: icon.width,
+                                                    h: icon.height,
+                                                    imagetype: Some(1),
+                                                }),
+                                                video: None,
+                                                data: None,
+                                                html: None,
+                                                app: None,
+                                            });
                                         },
                                         None => (),
                                     }
                                     match &ad_mobrtb.logo {
                                         Some(logo) => {
-                                            if assets.icon_asset.len() - icon_index > 0 {
-                                                asset_vec.push(Asset {
-                                                    id: assets.icon_asset.get(icon_index).unwrap().id,
-                                                    req: 1,
-                                                    title: None,
-                                                    img: Some(ImageAsset {
-                                                        url: logo.url.clone(),
-                                                        mime: None,
-                                                        w: logo.width,
-                                                        h: logo.height,
-                                                        imagetype: Some(1),
-                                                    }),
-                                                    video: None,
-                                                    data: None,
-                                                    html: None,
-                                                    app: None,
-                                                });
-
-                                                icon_index += 1;
-                                            }
+                                            asset_vec.push(Asset {
+                                                id: assets.consume_asset("icon"),
+                                                req: 1,
+                                                title: None,
+                                                img: Some(ImageAsset {
+                                                    url: logo.url.clone(),
+                                                    mime: None,
+                                                    w: logo.width,
+                                                    h: logo.height,
+                                                    imagetype: Some(1),
+                                                }),
+                                                video: None,
+                                                data: None,
+                                                html: None,
+                                                app: None,
+                                            });
                                         },
                                         None => (),
                                     }
                                     match &ad_mobrtb.video {
                                         Some(video) => {
-                                            if assets.video_asset.len() - video_index > 0 {
-                                                asset_vec.push(Asset {
-                                                    id: assets.video_asset.get(video_index).unwrap().id,
-                                                    req: 1,
-                                                    title: None,
-                                                    img: None,
-                                                    video: Some(VideoAsset {
-                                                        url: video.url.clone(),
-                                                        mime: None,
-                                                        w: None,
-                                                        h: None,
-                                                        dur: video.duration,
-                                                        size: None,
-                                                        skipoffset: None,
-                                                        delivery: None,
-                                                        orientation: None,
-                                                        autolanding: 0,
-                                                        clickable: 0,
-                                                    }),
-                                                    data: None,
-                                                    html: None,
-                                                    app: None,
-                                                });
-
-                                                video_index += 1;
-                                            }
+                                            asset_vec.push(Asset {
+                                                id: assets.consume_asset("video"),
+                                                req: 1,
+                                                title: None,
+                                                img: None,
+                                                video: Some(VideoAsset {
+                                                    url: video.url.clone(),
+                                                    mime: None,
+                                                    w: None,
+                                                    h: None,
+                                                    dur: video.duration,
+                                                    size: None,
+                                                    skipoffset: None,
+                                                    delivery: None,
+                                                    orientation: None,
+                                                    autolanding: 0,
+                                                    clickable: 0,
+                                                }),
+                                                data: None,
+                                                html: None,
+                                                app: None,
+                                            });
 
                                             match &ad_mobrtb.video_cover {
                                                 Some(video_cover) => {
-                                                    if assets.video_cover_asset.len() - video_cover_index > 0 {
-                                                        asset_vec.push(Asset {
-                                                            id: assets.video_cover_asset.get(video_cover_index).unwrap().id,
-                                                            req: 1,
-                                                            title: None,
-                                                            img: Some(ImageAsset {
-                                                                url: video_cover.url.clone(),
-                                                                mime: None,
-                                                                w: video_cover.width,
-                                                                h: video_cover.height,
-                                                                imagetype: Some(3),
-                                                            }),
-                                                            video: None,
-                                                            data: None,
-                                                            html: None,
-                                                            app: None,
-                                                        });
-
-                                                        video_cover_index += 1;
-                                                    }
+                                                    asset_vec.push(Asset {
+                                                        id: assets.consume_asset("video#cover"),
+                                                        req: 1,
+                                                        title: None,
+                                                        img: Some(ImageAsset {
+                                                            url: video_cover.url.clone(),
+                                                            mime: None,
+                                                            w: video_cover.width,
+                                                            h: video_cover.height,
+                                                            imagetype: Some(3),
+                                                        }),
+                                                        video: None,
+                                                        data: None,
+                                                        html: None,
+                                                        app: None,
+                                                    });
                                                 },
                                                 None => (),
                                             }
@@ -762,139 +754,115 @@ impl Client for Mobrtb {
                                     }
                                     match &ad_mobrtb.ratings {
                                         Some(ratings) => {
-                                            for asset in &assets.data_asset {
-                                                if asset.data.clone().unwrap().datatype == 501 {
-                                                    asset_vec.push(Asset {
-                                                        id: asset.id,
-                                                        req: 1,
-                                                        title: None,
-                                                        img: None,
-                                                        video: None,
-                                                        data: Some(DataAsset {
-                                                            value: ratings.clone(),
-                                                            len: None,
-                                                            datatype: Some(501),
-                                                        }),
-                                                        html: None,
-                                                        app: None,
-                                                    });
-                                                }
-                                            }
+                                            asset_vec.push(Asset {
+                                                id: assets.consume_asset("data#comments"),
+                                                req: 1,
+                                                title: None,
+                                                img: None,
+                                                video: None,
+                                                data: Some(DataAsset {
+                                                    value: ratings.clone(),
+                                                    len: None,
+                                                    datatype: Some(501),
+                                                }),
+                                                html: None,
+                                                app: None,
+                                            });
                                         },
                                         None => (),
                                     }
                                     match &ad_mobrtb.button_text {
                                         Some(button_text) => {
-                                            for asset in &assets.data_asset {
-                                                if asset.data.clone().unwrap().datatype == 12 {
-                                                    asset_vec.push(Asset {
-                                                        id: asset.id,
-                                                        req: 1,
-                                                        title: None,
-                                                        img: None,
-                                                        video: None,
-                                                        data: Some(DataAsset {
-                                                            value: button_text.clone(),
-                                                            len: None,
-                                                            datatype: Some(12),
-                                                        }),
-                                                        html: None,
-                                                        app: None,
-                                                    });
-                                                }
-                                            }
+                                            asset_vec.push(Asset {
+                                                id: assets.consume_asset("data#ctatext"),
+                                                req: 1,
+                                                title: None,
+                                                img: None,
+                                                video: None,
+                                                data: Some(DataAsset {
+                                                    value: button_text.clone(),
+                                                    len: None,
+                                                    datatype: Some(12),
+                                                }),
+                                                html: None,
+                                                app: None,
+                                            });
                                         },
                                         None => (),
                                     }
                                     match &ad_mobrtb.likes {
                                         Some(likes) => {
-                                            for asset in &assets.data_asset {
-                                                if asset.data.clone().unwrap().datatype == 4 {
-                                                    asset_vec.push(Asset {
-                                                        id: asset.id,
-                                                        req: 1,
-                                                        title: None,
-                                                        img: None,
-                                                        video: None,
-                                                        data: Some(DataAsset {
-                                                            value: likes.clone(),
-                                                            len: None,
-                                                            datatype: Some(4),
-                                                        }),
-                                                        html: None,
-                                                        app: None,
-                                                    });
-                                                }
-                                            }
+                                            asset_vec.push(Asset {
+                                                id: assets.consume_asset("data#likes"),
+                                                req: 1,
+                                                title: None,
+                                                img: None,
+                                                video: None,
+                                                data: Some(DataAsset {
+                                                    value: likes.clone(),
+                                                    len: None,
+                                                    datatype: Some(4),
+                                                }),
+                                                html: None,
+                                                app: None,
+                                            });
                                         },
                                         None => (),
                                     }
                                     match &ad_mobrtb.downloads {
                                         Some(downloads) => {
-                                            for asset in &assets.data_asset {
-                                                if asset.data.clone().unwrap().datatype == 5 {
-                                                    asset_vec.push(Asset {
-                                                        id: asset.id,
-                                                        req: 1,
-                                                        title: None,
-                                                        img: None,
-                                                        video: None,
-                                                        data: Some(DataAsset {
-                                                            value: downloads.clone(),
-                                                            len: None,
-                                                            datatype: Some(5),
-                                                        }),
-                                                        html: None,
-                                                        app: None,
-                                                    });
-                                                }
-                                            }
+                                            asset_vec.push(Asset {
+                                                id: assets.consume_asset("data#downloads"),
+                                                req: 1,
+                                                title: None,
+                                                img: None,
+                                                video: None,
+                                                data: Some(DataAsset {
+                                                    value: downloads.clone(),
+                                                    len: None,
+                                                    datatype: Some(5),
+                                                }),
+                                                html: None,
+                                                app: None,
+                                            });
                                         },
                                         None => (),
                                     }
                                     match &ad_mobrtb.html_snippet {
                                         Some(html_snippet) => {
-                                            if assets.html_asset.len() - html_index > 0 {
-                                                asset_vec.push(Asset {
-                                                    id: assets.html_asset.get(html_index).unwrap().id,
-                                                    req: 1,
-                                                    title: None,
-                                                    img: None,
-                                                    video: None,
-                                                    data: None,
-                                                    html: Some(HtmlAsset {
-                                                        html: Some(html_snippet.clone()),
-                                                        link: None,
-                                                        len: None,
-                                                    }),
-                                                    app: None,
-                                                });
-
-                                                html_index += 1;
-                                            }
+                                            asset_vec.push(Asset {
+                                                id: assets.consume_asset("html"),
+                                                req: 1,
+                                                title: None,
+                                                img: None,
+                                                video: None,
+                                                data: None,
+                                                html: Some(HtmlAsset {
+                                                    html: Some(html_snippet.clone()),
+                                                    link: None,
+                                                    len: None,
+                                                }),
+                                                app: None,
+                                            });
                                         }
                                         None => (),
                                     }
                                     match &ad_mobrtb.html_url {
                                         Some(html_url) => {
-                                            if assets.html_asset.len() - html_index > 0 {
-                                                asset_vec.push(Asset {
-                                                    id: assets.html_asset.get(html_index).unwrap().id,
-                                                    req: 1,
-                                                    title: None,
-                                                    img: None,
-                                                    video: None,
-                                                    data: None,
-                                                    html: Some(HtmlAsset {
-                                                        html: None,
-                                                        link: Some(html_url.clone()),
-                                                        len: None,
-                                                    }),
-                                                    app: None,
-                                                });
-
-                                                html_index += 1;
-                                            }
+                                            asset_vec.push(Asset {
+                                                id: assets.consume_asset("html"),
+                                                req: 1,
+                                                title: None,
+                                                img: None,
+                                                video: None,
+                                                data: None,
+                                                html: Some(HtmlAsset {
+                                                    html: None,
+                                                    link: Some(html_url.clone()),
+                                                    len: None,
+                                                }),
+                                                app: None,
+                                            });
                                         }
                                         None => (),
                                     }
@@ -903,7 +871,7 @@ impl Client for Mobrtb {
                                 match &ad_mobrtb.download_app_name {
                                     Some(download_app_name) => {
                                         let asset = Asset {
-                                            id:(assets.asset_size + 1) as i32,
+                                            id: assets.consume_asset("app"),
                                             req: 0,
                                             title: None,
                                             img: None,
@@ -937,7 +905,7 @@ impl Client for Mobrtb {
                                     None => (),
                                 }
 
-                                if request.item[0].spec.display.nativefmt.is_some() {
+                                if assets.get_asset_total_size() > 0 {
                                     display.native = Some(Native {
                                         asset: asset_vec,
                                         link: Some(link_asset.clone()),

@@ -48,7 +48,7 @@ impl Client for Adwanji {
     async fn request(request: &Request, connection: &Connection, pool: &HttpPool, cache: &Cache) -> Result<Response, ResultMessage> {
         let request_id = cache.get_sequence();
 
-        let assets = Assets::new(request);
+        let mut assets = Assets::new(request);
         let identifiers = Identifiers::new(request);
 
         let request_adwanji = AdwanjiRequest {
@@ -60,7 +60,7 @@ impl Client for Adwanji {
                     connection.client_tag_id.clone()
                 },
                 banner: {
-                    match &request.item[0].spec.display.displayfmt {
+                    match assets.get_banner() {
                         Some(displayfmt) =>
                                 Some(AdwanjiBannerFormat {
                                     w: {
@@ -135,9 +135,8 @@ impl Client for Adwanji {
                     }
                 },
                 feed: {
-                    if (assets.img_asset.len() == 1 || assets.img_asset.len() == 3) && assets.asset_size == assets.img_asset.len() {
-                        let &asset = assets.img_asset.get(0).unwrap();
-                        let img = asset.img.clone().unwrap();
+                    if (assets.get_asset_size("img") == 1 || assets.get_asset_size("img") == 3) && assets.get_asset_size("img") == assets.get_asset_total_size() {
+                        let img = assets.get_current_asset("img").unwrap().img.clone().unwrap();
                         Some(AdwanjiFeedFormat {
                             w: match img.w {
                                 Some(w) => Some(w),
@@ -153,9 +152,9 @@ impl Client for Adwanji {
                                     message: "request.item[0].spec.display.nativefmt.asset.img.h is required for upstream".to_string(),
                                 }),
                             },
-                            feedtype: if assets.img_asset.len() == 1 {
+                            feedtype: if assets.get_asset_size("img") == 1 {
                                 [1].to_vec()
-                            } else if assets.img_asset.len() == 3 {
+                            } else if assets.get_asset_size("img") == 3 {
                                 [2].to_vec()
                             } else {
                                 return Err(ResultMessage {
@@ -164,7 +163,7 @@ impl Client for Adwanji {
                                 })
                             },
                         })
-                    } else if assets.img_asset.len() == 0 {
+                    } else if assets.get_asset_size("img") == 0 {
                         None
                     } else {
                         return Err(ResultMessage {
@@ -174,9 +173,8 @@ impl Client for Adwanji {
                     }
                 },
                 video: {
-                    if assets.video_asset.len() == 1 && assets.asset_size == 1 {
-                        let &asset = assets.video_asset.get(0).unwrap();
-                        let video = asset.video.clone().unwrap();
+                    if assets.get_asset_size("video") == 1 && assets.get_asset_size("video") == assets.get_asset_total_size() {
+                        let video = assets.get_current_asset("video").unwrap().video.clone().unwrap();
                         Some(AdwanjiVideoFormat {
                             userid: {
                                 match &request.context.user.id {
@@ -190,7 +188,7 @@ impl Client for Adwanji {
                             maxduration: video.maxdur,
                         })
                     } else {
-                        if assets.video_asset.len() > 1 && assets.asset_size == assets.video_asset.len() {
+                        if assets.get_asset_size("video") > 1 && assets.get_asset_size("video") == assets.get_asset_total_size() {
                             return Err(ResultMessage {
                                 code: 998,
                                 message: "number of request.item[0].spec.display.nativefmt.asset.video should be 1 for upstream".to_string(),
@@ -1085,7 +1083,7 @@ impl Client for Adwanji {
                                             None => None,
                                         }
                                     },
-                                    storeid :{
+                                    storeid: {
                                         match &bid.ios_app_id {
                                             Some(ios_app_id) => Some(ios_app_id.clone()),
                                             None => None,
@@ -1142,7 +1140,7 @@ impl Client for Adwanji {
                                         id: response_adwanji.id.clone(),
                                         display: Display {
                                             w: {
-                                                if request.item[0].spec.display.displayfmt.is_some() {
+                                                if assets.get_banner_size() > 0 {
                                                     match &bid.banner {
                                                         Some(banner) => {
                                                             banner.w
@@ -1150,7 +1148,7 @@ impl Client for Adwanji {
                                                         None => None,
                                                     }
                                                 } else {
-                                                    if request.item[0].spec.display.nativefmt.is_some() {
+                                                    if assets.get_asset_total_size() > 0 {
                                                         match &bid.video {
                                                             Some(video) => {
                                                                 video.w
@@ -1163,7 +1161,7 @@ impl Client for Adwanji {
                                                 }
                                             },
                                             h: {
-                                                if request.item[0].spec.display.displayfmt.is_some() {
+                                                if assets.get_banner_size() > 0 {
                                                     match &bid.banner {
                                                         Some(banner) => {
                                                             banner.h
@@ -1171,7 +1169,7 @@ impl Client for Adwanji {
                                                         None => None,
                                                     }
                                                 } else {
-                                                    if request.item[0].spec.display.nativefmt.is_some() {
+                                                    if assets.get_asset_total_size() > 0 {
                                                         match &bid.video {
                                                             Some(video) => {
                                                                 video.h
@@ -1184,7 +1182,7 @@ impl Client for Adwanji {
                                                 }
                                             },
                                             banner: {
-                                                if request.item[0].spec.display.displayfmt.is_some() {
+                                                if assets.get_banner_size() > 0 {
                                                     match &bid.banner {
                                                         Some(banner) => {
                                                             Some(Banner {
@@ -1199,14 +1197,14 @@ impl Client for Adwanji {
                                                 }
                                             },
                                             native: {
-                                                if request.item[0].spec.display.nativefmt.is_some() {
+                                                if assets.get_asset_total_size() > 0 {
                                                     let mut asset_vec = vec![];
 
                                                     match &bid.video {
                                                         Some(video) => {
-                                                            if assets.video_asset.len() > 0 {
+                                                            if assets.get_asset_size("video") > 0 {
                                                                 asset_vec.push(Asset {
-                                                                    id: assets.video_asset.get(0).unwrap().id,
+                                                                    id: assets.consume_asset("video"),
                                                                     req: 1,
                                                                     video: Some(VideoAsset {
                                                                         url: video.iurl.clone(),
@@ -1228,9 +1226,9 @@ impl Client for Adwanji {
                                                                     app: None,
                                                                 });
                                                             }
-                                                            if assets.video_cover_asset.len() > 0 && video.cover_url.is_some() {
+                                                            if assets.get_asset_size("video#cover") > 0 && video.cover_url.is_some() {
                                                                 asset_vec.push(Asset {
-                                                                    id: assets.video_cover_asset.get(0).unwrap().id,
+                                                                    id: assets.consume_asset("video#cover"),
                                                                     req: 0,
                                                                     img: Some(ImageAsset {
                                                                         url: video.cover_url.clone().unwrap(),
@@ -1246,9 +1244,9 @@ impl Client for Adwanji {
                                                                     app: None,
                                                                 });
                                                             }
-                                                            if assets.video_icon_asset.len() > 0 && video.ad_icon.is_some() {
+                                                            if assets.get_asset_size("video#icon") > 0 && video.ad_icon.is_some() {
                                                                 asset_vec.push(Asset {
-                                                                    id: assets.video_icon_asset.get(0).unwrap().id,
+                                                                    id: assets.consume_asset("video#icon"),
                                                                     req: 0,
                                                                     img: Some(ImageAsset {
                                                                         url: video.ad_icon.clone().unwrap(),
@@ -1264,9 +1262,9 @@ impl Client for Adwanji {
                                                                     app: None,
                                                                 });
                                                             }
-                                                            if assets.video_end_img_asset.len() > 0 && video.end_url.is_some() {
+                                                            if assets.get_asset_size("video#end#img") > 0 && video.end_url.is_some() {
                                                                 asset_vec.push(Asset {
-                                                                    id: assets.video_end_img_asset.get(0).unwrap().id,
+                                                                    id: assets.consume_asset("video#end#img"),
                                                                     req: 0,
                                                                     img: Some(ImageAsset {
                                                                         url: video.end_url.clone().unwrap(),
@@ -1282,9 +1280,9 @@ impl Client for Adwanji {
                                                                     app: None,
                                                                 });
                                                             }
-                                                            if assets.video_end_title_asset.len() > 0 && video.ad_text.is_some() {
+                                                            if assets.get_asset_size("video#end#title") > 0 && video.ad_text.is_some() {
                                                                 asset_vec.push(Asset {
-                                                                    id: assets.video_end_title_asset.get(0).unwrap().id,
+                                                                    id: assets.consume_asset("video#end#title"),
                                                                     req: 0,
                                                                     title: Some(TitleAsset {
                                                                         text: video.ad_text.clone().unwrap(),
@@ -1299,9 +1297,9 @@ impl Client for Adwanji {
                                                                     app: None,
                                                                 });
                                                             }
-                                                            if assets.video_end_button_text_asset.len() > 0 && video.button_text.is_some() {
+                                                            if assets.get_asset_size("video#end#button#text") > 0 && video.button_text.is_some() {
                                                                 asset_vec.push(Asset {
-                                                                    id: assets.video_end_button_text_asset.get(0).unwrap().id,
+                                                                    id: assets.consume_asset("video#end#button#text"),
                                                                     req: 0,
                                                                     data: Some(DataAsset {
                                                                         value: video.button_text.clone().unwrap(),
@@ -1315,9 +1313,9 @@ impl Client for Adwanji {
                                                                     app: None,
                                                                 });
                                                             }
-                                                            if assets.video_end_html_asset.len() > 0 && video.end_html.is_some() {
+                                                            if assets.get_asset_size("video#end#html") > 0 && video.end_html.is_some() {
                                                                 asset_vec.push(Asset {
-                                                                    id: assets.video_end_html_asset.get(0).unwrap().id,
+                                                                    id: assets.consume_asset("video#end#html"),
                                                                     req: 0,
                                                                     html: Some(HtmlAsset {
                                                                         html: video.end_html.clone(),
@@ -1336,9 +1334,9 @@ impl Client for Adwanji {
                                                     }
                                                     match &bid.feed {
                                                         Some(feed) => {
-                                                            if assets.title_asset.len() > 0 {
+                                                            if assets.get_asset_size("title") > 0 {
                                                                 asset_vec.push(Asset {
-                                                                    id: assets.title_asset.get(0).unwrap().id,
+                                                                    id: assets.consume_asset("title"),
                                                                     req: 1,
                                                                     title: Some(TitleAsset {
                                                                         text: feed.title.clone(),
@@ -1353,27 +1351,25 @@ impl Client for Adwanji {
                                                                     app: None,
                                                                 });
                                                             }
-                                                            for (i, asset) in assets.img_asset.iter().enumerate() {
-                                                                if i < feed.imgs.len() {
-                                                                    asset_vec.push(Asset {
-                                                                        id: asset.id,
-                                                                        req: 1,
-                                                                        img: {
-                                                                            Some(ImageAsset {
-                                                                                url: feed.imgs[i].iurl.clone(),
-                                                                                mime: feed.imgs[i].mimes.clone(),
-                                                                                w: feed.imgs[i].w,
-                                                                                h: feed.imgs[i].h,
-                                                                                imagetype: Some(501),
-                                                                            })
-                                                                        },
-                                                                        title: None,
-                                                                        video: None,
-                                                                        data: None,
-                                                                        html: None,
-                                                                        app: None,
-                                                                    });
-                                                                }
+                                                            for img in feed.imgs.iter() {
+                                                                asset_vec.push(Asset {
+                                                                    id: assets.consume_asset("img"),
+                                                                    req: 1,
+                                                                    img: {
+                                                                        Some(ImageAsset {
+                                                                            url: img.iurl.clone(),
+                                                                            mime: img.mimes.clone(),
+                                                                            w: img.w,
+                                                                            h: img.h,
+                                                                            imagetype: Some(501),
+                                                                        })
+                                                                    },
+                                                                    title: None,
+                                                                    video: None,
+                                                                    data: None,
+                                                                    html: None,
+                                                                    app: None,
+                                                                });
                                                             }
                                                         },
                                                         None => (),
@@ -1382,7 +1378,7 @@ impl Client for Adwanji {
                                                     match &bid.app {
                                                         Some(app) => {
                                                             asset_vec.push(Asset {
-                                                                id: 0,
+                                                                id: assets.consume_asset("app"),
                                                                 req: 0,
                                                                 app: Some(AppAsset {
                                                                     name: app.name.clone(),

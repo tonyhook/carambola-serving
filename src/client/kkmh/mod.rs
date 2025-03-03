@@ -57,13 +57,7 @@ impl Client for Kkmh {
     async fn request(request: &Request, connection: &Connection, pool: &HttpPool, cache: &Cache) -> Result<Response, ResultMessage> {
         let request_id = cache.get_sequence();
 
-        let assets = Assets::new(request);
-        let mut title_index = 0;
-        let mut image_index = 0;
-        let mut thumb_index = 0;
-        let mut icon_index = 0;
-        let mut video_index = 0;
-        let mut video_cover_index = 0;
+        let mut assets = Assets::new(request);
         let identifiers = Identifiers::new(request);
 
         let request_kkmh = KkmhRequest {
@@ -108,14 +102,14 @@ impl Client for Kkmh {
                                 ad_types.push(1);
                             },
                             _ => {
-                                if assets.video_asset.len() > 0 {
+                                if assets.get_asset_size("video") > 0 {
                                     if reward > 0 {
                                         ad_types.push(3);
                                     } else {
                                         ad_types.push(4);
                                     }
                                 }
-                                if assets.img_asset.len() > 0 || assets.thumb_asset.len() > 0 {
+                                if assets.get_asset_size("img") > 0 || assets.get_asset_size("thumb") > 0 {
                                     match instl {
                                         0 => {
                                             ad_types.push(2);
@@ -718,7 +712,7 @@ impl Client for Kkmh {
                                     w: None,
                                     h: None,
                                     banner: {
-                                        if request.item[0].spec.display.displayfmt.is_some() {
+                                        if assets.get_banner_size() > 0 {
                                             match &bid_kkmh.adms[0].imgs {
                                                 Some(imgs) => {
                                                     if imgs.len() > 0 {
@@ -739,61 +733,53 @@ impl Client for Kkmh {
                                         }
                                     },
                                     native: {
-                                        if request.item[0].spec.display.nativefmt.is_some() {
+                                        if assets.get_asset_total_size() > 0 {
                                             let mut asset_vec = vec![];
 
                                             match &bid_kkmh.adms[0].title {
                                                 Some(title) => {
-                                                    if assets.title_asset.len() - title_index > 0 {
-                                                        asset_vec.push(Asset {
-                                                            id: assets.title_asset.get(title_index).unwrap().id,
-                                                            req: 1,
-                                                            title: Some(TitleAsset {
-                                                                text: title.clone(),
-                                                                subtitle: None,
-                                                                desc: {
-                                                                    match &bid_kkmh.adms[0].desc {
-                                                                        Some(desc) => Some(desc.clone()),
-                                                                        None => None,
-                                                                    }
-                                                                },
-                                                                len: Some(title.clone().len() as i32),
-                                                            }),
-                                                            img: None,
-                                                            video: None,
-                                                            data: None,
-                                                            html: None,
-                                                            app: None,
-                                                        });
-
-                                                        title_index += 1;
-                                                    }
+                                                    asset_vec.push(Asset {
+                                                        id: assets.consume_asset("title"),
+                                                        req: 1,
+                                                        title: Some(TitleAsset {
+                                                            text: title.clone(),
+                                                            subtitle: None,
+                                                            desc: {
+                                                                match &bid_kkmh.adms[0].desc {
+                                                                    Some(desc) => Some(desc.clone()),
+                                                                    None => None,
+                                                                }
+                                                            },
+                                                            len: Some(title.clone().len() as i32),
+                                                        }),
+                                                        img: None,
+                                                        video: None,
+                                                        data: None,
+                                                        html: None,
+                                                        app: None,
+                                                    });
                                                 },
                                                 None => (),
                                             }
                                             match &bid_kkmh.adms[0].icon {
                                                 Some(icon) => {
                                                     if icon.len() > 0 {
-                                                        if assets.icon_asset.len() > icon_index {
-                                                            asset_vec.push(Asset {
-                                                                id: assets.title_asset.get(icon_index).unwrap().id,
-                                                                req: 1,
-                                                                title: None,
-                                                                img: Some(ImageAsset {
-                                                                    url: icon.clone(),
-                                                                    mime: None,
-                                                                    w: None,
-                                                                    h: None,
-                                                                    imagetype: Some(1),
-                                                                }),
-                                                                video: None,
-                                                                data: None,
-                                                                html: None,
-                                                                app: None,
-                                                            });
-
-                                                            icon_index += 1;
-                                                        }
+                                                        asset_vec.push(Asset {
+                                                            id: assets.consume_asset("icon"),
+                                                            req: 1,
+                                                            title: None,
+                                                            img: Some(ImageAsset {
+                                                                url: icon.clone(),
+                                                                mime: None,
+                                                                w: None,
+                                                                h: None,
+                                                                imagetype: Some(1),
+                                                            }),
+                                                            video: None,
+                                                            data: None,
+                                                            html: None,
+                                                            app: None,
+                                                        });
                                                     }
                                                 },
                                                 None => (),
@@ -803,9 +789,9 @@ impl Client for Kkmh {
                                                     if bid_kkmh.adms[0].creative_type == 0 || bid_kkmh.adms[0].creative_type == 1 {
                                                         for img in imgs {
                                                             if img.len() > 0 {
-                                                                if assets.img_asset.len() > image_index {
+                                                                if assets.get_asset_size("img") > 0 {
                                                                     asset_vec.push(Asset {
-                                                                        id: assets.img_asset.get(image_index).unwrap().id,
+                                                                        id: assets.consume_asset("img"),
                                                                         req: 1,
                                                                         img: {
                                                                             Some(ImageAsset {
@@ -822,31 +808,26 @@ impl Client for Kkmh {
                                                                         html: None,
                                                                         app: None,
                                                                     });
-
-                                                                    image_index += 1;
-                                                                } else {
-                                                                    if assets.thumb_asset.len() > thumb_index {
-                                                                        asset_vec.push(Asset {
-                                                                            id: assets.thumb_asset.get(thumb_index).unwrap().id,
-                                                                            req: 1,
-                                                                            img: {
-                                                                                Some(ImageAsset {
-                                                                                    url: img.clone(),
-                                                                                    mime: None,
-                                                                                    w: None,
-                                                                                    h: None,
-                                                                                    imagetype: Some(501),
-                                                                                })
-                                                                            },
-                                                                            title: None,
-                                                                            video: None,
-                                                                            data: None,
-                                                                            html: None,
-                                                                            app: None,
-                                                                        });
-
-                                                                        thumb_index += 1;
-                                                                    }
+                                                                }
+                                                                if assets.get_asset_size("thumb") > 0 {
+                                                                    asset_vec.push(Asset {
+                                                                        id: assets.consume_asset("thumb"),
+                                                                        req: 1,
+                                                                        img: {
+                                                                            Some(ImageAsset {
+                                                                                url: img.clone(),
+                                                                                mime: None,
+                                                                                w: None,
+                                                                                h: None,
+                                                                                imagetype: Some(501),
+                                                                            })
+                                                                        },
+                                                                        title: None,
+                                                                        video: None,
+                                                                        data: None,
+                                                                        html: None,
+                                                                        app: None,
+                                                                    });
                                                                 }
                                                             }
                                                         }
@@ -854,72 +835,12 @@ impl Client for Kkmh {
                                                     if bid_kkmh.adms[0].creative_type == 2 || bid_kkmh.adms[0].creative_type == 3 {
                                                         for img in imgs {
                                                             if img.len() > 0 {
-                                                                if assets.video_cover_asset.len() > video_cover_index {
-                                                                    asset_vec.push(Asset {
-                                                                        id: assets.video_cover_asset.get(video_cover_index).unwrap().id,
-                                                                        req: 1,
-                                                                        img: {
-                                                                            Some(ImageAsset {
-                                                                                url: img.clone(),
-                                                                                mime: None,
-                                                                                w: None,
-                                                                                h: None,
-                                                                                imagetype: Some(3),
-                                                                            })
-                                                                        },
-                                                                        title: None,
-                                                                        video: None,
-                                                                        data: None,
-                                                                        html: None,
-                                                                        app: None,
-                                                                    });
-
-                                                                    video_cover_index += 1;
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                },
-                                                None => (),
-                                            }
-                                            match &bid_kkmh.adms[0].video {
-                                                Some(video) => {
-                                                    if assets.video_asset.len() - video_index > 0 {
-                                                        asset_vec.push(Asset {
-                                                            id: assets.video_asset.get(video_index).unwrap().id,
-                                                            req: 1,
-                                                            title: None,
-                                                            img: None,
-                                                            video: Some(VideoAsset {
-                                                                url: video.url.clone(),
-                                                                mime: None,
-                                                                w: None,
-                                                                h: None,
-                                                                dur: None,
-                                                                skipoffset: None,
-                                                                size: None,
-                                                                delivery: None,
-                                                                orientation: None,
-                                                                autolanding: 0,
-                                                                clickable: 0,
-                                                            }),
-                                                            data: None,
-                                                            html: None,
-                                                            app: None,
-                                                        });
-
-                                                        video_index += 1;
-                                                    }
-
-                                                    match &video.cover_url {
-                                                        Some(cover_url) => {
-                                                            if assets.video_cover_asset.len() > video_cover_index {
                                                                 asset_vec.push(Asset {
-                                                                    id: assets.video_cover_asset.get(video_cover_index).unwrap().id,
+                                                                    id: assets.consume_asset("video#cover"),
                                                                     req: 1,
                                                                     img: {
                                                                         Some(ImageAsset {
-                                                                            url: cover_url.clone(),
+                                                                            url: img.clone(),
                                                                             mime: None,
                                                                             w: None,
                                                                             h: None,
@@ -932,9 +853,57 @@ impl Client for Kkmh {
                                                                     html: None,
                                                                     app: None,
                                                                 });
-
-                                                                video_cover_index += 1;
                                                             }
+                                                        }
+                                                    }
+                                                },
+                                                None => (),
+                                            }
+                                            match &bid_kkmh.adms[0].video {
+                                                Some(video) => {
+                                                    asset_vec.push(Asset {
+                                                        id: assets.consume_asset("video"),
+                                                        req: 1,
+                                                        title: None,
+                                                        img: None,
+                                                        video: Some(VideoAsset {
+                                                            url: video.url.clone(),
+                                                            mime: None,
+                                                            w: None,
+                                                            h: None,
+                                                            dur: None,
+                                                            skipoffset: None,
+                                                            size: None,
+                                                            delivery: None,
+                                                            orientation: None,
+                                                            autolanding: 0,
+                                                            clickable: 0,
+                                                        }),
+                                                        data: None,
+                                                        html: None,
+                                                        app: None,
+                                                    });
+
+                                                    match &video.cover_url {
+                                                        Some(cover_url) => {
+                                                            asset_vec.push(Asset {
+                                                                id: assets.consume_asset("video#cover"),
+                                                                req: 1,
+                                                                img: {
+                                                                    Some(ImageAsset {
+                                                                        url: cover_url.clone(),
+                                                                        mime: None,
+                                                                        w: None,
+                                                                        h: None,
+                                                                        imagetype: Some(3),
+                                                                    })
+                                                                },
+                                                                title: None,
+                                                                video: None,
+                                                                data: None,
+                                                                html: None,
+                                                                app: None,
+                                                            });
                                                         },
                                                         None => (),
                                                     }
@@ -945,7 +914,7 @@ impl Client for Kkmh {
                                             match &bid_kkmh.appinfo {
                                                 Some(appinfo) => {
                                                     asset_vec.push(Asset {
-                                                        id: 0,
+                                                        id: assets.consume_asset("app"),
                                                         req: 0,
                                                         app: Some(AppAsset {
                                                             name: appinfo.name.clone(),

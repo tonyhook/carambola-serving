@@ -4,6 +4,8 @@ use sha1::Sha1;
 
 use crate::{protocol::*, Cache, Client, Connection, HttpPool, Request, Response, ResultMessage};
 
+use super::Assets;
+
 type HmacSha1 = Hmac<Sha1>;
 
 pub struct Dummy {
@@ -14,6 +16,8 @@ impl Client for Dummy {
 
     async fn request(request: &Request, connection: &Connection, _pool: &HttpPool, cache: &Cache) -> Result<Response, ResultMessage> {
         let request_id = cache.get_sequence();
+
+        let assets = Assets::new(request);
 
         let response = Response {
             id: request.id.clone(),
@@ -48,7 +52,7 @@ impl Client for Dummy {
                                 w: request.item[0].spec.display.w,
                                 h: request.item[0].spec.display.h,
                                 banner: {
-                                    if request.item[0].spec.display.displayfmt.is_some() {
+                                    if assets.get_banner_size() > 0 {
                                         Some(Banner {
                                             img: "https://www.baidu.com/img/PCtm_d9c8750bed0b3c7d089fa7d55720d6cf.png".to_string(),
                                             link: Some(link_asset.clone()),
@@ -58,169 +62,172 @@ impl Client for Dummy {
                                     }
                                 },
                                 native: {
-                                    match &request.item[0].spec.display.nativefmt {
-                                        Some(nativefmt) => {
-                                            let mut asset_vec = vec![];
+                                    if assets.get_asset_total_size() > 0 {
+                                        let mut asset_vec = vec![];
 
-                                            for asset in &nativefmt.asset {
-                                                if asset.title.is_some() {
-                                                    asset_vec.push(Asset {
-                                                        id: asset.id,
-                                                        req: 1,
-                                                        title: Some(TitleAsset {
-                                                            text: "test".to_string(),
-                                                            subtitle: None,
-                                                            desc: Some("test".to_string()),
-                                                            len: Some(4),
-                                                        }),
-                                                        img: None,
-                                                        video: None,
-                                                        data: None,
-                                                        html: None,
-                                                        app: None,
-                                                    });
-                                                }
-                                                if asset.img.is_some() {
-                                                    asset_vec.push(Asset {
-                                                        id: asset.id,
-                                                        req: 1,
-                                                        img: Some(ImageAsset {
-                                                            url: "https://www.baidu.com/img/PCtm_d9c8750bed0b3c7d089fa7d55720d6cf.png".to_string(),
-                                                            mime: None,
-                                                            w: None,
-                                                            h: None,
-                                                            imagetype: Some(3),
-                                                        }),
-                                                        title: None,
-                                                        video: None,
-                                                        data: None,
-                                                        html: None,
-                                                        app: None,
-                                                    });
-                                                }
-                                                match &asset.video {
-                                                    Some(video) => {
-                                                        asset_vec.push(Asset {
-                                                            id: asset.id,
-                                                            req: 1,
-                                                            video: Some(VideoAsset {
-                                                                url: "https://media.w3.org/2010/05/sintel/trailer.mp4".to_string(),
-                                                                mime: None,
-                                                                w: None,
-                                                                h: None,
-                                                                dur: None,
-                                                                skipoffset: None,
-                                                                size: None,
-                                                                delivery: None,
-                                                                orientation: None,
-                                                                autolanding: 0,
-                                                                clickable: 0,
-                                                            }),
-                                                            title: None,
-                                                            img: None,
-                                                            data: None,
-                                                            html: None,
-                                                            app: None,
-                                                        });
+                                        match assets.get_current_asset("title") {
+                                            Some(asset) => {
+                                                asset_vec.push(Asset {
+                                                    id: asset.id,
+                                                    req: 1,
+                                                    title: Some(TitleAsset {
+                                                        text: "test".to_string(),
+                                                        subtitle: None,
+                                                        desc: Some("test".to_string()),
+                                                        len: Some(4),
+                                                    }),
+                                                    img: None,
+                                                    video: None,
+                                                    data: None,
+                                                    html: None,
+                                                    app: None,
+                                                });
+                                            },
+                                            None => (),
+                                        }
+                                        match assets.get_current_asset("img") {
+                                            Some(asset) => {
+                                                asset_vec.push(Asset {
+                                                    id: asset.id,
+                                                    req: 1,
+                                                    img: Some(ImageAsset {
+                                                        url: "https://www.baidu.com/img/PCtm_d9c8750bed0b3c7d089fa7d55720d6cf.png".to_string(),
+                                                        mime: None,
+                                                        w: None,
+                                                        h: None,
+                                                        imagetype: Some(3),
+                                                    }),
+                                                    title: None,
+                                                    video: None,
+                                                    data: None,
+                                                    html: None,
+                                                    app: None,
+                                                });
+                                            },
+                                            None => (),
+                                        }
+                                        match assets.get_current_asset("video") {
+                                            Some(video) => {
+                                                asset_vec.push(Asset {
+                                                    id: video.id,
+                                                    req: 1,
+                                                    video: Some(VideoAsset {
+                                                        url: "https://media.w3.org/2010/05/sintel/trailer.mp4".to_string(),
+                                                        mime: None,
+                                                        w: None,
+                                                        h: None,
+                                                        dur: None,
+                                                        skipoffset: None,
+                                                        size: None,
+                                                        delivery: None,
+                                                        orientation: None,
+                                                        autolanding: 0,
+                                                        clickable: 0,
+                                                    }),
+                                                    title: None,
+                                                    img: None,
+                                                    data: None,
+                                                    html: None,
+                                                    app: None,
+                                                });
 
-                                                        match &video.comp {
-                                                            Some(comp) => {
-                                                                for companion in comp {
-                                                                    match &companion.display.nativefmt {
-                                                                        Some (nativefmt_embedded) => {
-                                                                            for asset in &nativefmt_embedded.asset {
-                                                                                if asset.title.is_some() {
+                                                match &video.video.clone().unwrap().comp {
+                                                    Some(comp) => {
+                                                        for companion in comp {
+                                                            match &companion.display.nativefmt {
+                                                                Some (nativefmt_embedded) => {
+                                                                    for asset in &nativefmt_embedded.asset {
+                                                                        if asset.title.is_some() {
+                                                                            asset_vec.push(Asset {
+                                                                                id: asset.id,
+                                                                                req: 1,
+                                                                                title: Some(TitleAsset {
+                                                                                    text: "test".to_string(),
+                                                                                    subtitle: None,
+                                                                                    desc: Some("test".to_string()),
+                                                                                    len: Some(4),
+                                                                                }),
+                                                                                img: None,
+                                                                                video: None,
+                                                                                data: None,
+                                                                                html: None,
+                                                                                app: None,
+                                                                            });
+                                                                        }
+                                                                        if asset.img.is_some() {
+                                                                            asset_vec.push(Asset {
+                                                                                id: asset.id,
+                                                                                req: 1,
+                                                                                img: Some(ImageAsset {
+                                                                                    url: "https://www.baidu.com/img/PCtm_d9c8750bed0b3c7d089fa7d55720d6cf.png".to_string(),
+                                                                                    mime: None,
+                                                                                    w: None,
+                                                                                    h: None,
+                                                                                    imagetype: Some(3),
+                                                                                }),
+                                                                                title: None,
+                                                                                video: None,
+                                                                                data: None,
+                                                                                html: None,
+                                                                                app: None,
+                                                                            });
+                                                                            match &asset.data {
+                                                                                Some(data) => {
                                                                                     asset_vec.push(Asset {
                                                                                         id: asset.id,
                                                                                         req: 1,
-                                                                                        title: Some(TitleAsset {
-                                                                                            text: "test".to_string(),
-                                                                                            subtitle: None,
-                                                                                            desc: Some("test".to_string()),
+                                                                                        data: Some(DataAsset {
+                                                                                            value: "test".to_string(),
                                                                                             len: Some(4),
-                                                                                        }),
-                                                                                        img: None,
-                                                                                        video: None,
-                                                                                        data: None,
-                                                                                        html: None,
-                                                                                        app: None,
-                                                                                    });
-                                                                                }
-                                                                                if asset.img.is_some() {
-                                                                                    asset_vec.push(Asset {
-                                                                                        id: asset.id,
-                                                                                        req: 1,
-                                                                                        img: Some(ImageAsset {
-                                                                                            url: "https://www.baidu.com/img/PCtm_d9c8750bed0b3c7d089fa7d55720d6cf.png".to_string(),
-                                                                                            mime: None,
-                                                                                            w: None,
-                                                                                            h: None,
-                                                                                            imagetype: Some(3),
+                                                                                            datatype: Some(data.datatype),
                                                                                         }),
                                                                                         title: None,
+                                                                                        img: None,
                                                                                         video: None,
-                                                                                        data: None,
                                                                                         html: None,
                                                                                         app: None,
                                                                                     });
-                                                                                    match &asset.data {
-                                                                                        Some(data) => {
-                                                                                            asset_vec.push(Asset {
-                                                                                                id: asset.id,
-                                                                                                req: 1,
-                                                                                                data: Some(DataAsset {
-                                                                                                    value: "test".to_string(),
-                                                                                                    len: Some(4),
-                                                                                                    datatype: Some(data.datatype),
-                                                                                                }),
-                                                                                                title: None,
-                                                                                                img: None,
-                                                                                                video: None,
-                                                                                                html: None,
-                                                                                                app: None,
-                                                                                            });
-                                                                                        },
-                                                                                        None => (),
-                                                                                    }
-                                                                                }
+                                                                                },
+                                                                                None => (),
                                                                             }
-                                                                        },
-                                                                        None => (),
+                                                                        }
                                                                     }
-                                                                }
-                                                            },
-                                                            None => (),
+                                                                },
+                                                                None => (),
+                                                            }
                                                         }
                                                     },
                                                     None => (),
                                                 }
-                                                match &asset.data {
-                                                    Some(data) => {
-                                                        asset_vec.push(Asset {
-                                                            id: asset.id,
-                                                            req: 1,
-                                                            data: Some(DataAsset {
-                                                                value: "test".to_string(),
-                                                                len: Some(4),
-                                                                datatype: Some(data.datatype),
-                                                            }),
-                                                            title: None,
-                                                            img: None,
-                                                            video: None,
-                                                            html: None,
-                                                            app: None,
-                                                        });
-                                                    },
-                                                    None => (),
-                                                }
-                                            }
+                                            },
+                                            None => (),
+                                        }
+                                        match assets.get_current_asset("data") {
+                                            Some(data) => {
+                                                asset_vec.push(Asset {
+                                                    id: data.id,
+                                                    req: 1,
+                                                    data: Some(DataAsset {
+                                                        value: "test".to_string(),
+                                                        len: Some(4),
+                                                        datatype: Some(data.data.clone().unwrap().datatype),
+                                                    }),
+                                                    title: None,
+                                                    img: None,
+                                                    video: None,
+                                                    html: None,
+                                                    app: None,
+                                                });
+                                            },
+                                            None => (),
+                                        }
 
-                                            Some(Native {
-                                                asset: asset_vec,
-                                                link: Some(link_asset.clone()),
-                                            })
-                                        },
-                                        None => None,
+                                        Some(Native {
+                                            asset: asset_vec,
+                                            link: Some(link_asset.clone()),
+                                        })
+                                    } else {
+                                        None
                                     }
                                 },
                                 event: {

@@ -27,7 +27,7 @@ impl Client for Mfocus {
 
         let request_id = cache.get_sequence();
 
-        let assets = Assets::new(request);
+        let mut assets = Assets::new(request);
         let identifiers = Identifiers::new(request);
 
         let request_mfocus = MfocusRequest {
@@ -445,7 +445,7 @@ impl Client for Mfocus {
                                                         None
                                                     },
                                                     banner: {
-                                                        if request.item[0].spec.display.displayfmt.is_some() {
+                                                        if assets.get_banner_size() > 0 {
                                                             Some(Banner {
                                                                 img: {
                                                                     match &ad_content.mainimage {
@@ -462,90 +462,85 @@ impl Client for Mfocus {
                                                         }
                                                     },
                                                     native: {
-                                                        if request.item[0].spec.display.nativefmt.is_some() {
+                                                        if assets.get_asset_total_size() > 0 {
                                                             let mut asset_vec = vec![];
 
-                                                            if assets.video_asset.len() > 0 && ad_content.videourl.is_some() {
-                                                                asset_vec.push(Asset {
-                                                                    id: assets.video_asset.get(0).unwrap().id,
-                                                                    req: 1,
-                                                                    video: Some(VideoAsset {
-                                                                        url: {
-                                                                            match &ad_content.videourl {
-                                                                                Some(videourl) => {
-                                                                                    videourl.clone()
-                                                                                },
-                                                                                None => "".to_string(),
-                                                                            }
-                                                                        },
-                                                                        mime: None,
-                                                                        w: None,
-                                                                        h: None,
-                                                                        dur: None,
-                                                                        skipoffset: None,
-                                                                        size: None,
-                                                                        delivery: None,
-                                                                        orientation: None,
-                                                                        autolanding: 0,
-                                                                        clickable: 0,
-                                                                    }),
-                                                                    title: None,
-                                                                    img: None,
-                                                                    data: None,
-                                                                    html: None,
-                                                                    app: None,
-                                                                });
+                                                            match &ad_content.videourl {
+                                                                Some(videourl) => {
+                                                                    asset_vec.push(Asset {
+                                                                        id: assets.consume_asset("video"),
+                                                                        req: 1,
+                                                                        video: Some(VideoAsset {
+                                                                            url: videourl.clone(),
+                                                                            mime: None,
+                                                                            w: None,
+                                                                            h: None,
+                                                                            dur: None,
+                                                                            skipoffset: None,
+                                                                            size: None,
+                                                                            delivery: None,
+                                                                            orientation: None,
+                                                                            autolanding: 0,
+                                                                            clickable: 0,
+                                                                        }),
+                                                                        title: None,
+                                                                        img: None,
+                                                                        data: None,
+                                                                        html: None,
+                                                                        app: None,
+                                                                    });
+                                                                },
+                                                                None => (),
                                                             }
-                                                            if assets.video_cover_asset.len() > 0 && ad_content.coverimage.is_some() {
-                                                                asset_vec.push(Asset {
-                                                                    id: assets.video_cover_asset.get(0).unwrap().id,
-                                                                    req: 0,
-                                                                    img: Some(ImageAsset {
-                                                                        url: {
-                                                                            match &ad_content.coverimage {
-                                                                                Some(coverimage) => {
-                                                                                    coverimage.clone()
-                                                                                },
-                                                                                None => "".to_string(),
-                                                                            }
-                                                                        },
-                                                                        mime: None,
-                                                                        w: None,
-                                                                        h: None,
-                                                                        imagetype: Some(3),
-                                                                    }),
-                                                                    title: None,
-                                                                    video: None,
-                                                                    data: None,
-                                                                    html: None,
-                                                                    app: None,
-                                                                });
+                                                            match &ad_content.coverimage {
+                                                                Some(coverimage) => {
+                                                                    asset_vec.push(Asset {
+                                                                        id: assets.consume_asset("video#cover"),
+                                                                        req: 0,
+                                                                        img: Some(ImageAsset {
+                                                                            url: coverimage.clone(),
+                                                                            mime: None,
+                                                                            w: None,
+                                                                            h: None,
+                                                                            imagetype: Some(3),
+                                                                        }),
+                                                                        title: None,
+                                                                        video: None,
+                                                                        data: None,
+                                                                        html: None,
+                                                                        app: None,
+                                                                    });
+                                                                },
+                                                                None => (),
                                                             }
-                                                            if assets.title_asset.len() > 0 && ad_content.title.is_some() {
-                                                                asset_vec.push(Asset {
-                                                                    id: assets.title_asset.get(0).unwrap().id,
-                                                                    req: 1,
-                                                                    title: Some(TitleAsset {
-                                                                        text: ad_content.title.clone().unwrap(),
-                                                                        subtitle: None,
-                                                                        desc: ad_content.text.clone(),
-                                                                        len: Some(ad_content.title.clone().unwrap().len() as i32),
-                                                                    }),
-                                                                    img: None,
-                                                                    video: None,
-                                                                    data: None,
-                                                                    html: None,
-                                                                    app: None,
-                                                                });
+                                                            match &ad_content.title {
+                                                                Some(title) => {
+                                                                    asset_vec.push(Asset {
+                                                                        id: assets.consume_asset("title"),
+                                                                        req: 1,
+                                                                        title: Some(TitleAsset {
+                                                                            text: title.clone(),
+                                                                            subtitle: None,
+                                                                            desc: ad_content.text.clone(),
+                                                                            len: Some(title.len() as i32),
+                                                                        }),
+                                                                        img: None,
+                                                                        video: None,
+                                                                        data: None,
+                                                                        html: None,
+                                                                        app: None,
+                                                                    });
+                                                                },
+                                                                None => (),
                                                             }
-                                                            for (i, asset) in assets.img_asset.iter().enumerate() {
-                                                                if i == 0 && ad_content.image1.is_some() {
+                                                            match &ad_content.image1 {
+                                                                Some(image1) => {
                                                                     asset_vec.push(Asset {
-                                                                        id: asset.id,
+                                                                        id: assets.consume_asset("thumb"),
                                                                         req: 1,
                                                                         img: {
                                                                             Some(ImageAsset {
-                                                                                url: ad_content.image1.clone().unwrap(),
+                                                                                url: image1.clone(),
                                                                                 mime: None,
                                                                                 w: None,
                                                                                 h: None,
@@ -558,14 +553,17 @@ impl Client for Mfocus {
                                                                         html: None,
                                                                         app: None,
                                                                     });
-                                                                }
-                                                                if i == 1 && ad_content.image2.is_some() {
+                                                                },
+                                                                None => (),
+                                                            }
+                                                            match &ad_content.image2 {
+                                                                Some(image2) => {
                                                                     asset_vec.push(Asset {
-                                                                        id: asset.id,
+                                                                        id: assets.consume_asset("thumb"),
                                                                         req: 1,
                                                                         img: {
                                                                             Some(ImageAsset {
-                                                                                url: ad_content.image2.clone().unwrap(),
+                                                                                url: image2.clone(),
                                                                                 mime: None,
                                                                                 w: None,
                                                                                 h: None,
@@ -578,14 +576,17 @@ impl Client for Mfocus {
                                                                         html: None,
                                                                         app: None,
                                                                     });
-                                                                }
-                                                                if i == 2 && ad_content.image3.is_some() {
+                                                                },
+                                                                None => (),
+                                                            }
+                                                            match &ad_content.image3 {
+                                                                Some(image3) => {
                                                                     asset_vec.push(Asset {
-                                                                        id: asset.id,
+                                                                        id: assets.consume_asset("thumb"),
                                                                         req: 1,
                                                                         img: {
                                                                             Some(ImageAsset {
-                                                                                url: ad_content.image3.clone().unwrap(),
+                                                                                url: image3.clone(),
                                                                                 mime: None,
                                                                                 w: None,
                                                                                 h: None,
@@ -598,14 +599,17 @@ impl Client for Mfocus {
                                                                         html: None,
                                                                         app: None,
                                                                     });
-                                                                }
-                                                                if i == 3 && ad_content.image4.is_some() {
+                                                                },
+                                                                None => (),
+                                                            }
+                                                            match &ad_content.image4 {
+                                                                Some(image4) => {
                                                                     asset_vec.push(Asset {
-                                                                        id: asset.id,
+                                                                        id: assets.consume_asset("thumb"),
                                                                         req: 1,
                                                                         img: {
                                                                             Some(ImageAsset {
-                                                                                url: ad_content.image4.clone().unwrap(),
+                                                                                url: image4.clone(),
                                                                                 mime: None,
                                                                                 w: None,
                                                                                 h: None,
@@ -618,7 +622,8 @@ impl Client for Mfocus {
                                                                         html: None,
                                                                         app: None,
                                                                     });
-                                                                }
+                                                                },
+                                                                None => (),
                                                             }
 
                                                             Some(Native {

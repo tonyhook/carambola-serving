@@ -31,7 +31,7 @@ impl Client for Yiba {
 
         let request_id = cache.get_sequence();
 
-        let assets = Assets::new(request);
+        let mut assets = Assets::new(request);
         let identifiers = Identifiers::new(request);
 
         let timestamp = Utc::now().timestamp_millis();
@@ -424,72 +424,60 @@ impl Client for Yiba {
             },
             video_type: {
                 let mut video_type = vec![];
-                if assets.video_asset.len() == 1 && assets.asset_size == 1 {
-                    for asset in &assets.video_asset {
-                        let video = asset.video.clone().unwrap();
-                        match &video.mime {
-                            Some(mime) => {
-                                for mime1 in mime {
-                                    let type1 = mime1.split("/").nth(1);
-                                    match type1 {
-                                        Some(type1) => {
-                                            video_type.push(type1.to_string());
-                                        },
-                                        None => (),
-                                    }
+                if assets.get_asset_size("video") == 1 && assets.get_asset_size("video") == assets.get_asset_total_size() {
+                    let video = assets.get_current_asset("video").unwrap().video.clone().unwrap();
+                    match video.mime {
+                        Some(mime) => {
+                            for mime1 in mime {
+                                let type1 = mime1.split("/").nth(1);
+                                match type1 {
+                                    Some(type1) => {
+                                        video_type.push(type1.to_string());
+                                    },
+                                    None => (),
                                 }
-                            },
-                            None => (),
-                        }
-                        break;
+                            }
+                        },
+                        None => (),
                     }
                 }
                 video_type
             },
             min_duration: {
                 let mut min_duration = 0;
-                if assets.video_asset.len() == 1 && assets.asset_size == 1 {
-                    for asset in &assets.video_asset {
-                        let video = asset.video.clone().unwrap();
-                        match video.mindur {
-                            Some(mindur) => {
-                                min_duration = mindur;
-                            },
-                            None => (),
-                        }
-                        break;
+                if assets.get_asset_size("video") == 1 && assets.get_asset_size("video") == assets.get_asset_total_size() {
+                    let video = assets.get_current_asset("video").unwrap().video.clone().unwrap();
+                    match video.mindur {
+                        Some(mindur) => {
+                            min_duration = mindur;
+                        },
+                        None => (),
                     }
                 }
                 min_duration
             },
             max_duration: {
                 let mut max_duration = 0;
-                if assets.video_asset.len() == 1 && assets.asset_size == 1 {
-                    for asset in &assets.video_asset {
-                        let video = asset.video.clone().unwrap();
-                        match video.maxdur {
-                            Some(maxdur) => {
-                                max_duration = maxdur;
-                            },
-                            None => (),
-                        }
-                        break;
+                if assets.get_asset_size("video") == 1 && assets.get_asset_size("video") == assets.get_asset_total_size() {
+                    let video = assets.get_current_asset("video").unwrap().video.clone().unwrap();
+                    match video.maxdur {
+                        Some(maxdur) => {
+                            max_duration = maxdur;
+                        },
+                        None => (),
                     }
                 }
                 max_duration
             },
             max_length: {
                 let mut max_size = 0;
-                if assets.video_asset.len() == 1 && assets.asset_size == 1 {
-                    for asset in &assets.video_asset {
-                        let video = asset.video.clone().unwrap();
-                        match video.maxsize {
-                            Some(maxsize) => {
-                                max_size = maxsize;
-                            },
-                            None => (),
-                        }
-                        break;
+                if assets.get_asset_size("video") == 1 && assets.get_asset_size("video") == assets.get_asset_total_size() {
+                    let video = assets.get_current_asset("video").unwrap().video.clone().unwrap();
+                    match video.maxsize {
+                        Some(maxsize) => {
+                            max_size = maxsize;
+                        },
+                        None => (),
                     }
                 }
                 max_size
@@ -804,7 +792,7 @@ impl Client for Yiba {
                                                     None
                                                 },
                                                 banner: {
-                                                    if request.item[0].spec.display.displayfmt.is_some() {
+                                                    if assets.get_banner_size() > 0 {
                                                         Some(Banner {
                                                             img: {
                                                                 let images = ad.images.clone().unwrap();
@@ -817,193 +805,244 @@ impl Client for Yiba {
                                                     }
                                                 },
                                                 native: {
-                                                    if request.item[0].spec.display.nativefmt.is_some() {
+                                                    if assets.get_asset_total_size() > 0 {
                                                         let mut asset_vec = vec![];
 
-                                                        if assets.video_asset.len() > 0 {
-                                                            asset_vec.push(Asset {
-                                                                id: assets.video_asset.get(0).unwrap().id,
-                                                                req: 1,
-                                                                video: Some(VideoAsset {
-                                                                    url: ad.video_url.clone().unwrap(),
-                                                                    mime: ad.video_type.clone(),
-                                                                    w: None,
-                                                                    h: None,
-                                                                    dur: ad.video_duration,
-                                                                    skipoffset: ad.video_skip_min_time,
-                                                                    size: ad.video_size,
-                                                                    delivery: {
-                                                                        match ad.video_prefetch {
-                                                                            Some(0) => Some(1),
-                                                                            Some(1) => Some(2),
-                                                                            _ => None,
-                                                                        }
-                                                                    },
-                                                                    orientation: ad.video_orientation,
-                                                                    autolanding: 0,
-                                                                    clickable: 0,
-                                                                }),
-                                                                title: None,
-                                                                img: None,
-                                                                data: None,
-                                                                html: None,
-                                                                app: None,
-                                                            });
-                                                        }
-                                                        if assets.video_end_img_asset.len() > 0 && ad.video_end_url.is_some() {
-                                                            asset_vec.push(Asset {
-                                                                id: assets.video_end_img_asset.get(0).unwrap().id,
-                                                                req: 0,
-                                                                img: Some(ImageAsset {
-                                                                    url: ad.video_end_url.clone().unwrap(),
-                                                                    mime: None,
-                                                                    w: None,
-                                                                    h: None,
-                                                                    imagetype: Some(3),
-                                                                }),
-                                                                title: None,
-                                                                video: None,
-                                                                data: None,
-                                                                html: None,
-                                                                app: None,
-                                                            });
-                                                        }
-                                                        if assets.video_end_button_img_asset.len() > 0&& ad.icon_text.is_some() {
-                                                            asset_vec.push(Asset {
-                                                                id: assets.video_end_button_img_asset.get(0).unwrap().id,
-                                                                req: 0,
-                                                                img: Some(ImageAsset {
-                                                                    url: ad.icon_url.clone().unwrap(),
-                                                                    mime: None,
-                                                                    w: None,
-                                                                    h: None,
-                                                                    imagetype: Some(1),
-                                                                }),
-                                                                title: None,
-                                                                video: None,
-                                                                data: None,
-                                                                html: None,
-                                                                app: None,
-                                                            });
-                                                        }
-                                                        if assets.video_end_button_text_asset.len() > 0 && ad.icon_text.is_some() {
-                                                            asset_vec.push(Asset {
-                                                                id: assets.video_end_button_text_asset.get(0).unwrap().id,
-                                                                req: 0,
-                                                                data: Some(DataAsset {
-                                                                    value: ad.icon_text.clone().unwrap(),
-                                                                    len: Some(ad.icon_text.clone().unwrap().len() as i32),
-                                                                    datatype: Some(12),
-                                                                }),
-                                                                title: None,
-                                                                img: None,
-                                                                video: None,
-                                                                html: None,
-                                                                app: None,
-                                                            });
-                                                        }
-                                                        if assets.video_end_html_asset.len() > 0 && ad.video_end_html.is_some() {
-                                                            asset_vec.push(Asset {
-                                                                id: assets.video_end_html_asset.get(0).unwrap().id,
-                                                                req: 0,
-                                                                html: Some(HtmlAsset {
-                                                                    html: ad.video_end_html.clone(),
-                                                                    link: None,
-                                                                    len: Some(ad.video_end_html.clone().unwrap().len() as i32),
-                                                                }),
-                                                                title: None,
-                                                                img: None,
-                                                                video: None,
-                                                                data: None,
-                                                                app: None,
-                                                            });
-                                                        }
-                                                        if assets.title_asset.len() > 0 {
-                                                            asset_vec.push(Asset {
-                                                                id: assets.title_asset.get(0).unwrap().id,
-                                                                req: 1,
-                                                                title: Some(TitleAsset {
-                                                                    text: ad.title.clone().unwrap(),
-                                                                    subtitle: None,
-                                                                    desc: ad.desc.clone(),
-                                                                    len: Some(ad.title.clone().unwrap().len() as i32),
-                                                                }),
-                                                                img: None,
-                                                                video: None,
-                                                                data: None,
-                                                                html: None,
-                                                                app: None,
-                                                            });
-                                                        }
-                                                        for (i, asset) in assets.img_asset.iter().enumerate() {
-                                                            if i < ad.images.clone().unwrap().len() {
+                                                        match &ad.video_url {
+                                                            Some(video_url) => {
                                                                 asset_vec.push(Asset {
-                                                                    id: asset.id,
+                                                                    id: assets.consume_asset("video"),
                                                                     req: 1,
-                                                                    img: {
-                                                                        Some(ImageAsset {
-                                                                            url: ad.images.clone().unwrap()[i].clone(),
-                                                                            mime: None,
-                                                                            w: ad.width,
-                                                                            h: ad.height,
-                                                                            imagetype: Some(501),
-                                                                        })
-                                                                    },
+                                                                    video: Some(VideoAsset {
+                                                                        url: video_url.clone(),
+                                                                        mime: ad.video_type.clone(),
+                                                                        w: None,
+                                                                        h: None,
+                                                                        dur: ad.video_duration,
+                                                                        skipoffset: ad.video_skip_min_time,
+                                                                        size: ad.video_size,
+                                                                        delivery: {
+                                                                            match ad.video_prefetch {
+                                                                                Some(0) => Some(1),
+                                                                                Some(1) => Some(2),
+                                                                                _ => None,
+                                                                            }
+                                                                        },
+                                                                        orientation: ad.video_orientation,
+                                                                        autolanding: 0,
+                                                                        clickable: 0,
+                                                                    }),
+                                                                    title: None,
+                                                                    img: None,
+                                                                    data: None,
+                                                                    html: None,
+                                                                    app: None,
+                                                                });
+                                                            },
+                                                            None => (),
+                                                        }
+                                                        match &ad.video_end_url {
+                                                            Some(video_end_url) => {
+                                                                asset_vec.push(Asset {
+                                                                    id: assets.consume_asset("video#end#img"),
+                                                                    req: 0,
+                                                                    img: Some(ImageAsset {
+                                                                        url: video_end_url.clone(),
+                                                                        mime: None,
+                                                                        w: None,
+                                                                        h: None,
+                                                                        imagetype: Some(3),
+                                                                    }),
                                                                     title: None,
                                                                     video: None,
                                                                     data: None,
                                                                     html: None,
                                                                     app: None,
                                                                 });
-                                                            }
+                                                            },
+                                                            None => (),
                                                         }
-                                                        if assets.html_asset.len() > 0 && ad.html.is_some() {
-                                                            asset_vec.push(Asset {
-                                                                id: assets.html_asset.get(0).unwrap().id,
-                                                                req: 0,
-                                                                html: Some(HtmlAsset {
-                                                                    html: ad.html.clone(),
-                                                                    link: None,
-                                                                    len: Some(ad.html.clone().unwrap().len() as i32),
-                                                                }),
-                                                                title: None,
-                                                                img: None,
-                                                                video: None,
-                                                                data: None,
-                                                                app: None,
-                                                            });
+                                                        match &ad.icon_url {
+                                                            Some(icon_url) => {
+                                                                asset_vec.push(Asset {
+                                                                    id: assets.consume_asset("video#end#button#img"),
+                                                                    req: 0,
+                                                                    img: Some(ImageAsset {
+                                                                        url: icon_url.clone(),
+                                                                        mime: None,
+                                                                        w: None,
+                                                                        h: None,
+                                                                        imagetype: Some(1),
+                                                                    }),
+                                                                    title: None,
+                                                                    video: None,
+                                                                    data: None,
+                                                                    html: None,
+                                                                    app: None,
+                                                                });
+                                                            },
+                                                            None => (),
+                                                        }
+                                                        match &ad.icon_text {
+                                                            Some(icon_text) => {
+                                                                asset_vec.push(Asset {
+                                                                    id: assets.consume_asset("video#end#button#text"),
+                                                                    req: 0,
+                                                                    data: Some(DataAsset {
+                                                                        value: icon_text.clone(),
+                                                                        len: Some(icon_text.len() as i32),
+                                                                        datatype: Some(12),
+                                                                    }),
+                                                                    title: None,
+                                                                    img: None,
+                                                                    video: None,
+                                                                    html: None,
+                                                                    app: None,
+                                                                });
+                                                            },
+                                                            None => (),
+                                                        }
+                                                        match &ad.video_end_html {
+                                                            Some(video_end_html) => {
+                                                                asset_vec.push(Asset {
+                                                                    id: assets.consume_asset("video#end#html"),
+                                                                    req: 0,
+                                                                    html: Some(HtmlAsset {
+                                                                        html: Some(video_end_html.clone()),
+                                                                        link: None,
+                                                                        len: Some(video_end_html.len() as i32),
+                                                                    }),
+                                                                    title: None,
+                                                                    img: None,
+                                                                    video: None,
+                                                                    data: None,
+                                                                    app: None,
+                                                                });
+                                                            },
+                                                            None => (),
+                                                        }
+                                                        match &ad.title {
+                                                            Some(title) => {
+                                                                asset_vec.push(Asset {
+                                                                    id: assets.consume_asset("title"),
+                                                                    req: 1,
+                                                                    title: Some(TitleAsset {
+                                                                        text: title.clone(),
+                                                                        subtitle: None,
+                                                                        desc: ad.desc.clone(),
+                                                                        len: Some(title.len() as i32),
+                                                                    }),
+                                                                    img: None,
+                                                                    video: None,
+                                                                    data: None,
+                                                                    html: None,
+                                                                    app: None,
+                                                                });
+                                                            },
+                                                            None => (),
+                                                        }
+                                                        match &ad.images {
+                                                            Some(images) => {
+                                                                if assets.get_asset_size("img") > 0 {
+                                                                    for image in images.iter() {
+                                                                        asset_vec.push(Asset {
+                                                                            id: assets.consume_asset("img"),
+                                                                            req: 1,
+                                                                            img: {
+                                                                                Some(ImageAsset {
+                                                                                    url: image.clone(),
+                                                                                    mime: None,
+                                                                                    w: ad.width,
+                                                                                    h: ad.height,
+                                                                                    imagetype: Some(3),
+                                                                                })
+                                                                            },
+                                                                            title: None,
+                                                                            video: None,
+                                                                            data: None,
+                                                                            html: None,
+                                                                            app: None,
+                                                                        });
+                                                                    }
+                                                                }
+                                                                if assets.get_asset_size("thumb") > 0 {
+                                                                    for image in images.iter() {
+                                                                        asset_vec.push(Asset {
+                                                                            id: assets.consume_asset("thumb"),
+                                                                            req: 1,
+                                                                            img: {
+                                                                                Some(ImageAsset {
+                                                                                    url: image.clone(),
+                                                                                    mime: None,
+                                                                                    w: ad.width,
+                                                                                    h: ad.height,
+                                                                                    imagetype: Some(501),
+                                                                                })
+                                                                            },
+                                                                            title: None,
+                                                                            video: None,
+                                                                            data: None,
+                                                                            html: None,
+                                                                            app: None,
+                                                                        });
+                                                                    }
+                                                                }
+                                                            },
+                                                            None => (),
+                                                        }
+                                                        match &ad.html {
+                                                            Some(html) => {
+                                                                asset_vec.push(Asset {
+                                                                    id: assets.consume_asset("html"),
+                                                                    req: 1,
+                                                                    html: Some(HtmlAsset {
+                                                                        html: Some(html.clone()),
+                                                                        link: None,
+                                                                        len: Some(html.len() as i32),
+                                                                    }),
+                                                                    title: None,
+                                                                    img: None,
+                                                                    video: None,
+                                                                    data: None,
+                                                                    app: None,
+                                                                });
+                                                            },
+                                                            None => (),
                                                         }
 
-                                                        if ad.app_name.is_some() {
-                                                            asset_vec.push(Asset {
-                                                                id: 0,
-                                                                req: 0,
-                                                                app: Some(AppAsset {
-                                                                    name: ad.app_name.clone().unwrap(),
-                                                                    desc:  None,
-                                                                    descurl:  None,
-                                                                    domain: None,
-                                                                    bundle: ad.app_package.clone(),
-                                                                    ver: None,
-                                                                    developer: ad.app_developer.clone(),
-                                                                    icon: None,
-                                                                    storeid: None,
-                                                                    storeurl: None,
-                                                                    paid: 0,
-                                                                    size: None,
-                                                                    md5: None,
-                                                                    registration: None,
-                                                                    privacy: ad.app_privacy_policy.clone(),
-                                                                    privacyurl:  None,
-                                                                    permission: ad.app_permission.clone(),
-                                                                    permissionurl:  None,
-                                                                }),
-                                                                title: None,
-                                                                img: None,
-                                                                video: None,
-                                                                data: None,
-                                                                html: None,
-                                                            });
+                                                        match &ad.app_name {
+                                                            Some(app_name) => {
+                                                                asset_vec.push(Asset {
+                                                                    id: assets.consume_asset("app"),
+                                                                    req: 0,
+                                                                    app: Some(AppAsset {
+                                                                        name: app_name.clone(),
+                                                                        desc: None,
+                                                                        descurl: None,
+                                                                        domain: None,
+                                                                        bundle: ad.app_package.clone(),
+                                                                        ver: None,
+                                                                        developer: ad.app_developer.clone(),
+                                                                        icon: None,
+                                                                        storeid: None,
+                                                                        storeurl: None,
+                                                                        paid: 0,
+                                                                        size: None,
+                                                                        md5: None,
+                                                                        registration: None,
+                                                                        privacy: None,
+                                                                        privacyurl: ad.app_privacy_policy.clone(),
+                                                                        permission: None,
+                                                                        permissionurl: ad.app_permission.clone(),
+                                                                    }),
+                                                                    title: None,
+                                                                    img: None,
+                                                                    video: None,
+                                                                    data: None,
+                                                                    html: None,
+                                                                });
+                                                            },
+                                                            None => (),
                                                         }
 
                                                         Some(Native {
