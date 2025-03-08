@@ -15,6 +15,7 @@ pub mod mygolbs;
 pub mod richmob;
 pub mod ustars;
 pub mod yiba;
+pub mod zhanqing;
 
 pub use assets::Assets;
 pub use identifiers::Identifiers;
@@ -34,3 +35,4 @@ pub use mygolbs::Mygolbs;
 pub use richmob::Richmob;
 pub use ustars::Ustars;
 pub use yiba::Yiba;
+pub use zhanqing::Zhanqing;
