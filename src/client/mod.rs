@@ -13,6 +13,7 @@ pub mod mfocus;
 pub mod mobrtb;
 pub mod mygolbs;
 pub mod richmob;
+pub mod ustars;
 pub mod yiba;
 
 pub use assets::Assets;
@@ -31,4 +32,5 @@ pub use mfocus::Mfocus;
 pub use mobrtb::Mobrtb;
 pub use mygolbs::Mygolbs;
 pub use richmob::Richmob;
+pub use ustars::Ustars;
 pub use yiba::Yiba;

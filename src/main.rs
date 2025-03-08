@@ -1671,6 +1671,7 @@ async fn query(request: &Request, connection: &Connection, pool: &HttpPool, cach
         "mobrtb" => Mobrtb::request(request, connection, pool, cache).await,
         "mygolbs" => Mygolbs::request(request, connection, pool, cache).await,
         "richmob" => Richmob::request(request, connection, pool, cache).await,
+        "ustars" => Ustars::request(request, connection, pool, cache).await,
         "yiba" => Yiba::request(request, connection, pool, cache).await,
         &_ => Err(ResultMessage {
             code: 999,
@@ -1691,6 +1692,7 @@ async fn bidding_notify_win(url: String, win_price: i32, next_price: i32, iv: &S
         "mobrtb" => Mobrtb::bidding_notify_win(url, win_price, next_price, iv, connection, pool).await,
         "mygolbs" => Mygolbs::bidding_notify_win(url, win_price, next_price, iv, connection, pool).await,
         "richmob" => Richmob::bidding_notify_win(url, win_price, next_price, iv, connection, pool).await,
+        "ustars" => Ustars::bidding_notify_win(url, win_price, next_price, iv, connection, pool).await,
         "yiba" => Yiba::bidding_notify_win(url, win_price, next_price, iv, connection, pool).await,
         &_ => (),
     }
@@ -1708,6 +1710,7 @@ async fn bidding_notify_lose(url: String, lose_price: i32, lose_reason: i32, los
         "mobrtb" => Mobrtb::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection, pool).await,
         "mygolbs" => Mygolbs::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection, pool).await,
         "richmob" => Richmob::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection, pool).await,
+        "ustars" => Ustars::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection, pool).await,
         "yiba" => Yiba::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection, pool).await,
         &_ => (),
     }
