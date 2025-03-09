@@ -2,7 +2,7 @@ mod client;
 mod entity;
 mod service;
 
-use std::{collections::HashMap, fs::File, panic::AssertUnwindSafe, sync::OnceLock};
+use std::{collections::HashMap, fs::File, panic::AssertUnwindSafe, sync::OnceLock, time::Duration};
 
 use axum::{extract::{Path, Query, State}, http::{HeaderMap, StatusCode}, routing::{get, post}, Json, Router};
 use base64::prelude::*;
@@ -13,6 +13,7 @@ use hyper::body::Incoming;
 use serde::{Deserialize, Serialize};
 use sha1::Sha1;
 use tokio_cron_scheduler::{Job, JobScheduler};
+use tokio::time::sleep;
 use tower_http::{compression::CompressionLayer, decompression::RequestDecompressionLayer};
 use tower::Service;
 use wildmatch::WildMatch;
@@ -37,6 +38,7 @@ pub struct EnvConfig {
     pub antifraud_connection_read: String,
     pub performance_interval: u32,
 
+    pub console_server: String,
     pub serving_server: String,
     pub tracking_server: String,
 
@@ -52,6 +54,7 @@ impl EnvConfig {
     }
 }
 static GLOBAL_CONFIG: OnceLock<EnvConfig> = OnceLock::new();
+static NODE_ID: OnceLock<i32> = OnceLock::new();
 
 #[tokio::main]
 async fn main() {
@@ -59,6 +62,40 @@ async fn main() {
         Ok(_) => (),
         Err(_) => panic!("Could not get configuration!"),
     }
+
+    let client = reqwest::ClientBuilder::new()
+        .gzip(true)
+        .no_brotli()
+        .no_deflate()
+        .build().unwrap();
+
+    loop {
+        let server_info = client.get(GLOBAL_CONFIG.get().unwrap().console_server.clone() + "/api/open/server")
+            .header("Accept-Encoding", "gzip")
+            .send().await;
+
+        match server_info {
+            Ok(response) => {
+                match response.status() {
+                    StatusCode::OK => {
+                        let server_info = response.json::<Server>().await.unwrap();
+                        let node_id = server_info.node;
+
+                        match NODE_ID.set(node_id) {
+                            Ok(_) => break,
+                            Err(_) => (),
+                        }
+                    },
+                    _ => (),
+                }
+            },
+            Err(_) => (),
+        }
+
+        sleep(Duration::from_secs(1)).await;
+    }
+
+    println!("Serving node {} started.", NODE_ID.get().unwrap());
 
     let database = Database::new(&GLOBAL_CONFIG.get().unwrap().db_connection);
     let cache = Cache::new(&GLOBAL_CONFIG.get().unwrap());

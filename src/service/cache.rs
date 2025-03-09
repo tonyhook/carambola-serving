@@ -4,7 +4,7 @@ use chrono::{DateTime, Timelike, Utc};
 use r2d2::Pool;
 use redis::Client;
 
-use crate::{EnvConfig, GLOBAL_CONFIG};
+use crate::{EnvConfig, GLOBAL_CONFIG, NODE_ID};
 
 pub const PERFORMANCE_NO_PROTOCOL:          &str = "A"; // -1 as client port
 pub const PERFORMANCE_BAD_PROTOCOL_VER:     &str = "B"; // -1 as client port
@@ -325,7 +325,7 @@ impl Cache {
                                 if result == 1 {
                                     let _ = redis::cmd("EXPIRE").arg(minute).arg(120).query::<Option<u32>>(&mut connection);
                                 }
-                                sequence = timestamp << 32 | result as u64;
+                                sequence = timestamp << 32 | ((*NODE_ID.get().unwrap() as u64) << 24 & 0xFF000000) | (result as u64 & 0x00FFFFFF);
                             },
                             None => (),
                         }
