@@ -14,6 +14,7 @@ pub struct HttpPool {
     pub pool_mobrtb: Arc<RwLock<Client>>,
     pub pool_mygolbs: Arc<RwLock<Client>>,
     pub pool_richmob: Arc<RwLock<Client>>,
+    pub pool_ruiang: Arc<RwLock<Client>>,
     pub pool_ustars: Arc<RwLock<Client>>,
     pub pool_yiba: Arc<RwLock<Client>>,
     pub pool_zhanqing: Arc<RwLock<Client>>,
@@ -87,6 +88,13 @@ impl HttpPool {
                 .pool_idle_timeout(Duration::from_millis(1000))
                 .build().unwrap())),
             pool_richmob: Arc::new(RwLock::new(reqwest::ClientBuilder::new()
+                .tcp_keepalive(Duration::from_secs(60))
+                .gzip(true)
+                .no_brotli()
+                .no_deflate()
+                .pool_idle_timeout(Duration::from_millis(1000))
+                .build().unwrap())),
+            pool_ruiang: Arc::new(RwLock::new(reqwest::ClientBuilder::new()
                 .tcp_keepalive(Duration::from_secs(60))
                 .gzip(true)
                 .no_brotli()
