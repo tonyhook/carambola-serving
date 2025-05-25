@@ -858,7 +858,7 @@ impl Client for Richmob {
                     }
                 },
                 price: {
-                    Some(Price::to_client(connection, request.item[0].flr))
+                    Some(Price::to_client(connection, request.item[0].flr.map(f64::from)) as i32)
                 },
             },
             deep_link: {

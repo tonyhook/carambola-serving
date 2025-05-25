@@ -24,7 +24,9 @@ pub struct Connection {
     pub timeout: u64,
     pub filter: Option<RuleSet>,
     pub priority: i32,
-    pub cost_ratio: f64,
+    pub upstream_ratio: f64,
+    pub rebate_ratio: f64,
+    pub downstream_ratio: f64,
     pub default_price: i32,
     pub configuration: Configuration,
 }

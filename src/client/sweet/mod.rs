@@ -160,7 +160,7 @@ impl Client for Sweet {
                     Some(1)
                 },
                 bid_floor: {
-                    Some(Price::to_client(connection, request.item[0].flr))
+                    Some(Price::to_client(connection, request.item[0].flr.map(f64::from)) as i32)
                 },
             },
             app: {
@@ -798,7 +798,7 @@ impl Client for Sweet {
                                                 },
                                                 None => {
                                                     return Err(ResultMessage {
-                                                        code: 993,
+                                                        code: 993, // defending
                                                         message: "upstream error: no data".to_string(),
                                                     });
                                                 },

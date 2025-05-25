@@ -68,7 +68,7 @@ impl Client for Mobrtb {
                         }),
                     }
                 },
-                floor_price: Some(Price::to_client(connection, request.item[0].flr) as f64),
+                floor_price: Some(Price::to_client(connection, request.item[0].flr.map(f64::from))),
                 support_js: None,
             }].to_vec(),
             app: {

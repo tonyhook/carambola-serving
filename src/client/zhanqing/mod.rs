@@ -51,7 +51,7 @@ impl Client for Zhanqing {
                 pid.to_string()
             },
             bidfloor: {
-                Price::to_client(connection, request.item[0].flr)
+                Price::to_client(connection, request.item[0].flr.map(f64::from)) as i32
             },
             time: {
                 time

@@ -468,23 +468,24 @@ impl Cache {
         }
     }
 
-    pub fn set_notification_cost(&self, request_id: &str, client_id: i32, vendor_id: i32, client_win_price: i32, vendor_win_price: i32) {
+    pub fn set_notification_cost(&self, request_id: &String, client_id: i32, vendor_id: i32, income: i32, outcome_upstream: f64, outcome_rebate: f64, outcome_downstream: f64) {
         let cache = self.clone();
         let request_id = Arc::new(request_id.to_string());
         tokio::spawn({
             async move {
-                cache.set_notification_cost_async(&request_id, client_id, vendor_id, client_win_price, vendor_win_price).await;
+                cache.set_notification_cost_async(&request_id, client_id, vendor_id, income, outcome_upstream, outcome_rebate, outcome_downstream).await;
             }
         });
     }
 
-    async fn set_notification_cost_async(&self, request_id: &str, client_id: i32, vendor_id: i32, client_win_price: i32, vendor_win_price: i32) {
+    async fn set_notification_cost_async(&self, request_id: &String, client_id: i32, vendor_id: i32, income: i32, outcome_upstream: f64, outcome_rebate: f64, outcome_downstream: f64) {
         let connection = self.nw.get();
 
         match connection {
             Ok(mut connection) => {
+                // income and outcome_downstream should be placed at the first for compatibility
                 let key = format!("cost:{}", request_id);
-                let value = format!("{}:{}:{}:{}", client_id, vendor_id, client_win_price, vendor_win_price);
+                let value = format!("{}:{}:{}:{}:{}:{}", client_id, vendor_id, income, outcome_downstream, outcome_upstream, outcome_rebate);
 
                 let result = redis::cmd("SET").arg(&key).arg(&value).query::<Option<String>>(&mut connection);
                 match result {

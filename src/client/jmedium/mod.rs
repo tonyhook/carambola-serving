@@ -122,7 +122,7 @@ impl Client for Jmedium {
                 },
             },
             deal: Some(JmediumDeal {
-                bidfloor: Some(Price::to_client(connection, request.item[0].flr))
+                bidfloor: Some(Price::to_client(connection, request.item[0].flr.map(f64::from)) as i32)
             }),
             app: JmediumApp {
                 name: {

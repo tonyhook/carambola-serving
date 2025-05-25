@@ -458,9 +458,9 @@ async fn handler(
     }
 
     // step 8: select best response
-    let mut best_client_price = -1;
-    let mut next_client_price = -1;
-    let mut best_vendor_price = -1;
+    let mut best_client_price = -1.0;
+    let mut next_client_price = -1.0;
+    let mut best_vendor_price = -1.0;
     let mut best_client: Option<(&Response, &Connection)> = Option::None;
     let mut best_burl: Option<Vec<String>> = Option::None;
     let mut best_lurl: Option<Vec<String>> = Option::None;
@@ -469,7 +469,7 @@ async fn handler(
         PORT_TYPE_SHARE => {
             // generate price
             best_client = Some((valid_responses.get(0).unwrap().0, valid_responses.get(0).unwrap().1));
-            best_client_price = best_client.unwrap().0.clone().seatbid.unwrap()[0].bid[0].price;
+            best_client_price = best_client.unwrap().0.clone().seatbid.unwrap()[0].bid[0].price as f64;
             best_vendor_price = Price::to_vendor(best_client.unwrap().1, Some(best_client_price));
 
             cache.update_performance(best_client.unwrap().1.client_port, vendor_port.0, &bundle, PERFORMANCE_SHARE_SUCCESS);
@@ -479,10 +479,10 @@ async fn handler(
             // generate price
             for &(response, connection) in valid_responses.iter() {
                 let bid = &response.clone().seatbid.unwrap()[0].bid[0];
-                let price = bid.price;
+                let price = bid.price as f64;
 
                 // invalid price
-                if connection.default_price > price {
+                if connection.default_price as f64 > price {
                     match &bid.lurl {
                         Some(lurl) => {
                             for url in lurl.iter() {
@@ -519,8 +519,8 @@ async fn handler(
             let best_seatbid = best_reponse.clone().seatbid.unwrap();
             let best_connection = best_client.unwrap().1;
 
-            if next_client_price > 0 {
-                best_client_price = next_client_price + 1;
+            if next_client_price > 0.0 {
+                best_client_price = next_client_price + 1.0;
             }
             best_vendor_price = Price::to_vendor(best_connection, Some(best_client_price));
 
@@ -535,7 +535,7 @@ async fn handler(
                         Some(lurl) => {
                             for url in lurl.iter() {
                                 let lose_price = best_client_price;
-                                bidding_notify_lose(url.clone(), lose_price, 2, &"".to_string(), &"".to_string(), connection, &pool).await;
+                                bidding_notify_lose(url.clone(), lose_price as i32, 2, &"".to_string(), &"".to_string(), connection, &pool).await;
                             }
                         },
                         None => (),
@@ -550,7 +550,7 @@ async fn handler(
                 match &best_seatbid[0].bid[0].burl {
                     Some(burl) => {
                         for url in burl.iter() {
-                            bidding_notify_win(url.clone(), best_client_price, best_client_price - 1, &"".to_string(), best_connection, &pool).await;
+                            bidding_notify_win(url.clone(), best_client_price as i32, (best_client_price - 1.0) as i32, &"".to_string(), best_connection, &pool).await;
                         }
                     },
                     None => (),
@@ -597,7 +597,7 @@ async fn handler(
         final_seatbid[0].bid[0].burl = None;
         final_seatbid[0].bid[0].lurl = None;
     } else {
-        final_seatbid[0].bid[0].price = best_vendor_price;
+        final_seatbid[0].bid[0].price = best_vendor_price as i32;
         final_seatbid[0].bid[0].burl = best_burl;
         final_seatbid[0].bid[0].lurl = best_lurl;
     }
@@ -608,7 +608,9 @@ async fn handler(
     // step 11: update cost
     // save price early avoiding no win notice call
     let client_port = best_client.unwrap().1.client_port;
-    cache.set_notification_cost(&final_seatbid[0].bid[0].id.clone().unwrap().as_str(), client_port, vendor_port.0, best_client_price, best_vendor_price);
+    let upstream_price = Price::to_upstream(best_client.unwrap().1, Some(best_client_price));
+    let rebate_price = Price::to_rebate(best_client.unwrap().1, Some(best_client_price));
+    cache.set_notification_cost(&final_seatbid[0].bid[0].id.clone().unwrap(), client_port, vendor_port.0, best_client_price as i32, upstream_price, rebate_price, best_vendor_price);
 
     // step 12: update tracking
     let request_id = &final_seatbid[0].bid[0].id.clone().unwrap();
@@ -1581,15 +1583,15 @@ async fn win(
                     let win_price = decrypt(win_price_message, &connection.vendor_ekey, &connection.vendor_ikey);
                     match win_price {
                         Some(win_price) => {
-                            let vendor_win_price = win_price;
-                            let client_win_price = Price::to_client(&connection, Some(win_price));
+                            let vendor_win_price = win_price as f64;
+                            let client_win_price = Price::to_client(&connection, Some(win_price as f64)) as i32;
                             let client_next_price = {
                                 match next_price_message {
                                     Some(next_price_message) => {
                                         let next_price = decrypt(next_price_message, &connection.vendor_ekey, &connection.vendor_ikey);
                                         match next_price {
                                             Some(next_price) => {
-                                                Price::to_client(&connection, Some(next_price))
+                                                Price::to_client(&connection, Some(next_price as f64)) as i32
                                             },
                                             None => {
                                                 client_win_price - 1
@@ -1620,7 +1622,9 @@ async fn win(
                             cache.update_performance(connection.client_port, connection.vendor_port, &bundle, PERFORMANCE_BIDDING_WIN);
 
                             // update the final price from win notice
-                            cache.set_notification_cost(request_id.as_str(), connection.client_port, connection.vendor_port, client_win_price, vendor_win_price);
+                            let upstream_price = Price::to_upstream(&connection, Some(client_win_price as f64));
+                            let rebate_price = Price::to_rebate(&connection, Some(client_win_price as f64));
+                            cache.set_notification_cost(&request_id, connection.client_port, connection.vendor_port, client_win_price, upstream_price, rebate_price, vendor_win_price);
                         },
                         None => (),
                     }
@@ -1657,7 +1661,7 @@ async fn lose(
                         let lose_price = decrypt(lose_price_message, &connection.vendor_ekey, &connection.vendor_ikey);
                         match lose_price {
                             Some(lose_price) => {
-                                Price::to_client(&connection, Some(lose_price))
+                                Price::to_client(&connection, Some(lose_price as f64)) as i32
                             },
                             None => 0,
                         }

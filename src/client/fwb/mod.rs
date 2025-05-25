@@ -101,7 +101,7 @@ impl Client for Fwb {
                     connection.client_tag_id.clone()
                 },
                 bidfloor: {
-                    Some(Price::to_client(connection, request.item[0].flr) as f64 / 100.0)
+                    Some(Price::to_client(connection, request.item[0].flr.map(f64::from)) / 100.0)
                 },
                 native: {
                     let mut fullscreen_video = false;

@@ -48,7 +48,7 @@ impl Client for Yiba {
                 "1.0".to_string()
             },
             bid_floor: {
-                Price::to_client(connection, request.item[0].flr)
+                Price::to_client(connection, request.item[0].flr.map(f64::from)) as i32
             },
             app_name: {
                 match &connection.client_media_appname {

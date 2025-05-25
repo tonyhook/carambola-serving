@@ -71,7 +71,7 @@ impl Client for Kkmh {
                     vd: None,
                     na: None,
                     tagid: connection.client_tag_id.clone(),
-                    bidfloor: Some(Price::to_client(connection, request.item[0].flr)),
+                    bidfloor: Some(Price::to_client(connection, request.item[0].flr.map(f64::from)) as i32),
                     ad_num: None,
                     ext: None,
                 };

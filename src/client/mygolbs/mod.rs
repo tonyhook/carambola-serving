@@ -65,7 +65,7 @@ impl Client for Mygolbs {
             },
             appversion_code: None,
             appstoreversion: None,
-            bid_floor: Some(Price::to_client(connection, request.item[0].flr)),
+            bid_floor: Some(Price::to_client(connection, request.item[0].flr.map(f64::from)) as i32),
             elapsetime: {
                 match &request.context.device.boottime {
                     Some(boottime) => {

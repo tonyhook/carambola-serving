@@ -141,7 +141,9 @@ impl Database {
                 ad_connection.test,
                 ad_vendor_port.timeout,
                 ad_connection.priority,
-                ad_connection.cost_ratio,
+                ad_connection.upstream_ratio,
+                ad_connection.rebate_ratio,
+                ad_connection.downstream_ratio,
                 ad_connection.default_price,
                 configuration_id
             FROM ad_connection, ad_client, ad_client_media, ad_client_port, ad_vendor, ad_vendor_media, ad_vendor_port
@@ -164,7 +166,7 @@ impl Database {
             let apppackage: Option<Value> = row.take(4);
             let appname: Option<Value> = row.take(5);
             let filter: Option<Value> = row.take(9);
-            let connection_id: i32 = row.take(19).unwrap();
+            let configuration_id: i32 = row.take(21).unwrap();
 
             let apppackage = match apppackage {
                 Some(Value::Bytes(apppackage)) => {
@@ -232,10 +234,12 @@ impl Database {
                 test: test[0] == 1,
                 timeout: row.take(15).unwrap(),
                 priority: row.take(16).unwrap(),
-                cost_ratio: row.take(17).unwrap(),
-                default_price: row.take(18).unwrap(),
+                upstream_ratio: row.take(17).unwrap(),
+                rebate_ratio: row.take(18).unwrap(),
+                downstream_ratio: row.take(19).unwrap(),
+                default_price: row.take(20).unwrap(),
                 configuration: {
-                    *configurations.iter().find(|c|c.id == connection_id).unwrap()
+                    *configurations.iter().find(|c|c.id == configuration_id).unwrap()
                 },
             };
             connections.push(connection);
