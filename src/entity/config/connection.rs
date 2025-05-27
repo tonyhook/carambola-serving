@@ -1,7 +1,5 @@
 use crate::entity::RuleSet;
 
-use super::Configuration;
-
 pub const PORT_TYPE_SHARE:   i32 = 1;
 pub const PORT_TYPE_BIDDING: i32 = 2;
 
@@ -28,5 +26,4 @@ pub struct Connection {
     pub rebate_ratio: f64,
     pub downstream_ratio: f64,
     pub default_price: i32,
-    pub configuration: Configuration,
 }

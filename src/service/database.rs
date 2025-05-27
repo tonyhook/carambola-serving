@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::{Arc, RwLock}};
 
 use mysql::{*, prelude::*};
 
-use crate::entity::{Configuration, Connection};
+use crate::entity::Connection;
 
 #[derive(Clone)]
 pub struct Database {
@@ -81,45 +81,6 @@ impl Database {
             vpl.insert(vp.1.clone(), vp.clone());
         }
 
-        let mut configurations = Vec::<Configuration>::new();
-
-        let result = conn.query_iter(
-            "SELECT
-                id,
-                log_transaction,
-                limit_request_frequency,
-                af_ip_frequency_hourly,
-                af_ip_frequency_daily,
-                af_id_frequency_hourly,
-                af_id_frequency_daily,
-                af_ua_per_id_hourly,
-                af_ua_per_id_daily,
-                af_ip_per_id_hourly,
-                af_ip_per_id_daily
-            FROM ad_configuration",
-        ).unwrap();
-
-        for row in result {
-            let mut row = row.unwrap();
-            let log_transaction: Vec<u8> = row.take(1).unwrap();
-
-            let configuration = Configuration {
-                id: row.take(0).unwrap(),
-                log_transaction: log_transaction[0] == 1,
-                limit_request_frequency: row.take(2).unwrap(),
-                af_ip_frequency_hourly: row.take(3).unwrap(),
-                af_ip_frequency_daily: row.take(4).unwrap(),
-                af_id_frequency_hourly: row.take(5).unwrap(),
-                af_id_frequency_daily: row.take(6).unwrap(),
-                af_ua_per_id_hourly: row.take(7).unwrap(),
-                af_ua_per_id_daily: row.take(8).unwrap(),
-                af_ip_per_id_hourly: row.take(9).unwrap(),
-                af_ip_per_id_daily: row.take(10).unwrap()
-            };
-
-            configurations.push(configuration);
-        }
-
         let mut connections = Vec::<Connection>::new();
 
         let result = conn.query_iter(
@@ -144,8 +105,7 @@ impl Database {
                 ad_connection.upstream_ratio,
                 ad_connection.rebate_ratio,
                 ad_connection.downstream_ratio,
-                ad_connection.default_price,
-                configuration_id
+                ad_connection.default_price
             FROM ad_connection, ad_client, ad_client_media, ad_client_port, ad_vendor, ad_vendor_media, ad_vendor_port
             WHERE ad_connection.enabled AND NOT ad_connection.deleted
             AND ad_connection.valid_from <= NOW()
@@ -166,7 +126,6 @@ impl Database {
             let apppackage: Option<Value> = row.take(4);
             let appname: Option<Value> = row.take(5);
             let filter: Option<Value> = row.take(9);
-            let configuration_id: i32 = row.take(21).unwrap();
 
             let apppackage = match apppackage {
                 Some(Value::Bytes(apppackage)) => {
@@ -238,9 +197,6 @@ impl Database {
                 rebate_ratio: row.take(18).unwrap(),
                 downstream_ratio: row.take(19).unwrap(),
                 default_price: row.take(20).unwrap(),
-                configuration: {
-                    *configurations.iter().find(|c|c.id == configuration_id).unwrap()
-                },
             };
             connections.push(connection);
         }

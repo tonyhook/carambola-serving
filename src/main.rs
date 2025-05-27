@@ -316,16 +316,6 @@ async fn handler(
     for connection in connections.iter() {
         let client_port = connection.client_port;
 
-        // check qps limitation for connection
-        let q = cache.get_request_amount_connection(client_port, vendor_port.0);
-
-        if q >= connection.configuration.limit_request_frequency * 60 {
-            cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_BEYOND_CLIENT_QPS);
-            continue;
-        }
-
-        cache.set_request_amount_connection(client_port, vendor_port.0);
-
         // check qps limitation for bundle
         let qps = {
             let qpsl = database.qpsla.clone();
