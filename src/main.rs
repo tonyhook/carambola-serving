@@ -13,7 +13,7 @@ use hyper::body::Incoming;
 use serde::{Deserialize, Serialize};
 use sha1::Sha1;
 use tokio_cron_scheduler::{Job, JobScheduler};
-use tower_http::compression::CompressionLayer;
+use tower_http::{compression::CompressionLayer, decompression::RequestDecompressionLayer};
 use tower::Service;
 use wildmatch::WildMatch;
 
@@ -80,12 +80,18 @@ async fn main() {
         .deflate(true)
         .gzip(true)
         .zstd(true);
+    let decomression_layer: RequestDecompressionLayer = RequestDecompressionLayer::new()
+        .br(true)
+        .deflate(true)
+        .gzip(true)
+        .zstd(true);
 
     let app = Router::new()
         .route("/api/ps", post(handler))
         .route("/api/win/{connection_id}/{request_id}", get(win))
         .route("/api/lose/{connection_id}/{request_id}", get(lose))
         .layer(comression_layer)
+        .layer(decomression_layer)
         .with_state((database, cache, pool));
 
     let listener = tokio::net::TcpListener::bind(format!("{}:{}", GLOBAL_CONFIG.get().unwrap().listen_address, GLOBAL_CONFIG.get().unwrap().listen_port))
