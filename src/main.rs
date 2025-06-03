@@ -2,7 +2,7 @@ mod client;
 mod entity;
 mod service;
 
-use std::{collections::HashMap, fs::File, panic::AssertUnwindSafe, sync::OnceLock, time::Duration};
+use std::{collections::HashMap, fs::File, io::Read, panic::AssertUnwindSafe, sync::OnceLock, time::Duration};
 
 use axum::{extract::{Path, Query, State}, http::{HeaderMap, StatusCode}, routing::{get, post}, Json, Router};
 use base64::prelude::*;
@@ -17,6 +17,7 @@ use tokio::time::sleep;
 use tower_http::{compression::CompressionLayer, decompression::RequestDecompressionLayer};
 use tower::Service;
 use wildmatch::WildMatch;
+use yaml_rust2::YamlLoader;
 
 type HmacSha1 = Hmac<Sha1>;
 
@@ -36,6 +37,7 @@ pub struct EnvConfig {
     pub trafficcontrol_connection_read: String,
     pub antifraud_connection_write: String,
     pub antifraud_connection_read: String,
+
     pub performance_interval: u32,
 
     pub console_server: String,
@@ -48,9 +50,35 @@ pub struct EnvConfig {
 
 impl EnvConfig {
     fn new() -> Self {
-        let file = File::open("serving.yml").unwrap();
-        serde_yaml::from_reader(file)
-            .expect("serving.yml read failed!")
+        let mut file = File::open("serving.yml").unwrap();
+        let mut buffer = String::new();
+        file.read_to_string(&mut buffer).expect("Failed to read serving.yml");
+
+        let docs = YamlLoader::load_from_str(&buffer)
+            .expect("serving.yml parsing failed!");
+        let yaml = &docs[0];
+
+        EnvConfig {
+            db_connection: yaml["db_connection"].as_str().unwrap_or("").to_string(),
+
+            performance_connection_write: yaml["performance_connection_write"].as_str().unwrap_or("").to_string(),
+            notification_connection_write: yaml["notification_connection_write"].as_str().unwrap_or("").to_string(),
+            notification_connection_read: yaml["notification_connection_read"].as_str().unwrap_or("").to_string(),
+            idgenerator_connection: yaml["idgenerator_connection"].as_str().unwrap_or("").to_string(),
+            trafficcontrol_connection_write: yaml["trafficcontrol_connection_write"].as_str().unwrap_or("").to_string(),
+            trafficcontrol_connection_read: yaml["trafficcontrol_connection_read"].as_str().unwrap_or("").to_string(),
+            antifraud_connection_write: yaml["antifraud_connection_write"].as_str().unwrap_or("").to_string(),
+            antifraud_connection_read: yaml["antifraud_connection_read"].as_str().unwrap_or("").to_string(),
+
+            performance_interval: yaml["performance_interval"].as_i64().unwrap_or(0) as u32,
+
+            console_server: yaml["console_server"].as_str().unwrap_or("").to_string(),
+            serving_server: yaml["serving_server"].as_str().unwrap_or("").to_string(),
+            tracking_server: yaml["tracking_server"].as_str().unwrap_or("").to_string(),
+
+            listen_address: yaml["listen_address"].as_str().unwrap_or("").to_string(),
+            listen_port: yaml["listen_port"].as_i64().unwrap_or(0).to_string(),
+        }
     }
 }
 static GLOBAL_CONFIG: OnceLock<EnvConfig> = OnceLock::new();

@@ -7,35 +7,35 @@ edition = "2021"
 
 [dependencies]
 aes = "0.8.4"
-axum = { version = "0.8.1", features = ["macros"] }
+axum = { version = "0.8.4", features = ["macros"] }
 base64 = "0.22.1"
-chrono = "0.4.39"
-chrono-tz = "0.10.0"
+chrono = "0.4.41"
+chrono-tz = "0.10.3"
 derivative = "2.2.0"
 ecb = "0.1.2"
-flate2 = "1.0.35"
+flate2 = "1.1.1"
 futures = "0.3.31"
 hex = "0.4.3"
 hmac = "0.12.1"
 hyper = "1.6.0"
-hyper-util = "0.1.10"
+hyper-util = "0.1.13"
 md5 = "0.7.0"
-mysql = "25.0.1"
-openssl-sys = "0.9.104"
-openssl = { version = "0.10.68", features = ["vendored"] }
+mysql = "26.0.0"
+openssl-sys = "0.9.109"
+openssl = { version = "0.10.73", features = ["vendored"] }
 r2d2 = "0.8.10"
-redis = { version = "0.29.1", features = ["aio", "disable-client-setinfo", "r2d2", "tokio-comp"] }
-reqwest = { version = "0.12.11", features = ["hickory-dns", "gzip", "json"] }
-serde = { version = "1.0.217", features = ["derive"] }
-serde-aux = "4.5.0"
-serde_json = "1.0.134"
+redis = { version = "0.31.0", features = ["aio", "disable-client-setinfo", "r2d2", "tokio-comp"] }
+reqwest = { version = "0.12.19", features = ["hickory-dns", "gzip", "json"] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde-aux = "4.7.0"
+serde_json = "1.0.140"
 serde_url_params = "0.2.1"
-serde_yaml = "0.9.34+deprecated"
 sha1 = "0.10.6"
-tokio = { version = "1.42.0", features = ["full"] }
-tokio-cron-scheduler = "0.13.0"
+tokio = { version = "1.45.1", features = ["full"] }
+tokio-cron-scheduler = "0.14.0"
 tower = "0.5.2"
-tower-http = { version = "0.6.2", features = ["compression-full", "decompression-full"] }
+tower-http = { version = "0.6.5", features = ["compression-full", "decompression-full"] }
 urlencoding = "2.1.3"
-uuid = { version = "1.11.0", features = ["v4", "fast-rng"] }
+uuid = { version = "1.17.0", features = ["v4", "fast-rng"] }
 wildmatch = "2.4.0"
+yaml-rust2 = "0.10.2"
