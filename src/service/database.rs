@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::{Arc, RwLock}};
 
 use mysql::{*, prelude::*};
 
-use crate::entity::Connection;
+use crate::entity::{AntiFraud, Connection, TrafficControl};
 
 #[derive(Clone)]
 pub struct Database {
@@ -20,8 +20,11 @@ pub struct Database {
     // vendor port map: tag_id => (id, tag_id, mode)
     pub vpla: Arc<RwLock<HashMap<String, (i32, String, i32)>>>,
 
-    // bundle qps map: client_port + "|" + vendor_port + "|" + bundle => qps
-    pub qpsla: Arc<RwLock<HashMap<String, i32>>>,
+    // traffic control map: client_port + "|" + vendor_port + "|" + bundle => tc[]
+    pub tcla: Arc<RwLock<HashMap<String, Vec<TrafficControl>>>>,
+
+    // anti fraud map: client_port => af[]
+    pub afla: Arc<RwLock<HashMap<String, Vec<AntiFraud>>>>,
 
 }
 
@@ -34,7 +37,8 @@ impl Database {
             cla: Arc::new(RwLock::new(HashMap::<i32, Connection>::new())),
             cpla: Arc::new(RwLock::new(HashMap::<String, (i32, String, i32)>::new())),
             vpla: Arc::new(RwLock::new(HashMap::<String, (i32, String, i32)>::new())),
-            qpsla: Arc::new(RwLock::new(HashMap::<String, i32>::new())),
+            tcla: Arc::new(RwLock::new(HashMap::<String, Vec<TrafficControl>>::new())),
+            afla: Arc::new(RwLock::new(HashMap::<String, Vec<AntiFraud>>::new())),
         }
     }
 
@@ -220,19 +224,68 @@ impl Database {
             cl.insert(connection.id, connection.clone());
         }
 
-        let qpss = conn.query_map(
-            "SELECT ad_traffic_control.client_port, ad_traffic_control.vendor_port, ad_traffic_control.bundle, ad_traffic_control.qps
+        let tcs = conn.query_map(
+            "SELECT
+                ad_traffic_control.client_port,
+                ad_traffic_control.vendor_port,
+                ad_traffic_control.bundle,
+                ad_traffic_control.indicator,
+                ad_traffic_control.period,
+                ad_traffic_control.limitation
             FROM ad_traffic_control;",
-            | (client_port, vendor_port, bundle, qps)
-                : (i32, i32, String, i32)
-            | (client_port, vendor_port, bundle, qps),
+            | (client_port, vendor_port, bundle, indicator, period, limitation)
+                : (i32, i32, String, i32, i32, i64)
+            | (client_port, vendor_port, bundle, indicator, period, limitation),
         ).unwrap();
 
-        let qpsll = self.qpsla.clone();
-        let mut qpsl = qpsll.write().unwrap();
-        qpsl.clear();
-        for qps in qpss.iter() {
-            qpsl.insert(format!("{}|{}|{}", qps.0, qps.1, qps.2), qps.3);
+        let tcll = self.tcla.clone();
+        let mut tcl = tcll.write().unwrap();
+        tcl.clear();
+        for tc in tcs.iter() {
+            let traffic_control = TrafficControl {
+                client_port: tc.0,
+                vendor_port: tc.1,
+                bundle: tc.2.clone(),
+                indicator: tc.3,
+                period: tc.4,
+                limitation: tc.5,
+            };
+            let key = format!("{}|{}|{}", traffic_control.client_port, traffic_control.vendor_port, traffic_control.bundle);
+            if !tcl.contains_key(&key) {
+                tcl.insert(key.clone(), Vec::<TrafficControl>::new());
+            }
+            tcl.get_mut(&key).unwrap().push(traffic_control);
+        }
+
+        let afs = conn.query_map(
+            "SELECT
+                ad_anti_fraud.client_port,
+                ad_anti_fraud.rule,
+                ad_anti_fraud.period,
+                ad_anti_fraud.limitation
+            FROM ad_anti_fraud, ad_anti_fraud_rule
+            WHERE ad_anti_fraud.rule = ad_anti_fraud_rule.code
+            AND ad_anti_fraud_rule.enabled;",
+            | (client_port, rule, period, limitation)
+                : (i32, String, i32, f64)
+            | (client_port, rule, period, limitation),
+        ).unwrap();
+
+        let afll = self.afla.clone();
+        let mut afl = afll.write().unwrap();
+        afl.clear();
+        for af in afs.iter() {
+            let anti_fraud = AntiFraud {
+                client_port: af.0,
+                rule: af.1.clone(),
+                period: af.2,
+                limitation: af.3,
+            };
+            let key = format!("{}", anti_fraud.client_port);
+            if !afl.contains_key(&key) {
+                afl.insert(key.clone(), Vec::<AntiFraud>::new());
+            }
+            afl.get_mut(&key).unwrap().push(anti_fraud);
         }
     }
 

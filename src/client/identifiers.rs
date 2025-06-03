@@ -69,4 +69,8 @@ impl Identifiers {
         None
     }
 
+    pub fn get_flatten_ids(&self) -> Vec<&Uid> {
+        self.id_map.values().flatten().collect()
+    }
+
 }

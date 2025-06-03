@@ -32,8 +32,8 @@ pub struct EnvConfig {
     pub notification_connection_write: String,
     pub notification_connection_read: String,
     pub idgenerator_connection: String,
-    pub flowcontrol_connection_write: String,
-    pub flowcontrol_connection_read: String,
+    pub trafficcontrol_connection_write: String,
+    pub trafficcontrol_connection_read: String,
     pub antifraud_connection_write: String,
     pub antifraud_connection_read: String,
     pub performance_interval: u32,
@@ -99,6 +99,7 @@ async fn main() {
 
     let database = Database::new(&GLOBAL_CONFIG.get().unwrap().db_connection);
     let cache = Cache::new(&GLOBAL_CONFIG.get().unwrap());
+    let traffic = Traffic::new(database.clone(), cache.clone());
     let pool = HttpPool::new();
 
     let sched = JobScheduler::new().await.unwrap();
@@ -129,7 +130,7 @@ async fn main() {
         .route("/api/lose/{connection_id}/{request_id}", get(lose))
         .layer(comression_layer)
         .layer(decomression_layer)
-        .with_state((database, cache, pool));
+        .with_state((database, cache, traffic, pool));
 
     let listener = tokio::net::TcpListener::bind(format!("{}:{}", GLOBAL_CONFIG.get().unwrap().listen_address, GLOBAL_CONFIG.get().unwrap().listen_port))
         .await
@@ -155,35 +156,13 @@ async fn main() {
 }
 
 async fn handler(
-    State((database, cache, pool)): State<(Database, Cache, HttpPool)>,
+    State((database, cache, traffic, pool)): State<(Database, Cache, Traffic, HttpPool)>,
     headers: HeaderMap,
     Json(request): Json<Request>)
 -> Result<Json<Response>, (StatusCode, String)> {
-    let qps = {
-        let qpsl = database.qpsla.clone();
-        let qps = qpsl.read().unwrap();
-
-        let limitation = qps.get(&format!("{}|{}|{}", -1, -1, "GLOBAL"));
-
-        match limitation {
-            Some(&limitation) => {
-                limitation
-            },
-            None => {
-                -1
-            },
-        }
-    };
-
-    if qps > 0 {
-        let q = cache.get_request_amount_connection_sec(-1, -1);
-
-        if q >= qps {
-            cache.update_performance(-1, -1, &"GLOBAL".to_string(), PERFORMANCE_BEYOND_VENDOR_QPS);
-            return Err((StatusCode::TOO_MANY_REQUESTS, "BEYOND QPS".to_string()));
-        }
-
-        cache.set_request_amount_connection_sec(-1, -1);
+    if !traffic.pass_traffic_control(-1, -1, &"".to_string()) {
+        cache.update_performance(-1, -1, &"".to_string(), PERFORMANCE_BEYOND_VENDOR_TRAFFIC_CONTROL);
+        return Err((StatusCode::TOO_MANY_REQUESTS, "TRAFFIC CONTROL LIMITATION".to_string()));
     }
 
     // step 1: check protocol
@@ -243,7 +222,13 @@ async fn handler(
         vendor_port = vps.get(tagid).unwrap();
     }
 
-    // step 4: check connection
+    // step 4: check vendor port anti fraud
+    if !traffic.pass_anti_fraud(-1, &request) {
+        cache.update_performance(-1, -1, &bundle, PERFORMANCE_VENDOR_ANTI_FRAUD);
+        return Err((StatusCode::FORBIDDEN, "ANTI FRAUD VIOLATION".to_string()));
+    }
+
+    // step 5: check connection
     let mut connections = {
         let cml = database.cma.clone();
         let cm = cml.read().unwrap();
@@ -266,7 +251,7 @@ async fn handler(
         return Err((StatusCode::BAD_REQUEST, "NO MATCHED CONNECTION".to_string()));
     }
 
-    // step 5: select connection
+    // step 6: select connection
     let mut client_mode = PORT_TYPE_SHARE;
 
     match vendor_port.2 {
@@ -310,48 +295,35 @@ async fn handler(
         _ => (),
     }
 
-    // step 6: send requests
+    // step 7: send requests
     let mut requests = Vec::new();
     let mut request_connections = Vec::new();
     for connection in connections.iter() {
         let client_port = connection.client_port;
 
-        // check qps limitation for bundle
-        let qps = {
-            let qpsl = database.qpsla.clone();
-            let qps = qpsl.read().unwrap();
-
-            let limitation = qps.get(&format!("{}|{}|{}", client_port, vendor_port.0, &bundle));
-
-            match limitation {
-                Some(&limitation) => {
-                    limitation
-                },
-                None => {
-                    -1
-                },
-            }
-        };
-
-        if qps == 0 {
-            cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_BEYOND_CLIENT_QPS);
+        // check traffic control
+        if !traffic.pass_traffic_control(client_port, -1, &"".to_string()) {
+            cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_BEYOND_CLIENT_TRAFFIC_CONTROL);
             continue;
         }
-
-        if qps > 0 {
-            let q = cache.get_request_amount_bundle(client_port, vendor_port.0, &bundle);
-
-            if q >= qps * 60 {
-                cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_BEYOND_CLIENT_QPS);
-                continue;
-            }
-
-            cache.set_request_amount_bundle(client_port, vendor_port.0, &bundle);
+        if !traffic.pass_traffic_control(client_port, vendor_port.0, &"".to_string()) {
+            cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_BEYOND_CLIENT_TRAFFIC_CONTROL);
+            continue;
+        }
+        if !traffic.pass_traffic_control(client_port, vendor_port.0, &bundle) {
+            cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_BEYOND_CLIENT_TRAFFIC_CONTROL);
+            continue;
         }
 
         // check key fields of connection
         if !match_key_field(&request, connection) {
             cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_LOST_KEY_FIELD);
+            continue;
+        }
+
+        // check client port anti fraud
+        if !traffic.pass_anti_fraud(client_port, &request) {
+            cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_CLIENT_ANTI_FRAUD);
             continue;
         }
 
@@ -364,7 +336,7 @@ async fn handler(
 
     let responses = join_all(requests).await;
 
-    // step 7: collect responses
+    // step 8: collect responses
     let mut valid_responses = Vec::<(&Response, &Connection)>::new();
     let mut errors = Vec::<String>::new();
 
@@ -447,7 +419,7 @@ async fn handler(
         }
     }
 
-    // step 8: select best response
+    // step 9: select best response
     let mut best_client_price = -1.0;
     let mut next_client_price = -1.0;
     let mut best_vendor_price = -1.0;
@@ -578,7 +550,7 @@ async fn handler(
         _ => (),
     }
 
-    // step 9: update price and notification urls
+    // step 10: update price and notification urls
     let mut final_response = best_client.unwrap().0.clone();
     let mut final_seatbid = final_response.seatbid.unwrap().clone();
     let final_connection = best_client.unwrap().1;
@@ -592,17 +564,20 @@ async fn handler(
         final_seatbid[0].bid[0].lurl = best_lurl;
     }
 
-    // step 10: prepare bundle name for tracking
+    // step 11: prepare bundle name for tracking
     cache.set_bundle(&final_seatbid[0].bid[0].id.clone().unwrap(), &bundle);
 
-    // step 11: update cost
+    // step 12: update traffic control
+    traffic.prepare_for_imp(final_connection.client_port, &final_seatbid[0].bid[0].id.clone().unwrap(), &request);
+
+    // step 13: update cost
     // save price early avoiding no win notice call
     let client_port = best_client.unwrap().1.client_port;
     let upstream_price = Price::to_upstream(best_client.unwrap().1, Some(best_client_price));
     let rebate_price = Price::to_rebate(best_client.unwrap().1, Some(best_client_price));
     cache.set_notification_cost(&final_seatbid[0].bid[0].id.clone().unwrap(), client_port, vendor_port.0, best_client_price as i32, upstream_price, rebate_price, best_vendor_price);
 
-    // step 12: update tracking
+    // step 14: update tracking
     let request_id = &final_seatbid[0].bid[0].id.clone().unwrap();
     let event = &mut final_seatbid[0].bid[0].media.display.event;
     event.push(Event {
@@ -1551,7 +1526,7 @@ fn match_key_field(request: &Request, connection: &Connection) -> bool {
 }
 
 async fn win(
-    State((database, cache, pool)): State<(Database, Cache, HttpPool)>,
+    State((database, cache, _traffic, pool)): State<(Database, Cache, Traffic, HttpPool)>,
     Path((connection_id, request_id)): Path<(i32, String)>,
     Query(query): Query<HashMap<String, String>>) {
     let connection = {
@@ -1627,7 +1602,7 @@ async fn win(
 }
 
 async fn lose(
-    State((database, cache, pool)): State<(Database, Cache, HttpPool)>,
+    State((database, cache, _traffic, pool)): State<(Database, Cache, Traffic, HttpPool)>,
     Path((connection_id, request_id)): Path<(i32, String)>,
     Query(query): Query<HashMap<String, String>>) {
     let connection = {
