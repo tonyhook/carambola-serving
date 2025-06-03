@@ -26,10 +26,14 @@ use service::*;
 pub struct EnvConfig {
     pub db_connection: String,
 
-    pub performance_connection: String,
-    pub flowcontrol_connection: String,
+    pub performance_connection_write: String,
+    pub notification_connection_write: String,
+    pub notification_connection_read: String,
     pub idgenerator_connection: String,
-    pub notification_connection: String,
+    pub flowcontrol_connection_write: String,
+    pub flowcontrol_connection_read: String,
+    pub antifraud_connection_write: String,
+    pub antifraud_connection_read: String,
     pub performance_interval: u32,
 
     pub serving_server: String,

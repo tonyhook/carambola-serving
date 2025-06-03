@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use chrono::{DateTime, Timelike, Utc};
 use r2d2::Pool;
@@ -34,22 +34,26 @@ pub const PERFORMANCE_LOST_KEY_FIELD:       &str = "ZM";
 
 #[derive(Clone)]
 pub struct Cache {
-    pub pa: Arc<Mutex<Pool<Client>>>, // performance
-    pub fa: Arc<Mutex<Pool<Client>>>, // anti fraud
-    pub sa: Arc<Mutex<Pool<Client>>>, // id generator
-    pub na: Arc<Mutex<Pool<Client>>>, // notification url & cost
+    pub pw: Pool<Client>, // performance (write)
+    pub nw: Pool<Client>, // notification bundle, url & cost (write)
+    pub nr: Pool<Client>, // notification bundle, url & cost (read)
+    pub s: Pool<Client>, // id generator
+    pub fcw: Pool<Client>, // flow control (read)
+    pub fcr: Pool<Client>, // flow control (write)
 }
 
 impl Cache {
 
-    pub fn new(config: &EnvConfig) -> Self {
-        redis::Client::open(config.performance_connection.clone()).unwrap();
+    // performance
 
+    pub fn new(config: &EnvConfig) -> Self {
         Self {
-            pa: Arc::new(Mutex::new(Pool::builder().build(redis::Client::open(config.performance_connection.clone()).unwrap()).unwrap())),
-            fa: Arc::new(Mutex::new(Pool::builder().build(redis::Client::open(config.flowcontrol_connection.clone()).unwrap()).unwrap())),
-            sa: Arc::new(Mutex::new(Pool::builder().build(redis::Client::open(config.idgenerator_connection.clone()).unwrap()).unwrap())),
-            na: Arc::new(Mutex::new(Pool::builder().build(redis::Client::open(config.notification_connection.clone()).unwrap()).unwrap())),
+            pw: Pool::builder().build(redis::Client::open(config.performance_connection_write.clone()).unwrap()).unwrap(),
+            nw: Pool::builder().build(redis::Client::open(config.notification_connection_write.clone()).unwrap()).unwrap(),
+            nr: Pool::builder().build(redis::Client::open(config.notification_connection_read.clone()).unwrap()).unwrap(),
+            s: Pool::builder().build(redis::Client::open(config.idgenerator_connection.clone()).unwrap()).unwrap(),
+            fcw: Pool::builder().build(redis::Client::open(config.flowcontrol_connection_write.clone()).unwrap()).unwrap(),
+            fcr: Pool::builder().build(redis::Client::open(config.flowcontrol_connection_read.clone()).unwrap()).unwrap(),
         }
     }
 
@@ -74,11 +78,7 @@ impl Cache {
         let key = format!("P{:0>2}{:0>2}:{}:{}:{}:{}", hour, minute_aligned, client_port, vendor_port, bundle.replace(":", "_"), event);
         let expire = 14400 - minute_fragment * 60 - second - GLOBAL_CONFIG.get().unwrap().performance_interval * 60;
 
-        let connection = {
-            let cl = self.pa.clone();
-            let rs_client = cl.lock().unwrap();
-            rs_client.get()
-        };
+        let connection = self.pw.get();
 
         match connection {
             Ok(mut connection) => {
@@ -101,63 +101,7 @@ impl Cache {
         }
     }
 
-    pub fn get_bundle(&self, request_id: &String) -> Option<String> {
-        let connection = {
-            let cl = self.na.clone();
-            let rs_client = cl.lock().unwrap();
-            rs_client.get()
-        };
-
-        match connection {
-            Ok(mut connection) => {
-                let key = format!("bundle:{}", request_id);
-
-                let result = redis::cmd("GET").arg(&key).query::<Option<String>>(&mut connection);
-                match result {
-                    Ok(result) => {
-                        return result;
-                    },
-                    Err(_) => {
-                        return None;
-                    }
-                }
-            },
-            Err(_) => {
-                return None;
-            },
-        }
-    }
-
-    pub fn set_bundle(&self, request_id: &String, bundle: &String) {
-        let connection = {
-            let cl = self.na.clone();
-            let rs_client = cl.lock().unwrap();
-            rs_client.get()
-        };
-
-        match connection {
-            Ok(mut connection) => {
-                let key = format!("bundle:{}", request_id);
-                let value = format!("{}", bundle.replace(":", "_"));
-
-                let result = redis::cmd("SET").arg(&key).arg(&value).query::<Option<i32>>(&mut connection);
-                match result {
-                    Ok(result) => {
-                        match result {
-                            Some(result) => {
-                                if result == 1 {
-                                    let _ = redis::cmd("EXPIRE").arg(&key).arg(86400).query::<Option<u32>>(&mut connection);
-                                }
-                            },
-                            None => (),
-                        }
-                    },
-                    Err(_) => (),
-                }
-            },
-            Err(_) => (),
-        }
-    }
+    // qps & anti fraud
 
     pub fn get_request_amount_connection(&self, client_port: i32, vendor_port: i32) -> i32 {
         let utc: DateTime<Utc> = Utc::now();
@@ -166,15 +110,11 @@ impl Cache {
 
         let key = format!("Q{:0>2}{:0>2}:{}:{}", hour, minute, client_port, vendor_port);
 
-        let connection = {
-            let cl = self.fa.clone();
-            let rs_client = cl.lock().unwrap();
-            rs_client.get()
-        };
+        let connection = self.fcr.get();
 
         match connection {
             Ok(mut connection) => {
-                let result = redis::cmd("GET").arg(key).query::<Option<i32>>(&mut connection);
+                let result = redis::cmd("GET").arg(&key).query::<Option<i32>>(&mut connection);
                 match result {
                     Ok(amount) => {
                         match amount {
@@ -190,6 +130,15 @@ impl Cache {
     }
 
     pub fn set_request_amount_connection(&self, client_port: i32, vendor_port: i32) {
+        let cache = self.clone();
+        tokio::spawn({
+            async move {
+                cache.set_request_amount_connection_async(client_port,vendor_port).await;
+            }
+        });
+    }
+
+    async fn set_request_amount_connection_async(&self, client_port: i32, vendor_port: i32) {
         let utc: DateTime<Utc> = Utc::now();
         let hour = utc.hour();
         let minute = utc.minute();
@@ -198,11 +147,75 @@ impl Cache {
         let key = format!("Q{:0>2}{:0>2}:{}:{}", hour, minute, client_port, vendor_port);
         let expire = 60 - second + GLOBAL_CONFIG.get().unwrap().performance_interval * 60;
 
-        let connection = {
-            let cl = self.fa.clone();
-            let rs_client = cl.lock().unwrap();
-            rs_client.get()
-        };
+        let connection = self.fcw.get();
+
+        match connection {
+            Ok(mut connection) => {
+                let result = redis::cmd("INCR").arg(&key).query::<Option<i32>>(&mut connection);
+                match result {
+                    Ok(result) => {
+                        match result {
+                            Some(result) => {
+                                if result == 1 {
+                                    let _ = redis::cmd("EXPIRE").arg(&key).arg(expire).query::<Option<u32>>(&mut connection);
+                                }
+                            },
+                            None => (),
+                        }
+                    },
+                    Err(_) => (),
+                }
+            },
+            Err(_) => (),
+        }
+    }
+
+    pub fn get_request_amount_connection_sec(&self, client_port: i32, vendor_port: i32) -> i32 {
+        let utc: DateTime<Utc> = Utc::now();
+        let hour = utc.hour();
+        let minute = utc.minute();
+        let second = utc.second();
+
+        let key = format!("Q{:0>2}{:0>2}{:0>2}:{}:{}", hour, minute, second, client_port, vendor_port);
+
+        let connection = self.fcr.get();
+
+        match connection {
+            Ok(mut connection) => {
+                let result = redis::cmd("GET").arg(&key).query::<Option<i32>>(&mut connection);
+                match result {
+                    Ok(amount) => {
+                        match amount {
+                            Some(amount) => amount,
+                            None => 0,
+                        }
+                    },
+                    Err(_) => std::i32::MAX,
+                }
+            },
+            Err(_) => std::i32::MAX,
+        }
+    }
+
+    pub fn set_request_amount_connection_sec(&self, client_port: i32, vendor_port: i32) {
+        let cache = self.clone();
+        tokio::spawn({
+            async move {
+                cache.set_request_amount_connection_sec_async(client_port,vendor_port).await;
+            }
+        });
+    }
+
+    async fn set_request_amount_connection_sec_async(&self, client_port: i32, vendor_port: i32) {
+        let utc: DateTime<Utc> = Utc::now();
+        let hour = utc.hour();
+        let minute = utc.minute();
+        let second = utc.second();
+
+        let key = format!("Q{:0>2}{:0>2}{:0>2}:{}:{}", hour, minute, second, client_port, vendor_port);
+        let expire = 120;
+
+        let connection = self.fcw.get();
 
         match connection {
             Ok(mut connection) => {
@@ -232,15 +245,11 @@ impl Cache {
 
         let key = format!("Q{:0>2}{:0>2}:{}:{}:{}", hour, minute, client_port, vendor_port, bundle.replace(":", "_"));
 
-        let connection = {
-            let cl = self.fa.clone();
-            let rs_client = cl.lock().unwrap();
-            rs_client.get()
-        };
+        let connection = self.fcr.get();
 
         match connection {
             Ok(mut connection) => {
-                let result = redis::cmd("GET").arg(key).query::<Option<i32>>(&mut connection);
+                let result = redis::cmd("GET").arg(&key).query::<Option<i32>>(&mut connection);
                 match result {
                     Ok(amount) => {
                         match amount {
@@ -256,6 +265,16 @@ impl Cache {
     }
 
     pub fn set_request_amount_bundle(&self, client_port: i32, vendor_port: i32, bundle: &str) {
+        let cache = self.clone();
+        let bundle = Arc::new(bundle.to_string());
+        tokio::spawn({
+            async move {
+                cache.set_request_amount_bundle_async(client_port,vendor_port, &bundle).await;
+            }
+        });
+    }
+
+    async fn set_request_amount_bundle_async(&self, client_port: i32, vendor_port: i32, bundle: &str) {
         let utc: DateTime<Utc> = Utc::now();
         let hour = utc.hour();
         let minute = utc.minute();
@@ -264,11 +283,7 @@ impl Cache {
         let key = format!("Q{:0>2}{:0>2}:{}:{}:{}", hour, minute, client_port, vendor_port, bundle.replace(":", "_"));
         let expire = 60 - second + GLOBAL_CONFIG.get().unwrap().performance_interval * 60;
 
-        let connection = {
-            let cl = self.fa.clone();
-            let rs_client = cl.lock().unwrap();
-            rs_client.get()
-        };
+        let connection = self.fcw.get();
 
         match connection {
             Ok(mut connection) => {
@@ -291,13 +306,11 @@ impl Cache {
         }
     }
 
+    // id generator
+
     pub fn get_sequence(&self) -> u64 {
         let mut sequence = 0;
-        let connection = {
-            let cl = self.sa.clone();
-            let rs_client = cl.lock().unwrap();
-            rs_client.get()
-        };
+        let connection = self.s.get();
 
         match connection {
             Ok(mut connection) => {
@@ -325,12 +338,71 @@ impl Cache {
         sequence
     }
 
-    pub fn get_notification_url(&self, request_id: &String, group: &str) -> Option<Vec<String>> {
-        let connection = {
-            let cl = self.na.clone();
-            let rs_client = cl.lock().unwrap();
-            rs_client.get()
-        };
+    // notification bundle, url & cost
+
+    pub fn get_bundle(&self, request_id: &String) -> Option<String> {
+        let connection = self.nr.get();
+
+        match connection {
+            Ok(mut connection) => {
+                let key = format!("bundle:{}", request_id);
+
+                let result = redis::cmd("GET").arg(&key).query::<Option<String>>(&mut connection);
+                match result {
+                    Ok(result) => {
+                        return result;
+                    },
+                    Err(_) => {
+                        return None;
+                    }
+                }
+            },
+            Err(_) => {
+                return None;
+            },
+        }
+    }
+
+    pub fn set_bundle(&self, request_id: &String, bundle: &String) {
+        let cache = self.clone();
+        let request_id = Arc::new(request_id.to_string());
+        let bundle = Arc::new(bundle.to_string());
+        tokio::spawn({
+            async move {
+                cache.set_bundle_async(&request_id, &bundle).await;
+            }
+        });
+    }
+
+    async fn set_bundle_async(&self, request_id: &String, bundle: &String) {
+        let connection = self.nw.get();
+
+        match connection {
+            Ok(mut connection) => {
+                let key = format!("bundle:{}", request_id);
+                let value = format!("{}", bundle.replace(":", "_"));
+
+                let result = redis::cmd("SET").arg(&key).arg(&value).query::<Option<String>>(&mut connection);
+                match result {
+                    Ok(result) => {
+                        match result {
+                            Some(result) => {
+                                if result == "OK" {
+                                    let _ = redis::cmd("EXPIRE").arg(&key).arg(86400).query::<Option<u32>>(&mut connection);
+                                }
+                            },
+                            None => (),
+                        }
+                    },
+                    Err(_) => (),
+                }
+            },
+            Err(_) => (),
+        }
+    }
+
+    pub fn get_notification_url(&self, request_id: &str, group: &str) -> Option<Vec<String>> {
+        let connection = self.nw.get();
 
         match connection {
             Ok(mut connection) => {
@@ -356,12 +428,20 @@ impl Cache {
         return None;
     }
 
-    pub fn set_notification_url(&self, request_id: &String, group: &str, urls: &Vec<String>) {
-        let connection = {
-            let cl = self.na.clone();
-            let rs_client = cl.lock().unwrap();
-            rs_client.get()
-        };
+    pub fn set_notification_url(&self, request_id: &str, group: &str, urls: &Vec<String>) {
+        let cache = self.clone();
+        let request_id = Arc::new(request_id.to_string());
+        let group = Arc::new(group.to_string());
+        let urls = Arc::new(urls.clone());
+        tokio::spawn({
+            async move {
+                cache.set_notification_url_async(&request_id, &group, &urls).await;
+            }
+        });
+    }
+
+    async fn set_notification_url_async(&self, request_id: &str, group: &str, urls: &Vec<String>) {
+        let connection = self.nw.get();
 
         match connection {
             Ok(mut connection) => {
@@ -389,23 +469,29 @@ impl Cache {
     }
 
     pub fn set_notification_cost(&self, request_id: &str, client_id: i32, vendor_id: i32, client_win_price: i32, vendor_win_price: i32) {
-        let connection = {
-            let cl = self.na.clone();
-            let rs_client = cl.lock().unwrap();
-            rs_client.get()
-        };
+        let cache = self.clone();
+        let request_id = Arc::new(request_id.to_string());
+        tokio::spawn({
+            async move {
+                cache.set_notification_cost_async(&request_id, client_id, vendor_id, client_win_price, vendor_win_price).await;
+            }
+        });
+    }
+
+    async fn set_notification_cost_async(&self, request_id: &str, client_id: i32, vendor_id: i32, client_win_price: i32, vendor_win_price: i32) {
+        let connection = self.nw.get();
 
         match connection {
             Ok(mut connection) => {
                 let key = format!("cost:{}", request_id);
                 let value = format!("{}:{}:{}:{}", client_id, vendor_id, client_win_price, vendor_win_price);
 
-                let result = redis::cmd("SET").arg(&key).arg(&value).query::<Option<i32>>(&mut connection);
+                let result = redis::cmd("SET").arg(&key).arg(&value).query::<Option<String>>(&mut connection);
                 match result {
                     Ok(result) => {
                         match result {
                             Some(result) => {
-                                if result == 1 {
+                                if result == "OK" {
                                     let _ = redis::cmd("EXPIRE").arg(&key).arg(86400).query::<Option<u32>>(&mut connection);
                                 }
                             },
