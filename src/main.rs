@@ -1703,6 +1703,7 @@ async fn query(request: &Request, connection: &Connection, pool: &HttpPool, cach
     match connection.client_code.as_str() {
         "dummy" => Dummy::request(request, connection, pool, cache).await,
         "adwanji" => Adwanji::request(request, connection, pool, cache).await,
+        "billowlink" => Billowlink::request(request, connection, pool, cache).await,
         "fanglin" => Fanglin::request(request, connection, pool, cache).await,
         "fwb" => Fwb::request(request, connection, pool, cache).await,
         "huichuan" => Huichuan::request(request, connection, pool, cache).await,
@@ -1728,6 +1729,7 @@ async fn bidding_notify_win(url: String, win_price: i32, next_price: i32, iv: &S
     match connection.client_code.as_str() {
         "dummy" => Dummy::bidding_notify_win(url, win_price, next_price, iv, connection, pool).await,
         "adwanji" => Adwanji::bidding_notify_win(url, win_price, next_price, iv, connection, pool).await,
+        "billowlink" => Billowlink::bidding_notify_win(url, win_price, next_price, iv, connection, pool).await,
         "fanglin" => Fanglin::bidding_notify_win(url, win_price, next_price, iv, connection, pool).await,
         "fwb" => Fwb::bidding_notify_win(url, win_price, next_price, iv, connection, pool).await,
         "huichuan" => Huichuan::bidding_notify_win(url, win_price, next_price, iv, connection, pool).await,
@@ -1750,6 +1752,7 @@ async fn bidding_notify_lose(url: String, lose_price: i32, lose_reason: i32, los
     match connection.client_code.as_str() {
         "dummy" => Dummy::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection, pool).await,
         "adwanji" => Adwanji::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection, pool).await,
+        "billowlink" => Billowlink::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection, pool).await,
         "fanglin" => Fanglin::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection, pool).await,
         "fwb" => Fwb::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection, pool).await,
         "huichuan" => Huichuan::bidding_notify_lose(url, lose_price, lose_reason, lose_adn_name, iv, connection, pool).await,

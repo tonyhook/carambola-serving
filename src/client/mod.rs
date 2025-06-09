@@ -5,6 +5,7 @@ pub mod result_message;
 pub mod client;
 pub mod dummy;
 pub mod adwanji;
+pub mod billowlink;
 pub mod fanglin;
 pub mod fwb;
 pub mod huichuan;
@@ -28,6 +29,7 @@ pub use client::Client;
 
 pub use dummy::Dummy;
 pub use adwanji::Adwanji;
+pub use billowlink::Billowlink;
 pub use fanglin::Fanglin;
 pub use fwb::Fwb;
 pub use huichuan::Huichuan;
