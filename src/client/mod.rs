@@ -19,6 +19,7 @@ pub mod ruiang;
 pub mod sweet;
 pub mod ustars;
 pub mod yiba;
+pub mod yiwei;
 pub mod zhanqing;
 
 pub use assets::Assets;
@@ -43,4 +44,5 @@ pub use ruiang::Ruiang;
 pub use sweet::Sweet;
 pub use ustars::Ustars;
 pub use yiba::Yiba;
+pub use yiwei::Yiwei;
 pub use zhanqing::Zhanqing;
