@@ -11,6 +11,7 @@ pub struct HttpPool {
     pub pool_huichuan: Arc<RwLock<Client>>,
     pub pool_jmedium: Arc<RwLock<Client>>,
     pub pool_kkmh: Arc<RwLock<Client>>,
+    pub pool_leidong: Arc<RwLock<Client>>,
     pub pool_mfocus: Arc<RwLock<Client>>,
     pub pool_mobrtb: Arc<RwLock<Client>>,
     pub pool_mygolbs: Arc<RwLock<Client>>,
@@ -70,6 +71,13 @@ impl HttpPool {
                 .pool_idle_timeout(Duration::from_millis(1000))
                 .build().unwrap())),
             pool_kkmh: Arc::new(RwLock::new(reqwest::ClientBuilder::new()
+                .tcp_keepalive(Duration::from_secs(60))
+                .gzip(true)
+                .no_brotli()
+                .no_deflate()
+                .pool_idle_timeout(Duration::from_millis(1000))
+                .build().unwrap())),
+            pool_leidong: Arc::new(RwLock::new(reqwest::ClientBuilder::new()
                 .tcp_keepalive(Duration::from_secs(60))
                 .gzip(true)
                 .no_brotli()

@@ -300,6 +300,7 @@ dependencies = [
  "openssl-sys",
  "r2d2",
  "redis",
+ "regex",
  "reqwest",
  "serde",
  "serde-aux",
