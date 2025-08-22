@@ -9,7 +9,7 @@ pub struct MobrtbRequest {
     pub id: Option<String>,
     pub version: String,
     pub ads: Vec<MobrtbAdFormat>,
-    pub app: MobrtbApp,
+    pub app: Option<MobrtbApp>,
     pub device: MobrtbDevice,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub user: Option<MobrtbUser>,

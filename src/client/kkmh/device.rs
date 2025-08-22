@@ -8,14 +8,18 @@ pub struct KkmhDevice {
     pub ua: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub geo: Option<KkmhGeo>,
-    pub ip: String,
-    pub devt: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ip: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub devt: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub make: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub model: Option<String>,
-    pub os: String,
-    pub osv: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub os: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub osv: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hwv: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -26,7 +30,8 @@ pub struct KkmhDevice {
     pub ppi: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ct: Option<i32>,
-    pub ca: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ca: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub imei: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]

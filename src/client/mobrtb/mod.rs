@@ -52,20 +52,14 @@ impl Client for Mobrtb {
                 ad_unit_token: unit_token.to_string(),
                 width: {
                     match request.item[0].spec.display.w {
-                        Some(w) => w,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.item[0].spec.display.w is required for upstream".to_string(),
-                        }),
+                        Some(w) => Some(w),
+                        None => None,
                     }
                 },
                 height: {
                     match request.item[0].spec.display.h {
-                        Some(h) => h,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.item[0].spec.display.h is required for upstream".to_string(),
-                        }),
+                        Some(h) => Some(h),
+                        None => None,
                     }
                 },
                 floor_price: Some(Price::to_client(connection, request.item[0].flr.map(f64::from))),
@@ -73,7 +67,7 @@ impl Client for Mobrtb {
             }].to_vec(),
             app: {
                 match &request.context.app {
-                    Some(app) => MobrtbApp {
+                    Some(app) => Some(MobrtbApp {
                         name: {
                             match &connection.client_media_appname {
                                 Some(client_media_appname) => client_media_appname.clone(),
@@ -82,138 +76,96 @@ impl Client for Mobrtb {
                         },
                         version: {
                             match &app.ver {
-                                Some(ver) => ver.clone(),
-                                None => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.app.ver is required for upstream".to_string(),
-                                }),
+                                Some(ver) => Some(ver.clone()),
+                                None => None,
                             }
                         },
                         bundle: {
                             match &connection.client_media_apppackage {
-                                Some(client_media_apppackage) => client_media_apppackage.clone(),
+                                Some(client_media_apppackage) => Some(client_media_apppackage.clone()),
                                 None => {
                                     match &app.bundle {
-                                        Some(bundle) => bundle.clone(),
-                                        None => return Err(ResultMessage {
-                                            code: 998,
-                                            message: "request.context.app.bundle is required for upstream".to_string(),
-                                        }),
+                                        Some(bundle) => Some(bundle.clone()),
+                                        None => None,
                                     }
                                 },
                             }
                         },
                         deeplink_mode: Some(1),
-                    },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.app is required for upstream".to_string(),
                     }),
+                    None => None,
                 }
             },
             device: MobrtbDevice {
                 ip: {
                     match &request.context.device.ip {
-                        Some(ip) => ip.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.ip is required for upstream".to_string(),
-                        }),
+                        Some(ip) => Some(ip.clone()),
+                        None => None,
                     }
                 },
                 ipv6: request.context.device.ipv6.clone(),
                 user_agent: request.context.device.ua.clone(),
                 make: {
                     match &request.context.device.make {
-                        Some(make) => make.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.make is required for upstream".to_string(),
-                        }),
+                        Some(make) => Some(make.clone()),
+                        None => None,
                     }
                 },
                 brand: {
                     match &request.context.device.brand {
-                        Some(brand) => brand.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.brand is required for upstream".to_string(),
-                        }),
+                        Some(brand) => Some(brand.clone()),
+                        None => None,
                     }
                 },
                 model: {
                     match &request.context.device.model {
-                        Some(model) => model.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.model is required for upstream".to_string(),
-                        }),
+                        Some(model) => Some(model.clone()),
+                        None => None,
                     }
                 },
                 os: {
                     match request.context.device.os {
                         Some(os) => {
                             match os {
-                                2 => "android".to_string(),
-                                13 => "ios".to_string(),
-                                _ => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.os should be 2/13 for upstream".to_string(),
-                                }),
+                                2 => Some("android".to_string()),
+                                13 => Some("ios".to_string()),
+                                _ => None,
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.os is required for upstream".to_string(),
-                        }),
+                        None => None,
                     }
                 },
                 os_version: {
                     match &request.context.device.osv {
-                        Some(osv) => osv.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.osv is required for upstream".to_string(),
-                        }),
+                        Some(osv) => Some(osv.clone()),
+                        None => None,
                     }
                 },
                 connection_type: {
                     match &request.context.device.contype {
                         Some(contype) => {
                             match contype {
-                                2 => "wifi".to_string(),
-                                4 => "2g".to_string(),
-                                5 => "3g".to_string(),
-                                6 => "4g".to_string(),
-                                7 => "5g".to_string(),
-                                _ => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.contype should be 2/4/5/6/7 for upstream".to_string(),
-                                }),
+                                2 => Some("wifi".to_string()),
+                                4 => Some("2g".to_string()),
+                                5 => Some("3g".to_string()),
+                                6 => Some("4g".to_string()),
+                                7 => Some("5g".to_string()),
+                                _ => None,
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.contype is required for upstream".to_string(),
-                        }),
+                        None => None,
                     }
                 },
                 orientation: {
                     match request.context.device.orientation {
                         Some(orientation) => {
                             match orientation {
-                                501 => "portrait".to_string(),
-                                502 => "landscape".to_string(),
-                                _ => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.contype should be 501/502 for upstream".to_string(),
-                                }),
+                                501 => Some("portrait".to_string()),
+                                502 => Some("landscape".to_string()),
+                                _ => None,
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.orientation is required for upstream".to_string(),
-                        }),
+                        None => None,
                     }
                 },
                 plmn: {

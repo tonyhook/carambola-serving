@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Deserialize)]
 pub struct LeidongAppRequest {
     #[serde(rename(deserialize = "bundleId", serialize = "bundleId"))]
-    pub bundle_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bundle_id: Option<String>,
     #[serde(rename(deserialize = "storeUrl", serialize = "storeUrl"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub store_url: Option<String>,

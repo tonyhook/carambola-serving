@@ -6,8 +6,10 @@ use super::LeidongGeo;
 #[derive(Deserialize)]
 pub struct LeidongDevice {
     pub ua: String,
-    pub ipv4: String,
-    pub ipv6: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ipv4: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ipv6: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub lmt: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -39,9 +41,12 @@ pub struct LeidongDevice {
     pub h: i32,
     pub w: i32,
     pub os: i32,
-    pub osv: String,
-    pub make: String,
-    pub model: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub osv: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub make: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
     pub carrier: i32,
     #[serde(rename(deserialize = "connType", serialize = "connType"))]
     pub conn_type: i32,

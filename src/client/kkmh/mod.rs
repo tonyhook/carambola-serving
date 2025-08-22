@@ -142,36 +142,27 @@ impl Client for Kkmh {
                 },
                 name: {
                     match &connection.client_media_appname {
-                        Some(client_media_appname) => client_media_appname.clone(),
+                        Some(client_media_appname) => Some(client_media_appname.clone()),
                         None => {
                             match &request.context.app {
-                                Some(app) => app.name.clone(),
-                                None => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.app is required for upstream".to_string(),
-                                }),
+                                Some(app) => Some(app.name.clone()),
+                                None => None,
                             }
                         },
                     }
                 },
                 bundle: {
                     match &connection.client_media_apppackage {
-                        Some(client_media_apppackage) => client_media_apppackage.clone(),
+                        Some(client_media_apppackage) => Some(client_media_apppackage.clone()),
                         None => {
                             match &request.context.app {
                                 Some(app) => {
                                     match &app.bundle {
-                                        Some(bundle) => bundle.clone(),
-                                        None => return Err(ResultMessage {
-                                            code: 998,
-                                            message: "request.context.app.bundle is required for upstream".to_string(),
-                                        }),
+                                        Some(bundle) => Some(bundle.clone()),
+                                        None => None,
                                     }
                                 }
-                                None => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.app is required for upstream".to_string(),
-                                }),
+                                None => None,
                             }
                         },
                     }
@@ -180,17 +171,11 @@ impl Client for Kkmh {
                     match &request.context.app {
                         Some(app) => {
                             match &app.ver {
-                                Some(ver) => ver.clone(),
-                                None => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.app.ver is required for upstream".to_string(),
-                                }),
+                                Some(ver) => Some(ver.clone()),
+                                None => None,
                             }
                         }
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.app is required for upstream".to_string(),
-                        }),
+                        None => None,
                     }
                 },
                 keywords: {
@@ -206,20 +191,26 @@ impl Client for Kkmh {
                         Some(geo) => Some(KkmhGeo {
                             lat: {
                                 match geo.lat {
-                                    Some(lat) => lat,
-                                    None => return Err(ResultMessage {
-                                        code: 998,
-                                        message: "request.context.device.geo.lat is required for upstream".to_string(),
-                                    }),
+                                    Some(lat) => {
+                                        if lat > 90.0 || lat < -90.0 {
+                                            0.0
+                                        } else {
+                                            lat
+                                        }
+                                    },
+                                    None => 0.0,
                                 }
                             },
                             lon: {
                                 match geo.lon {
-                                    Some(lon) => lon,
-                                    None => return Err(ResultMessage {
-                                        code: 998,
-                                        message: "request.context.device.geo.lon is required for upstream".to_string(),
-                                    }),
+                                    Some(lon) => {
+                                        if lon > 180.0 || lon < -180.0 {
+                                            0.0
+                                        } else {
+                                            lon
+                                        }
+                                    },
+                                    None => 0.0,
                                 }
                             },
                             country: geo.country.clone(),
@@ -231,27 +222,21 @@ impl Client for Kkmh {
                 },
                 ip: {
                     match &request.context.device.ip {
-                        Some(ip) => ip.clone(),
+                        Some(ip) => Some(ip.clone()),
                         None => {
                             match &request.context.device.ipv6  {
-                                Some(ipv6) => ipv6.clone(),
-                                None => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.ip is required for upstream".to_string(),
-                                }),
+                                Some(ipv6) => Some(ipv6.clone()),
+                                None => None,
                             }
                         },
                     }
                 },
                 devt: {
                     match &request.context.device.devicetype {
-                        Some(4) => 1,
-                        Some(5) => 2,
-                        Some(_) => 3,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.devicetype is required for upstream".to_string(),
-                        }),
+                        Some(4) => Some(1),
+                        Some(5) => Some(2),
+                        Some(_) => Some(3),
+                        None => None,
                     }
                 },
                 make: {
@@ -262,21 +247,15 @@ impl Client for Kkmh {
                 },
                 os: {
                     match &request.context.device.os {
-                        Some(2) => "Android".to_string(),
-                        Some(13) => "iOS".to_string(),
-                        _ => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.os should be 2/13 for upstream".to_string(),
-                        }),
+                        Some(2) => Some("Android".to_string()),
+                        Some(13) => Some("iOS".to_string()),
+                        _ => None,
                     }
                 },
                 osv: {
                     match &request.context.device.osv {
-                        Some(osv) => osv.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.osv is required for upstream".to_string(),
-                        }),
+                        Some(osv) => Some(osv.clone()),
+                        None => None,
                     }
                 },
                 hwv: {
@@ -299,26 +278,20 @@ impl Client for Kkmh {
                         Some(6) => Some(4),
                         Some(7) => Some(5),
                         Some(_) => Some(0),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.contype is required for upstream".to_string(),
-                        }),
+                        None => None,
                     }
                 },
                 ca: {
                     match &request.context.device.carrier {
                         Some(carrier) => {
                             match carrier.as_str() {
-                                "cmcc" => 1,
-                                "unicom" => 3,
-                                "telecom" => 4,
-                                _ => 20,
+                                "cmcc" => Some(1),
+                                "unicom" => Some(3),
+                                "telecom" => Some(4),
+                                _ => Some(20),
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.carrier is required for upstream".to_string(),
-                        }),
+                        None => None,
                     }
 
                 },
@@ -456,10 +429,7 @@ impl Client for Kkmh {
                                     let utc = chrono_tz::UTC.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap();
                                     Some((t.timestamp() - utc.timestamp()).to_string())
                                 },
-                                Err(_) => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.timezone is malformat for upstream, should be like Asia/Shanghai".to_string(),
-                                }),
+                                Err(_) => None,
                             }
                         },
                         None => None,

@@ -72,17 +72,11 @@ impl Client for Leidong {
                         match &request.context.app {
                             Some(app) => {
                                 match &app.bundle {
-                                    Some(bundle) => bundle.clone(),
-                                    None => return Err(ResultMessage {
-                                        code: 998,
-                                        message: "request.context.app.bundle is required for upstream".to_string(),
-                                    }),
+                                    Some(bundle) => Some(bundle.clone()),
+                                    None => None,
                                 }
                             },
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.app is required for upstream".to_string(),
-                            }),
+                            None => None,
                         }
                     },
                     store_url: {
@@ -90,10 +84,7 @@ impl Client for Leidong {
                             Some(app) => {
                                 app.storeurl.clone()
                             },
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.app is required for upstream".to_string(),
-                            }),
+                            None => None,
                         }
                     },
                     app_name: {
@@ -101,10 +92,7 @@ impl Client for Leidong {
                             Some(app) => {
                                 Some(app.name.clone())
                             },
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.app is required for upstream".to_string(),
-                            }),
+                            None => None,
                         }
                     },
                     domain: {
@@ -112,10 +100,7 @@ impl Client for Leidong {
                             Some(app) => {
                                 app.domain.clone()
                             },
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.app is required for upstream".to_string(),
-                            }),
+                            None => None,
                         }
                     },
                     publisher_name: {
@@ -126,10 +111,7 @@ impl Client for Leidong {
                             Some(app) => {
                                 app.ver.clone()
                             },
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.app is required for upstream".to_string(),
-                            }),
+                            None => None,
                         }
                     },
                     privacy_link: {
@@ -326,21 +308,18 @@ impl Client for Leidong {
                     ipv4: {
                         match &request.context.device.ip {
                             Some(ip) => {
-                                ip.clone()
+                                Some(ip.clone())
                             },
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.device.ip is required for upstream".to_string(),
-                            }),
+                            None => None,
                         }
                     },
                     ipv6: {
                         match &request.context.device.ipv6 {
                             Some(ipv6) => {
-                                ipv6.clone()
+                                Some(ipv6.clone())
                             },
                             None => {
-                                "::".to_string()
+                                Some("::".to_string())
                             },
                         }
                     },
@@ -465,29 +444,20 @@ impl Client for Leidong {
                     },
                     osv: {
                         match &request.context.device.osv {
-                            Some(osv) => osv.clone(),
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.device.osv is required for upstream".to_string(),
-                            }),
+                            Some(osv) => Some(osv.clone()),
+                            None => None,
                         }
                     },
                     make: {
                         match &request.context.device.make {
-                            Some(make) => make.clone(),
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.device.make is required for upstream".to_string(),
-                            }),
+                            Some(make) => Some(make.clone()),
+                            None => None,
                         }
                     },
                     model: {
                         match &request.context.device.model {
-                            Some(model) => model.clone(),
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.device.model is required for upstream".to_string(),
-                            }),
+                            Some(model) => Some(model.clone()),
+                            None => None,
                         }
                     },
                     carrier: {

@@ -3,17 +3,25 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize)]
 #[derive(Deserialize)]
 pub struct MobrtbDevice {
-    pub ip: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ip: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ipv6: Option<String>,
     pub user_agent: String,
-    pub make: String,
-    pub brand: String,
-    pub model: String,
-    pub os: String,
-    pub os_version: String,
-    pub connection_type: String,
-    pub orientation: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub make: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub brand: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub os: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub os_version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub connection_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub orientation: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub plmn: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
