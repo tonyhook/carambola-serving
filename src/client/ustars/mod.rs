@@ -132,43 +132,28 @@ impl Client for Ustars {
                 match &request.context.app {
                     Some(app) => {
                         match &app.bundle {
-                            Some(bundle) => bundle.clone(),
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.app.bundle is required for upstream".to_string(),
-                            }),
+                            Some(bundle) => Some(bundle.clone()),
+                            None => None,
                         }
                     },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.app is required for upstream".to_string(),
-                    }),
+                    None => None,
                 }
             },
             app_version: {
                 match &request.context.app {
                     Some(app) => {
                         match &app.ver {
-                            Some(ver) => ver.clone(),
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.app.ver is required for upstream".to_string(),
-                            }),
+                            Some(ver) => Some(ver.clone()),
+                            None => None,
                         }
                     },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.app is required for upstream".to_string(),
-                    }),
+                    None => None,
                 }
             },
             ip: {
                 match &request.context.device.ip {
-                    Some(ip) => ip.clone(),
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.ip is required for upstream".to_string(),
-                    }),
+                    Some(ip) => Some(ip.clone()),
+                    None => None,
                 }
             },
             user_agent: {
@@ -182,20 +167,14 @@ impl Client for Ustars {
             },
             model: {
                 match &request.context.device.model {
-                    Some(model) => model.clone(),
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.model is required for upstream".to_string(),
-                    }),
+                    Some(model) => Some(model.clone()),
+                    None => None,
                 }
             },
             brand: {
                 match &request.context.device.brand {
-                    Some(brand) => brand.clone(),
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.brand is required for upstream".to_string(),
-                    }),
+                    Some(brand) => Some(brand.clone()),
+                    None => None,
                 }
             },
             os_type: {
@@ -263,17 +242,14 @@ impl Client for Ustars {
             },
             dpi: {
                 match request.context.device.ppi {
-                    Some(ppi) => ppi,
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.ppi is required for upstream".to_string(),
-                    }),
+                    Some(ppi) => Some(ppi),
+                    None => Some(160),
                 }
             },
             density: {
                 match request.context.device.pxratio {
-                    Some(pxratio) => pxratio,
-                    None => 2.25,
+                    Some(pxratio) => Some(pxratio),
+                    None => Some(2.25),
                 }
             },
             imsi: {

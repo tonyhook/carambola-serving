@@ -397,17 +397,14 @@ impl Client for Fwb {
             }].to_vec(),
             app: {
                 match &request.context.app {
-                    Some(app) => FwbApp {
+                    Some(app) => Some(FwbApp {
                         bundle: {
                             match &connection.client_media_apppackage {
-                                Some(client_media_apppackage) => client_media_apppackage.clone(),
+                                Some(client_media_apppackage) => Some(client_media_apppackage.clone()),
                                 None => {
                                     match &app.bundle {
-                                        Some(bundle) => bundle.clone(),
-                                        None => return Err(ResultMessage {
-                                            code: 998,
-                                            message: "request.context.app.bundle is required for upstream".to_string(),
-                                        }),
+                                        Some(bundle) => Some(bundle.clone()),
+                                        None => None,
                                     }
                                 },
                             }
@@ -427,22 +424,16 @@ impl Client for Fwb {
                         keywords: {
                             None
                         },
-                    },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.app is required for upstream".to_string(),
                     }),
+                    None => None,
                 }
             },
             device: FwbDevice {
                 os: {
                     match &request.context.device.os {
-                        Some(2) => "android".to_string(),
-                        Some(13) => "ios".to_string(),
-                        _ => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.os should be 2/13 for upstream".to_string(),
-                        }),
+                        Some(2) => Some("android".to_string()),
+                        Some(13) => Some("ios".to_string()),
+                        _ => None,
                     }
                 },
                 osv: {
@@ -535,58 +526,40 @@ impl Client for Fwb {
                 },
                 ip: {
                     match &request.context.device.ip {
-                        Some(ip) => ip.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.ip is required for upstream".to_string(),
-                        }),
+                        Some(ip) => Some(ip.clone()),
+                        None => None,
                     }
                 },
                 ipv6: request.context.device.ipv6.clone(),
                 ua: request.context.device.ua.clone(),
                 connectiontype: {
                     match request.context.device.contype {
-                        Some(contype) => contype,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.contype is required for upstream".to_string(),
-                        }),
+                        Some(contype) => Some(contype),
+                        None => None,
                     }
                 },
                 devicetype: {
                     match request.context.device.devicetype {
-                        Some(devicetype) => devicetype,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.devicetype is required for upstream".to_string(),
-                        }),
+                        Some(devicetype) => Some(devicetype),
+                        None => None,
                     }
                 },
                 make: {
                     match &request.context.device.make {
-                        Some(make) => make.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.make is required for upstream".to_string(),
-                        }),
+                        Some(make) => Some(make.clone()),
+                        None => None,
                     }
                 },
                 model: {
                     match &request.context.device.model {
-                        Some(model) => model.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.model is required for upstream".to_string(),
-                        }),
+                        Some(model) => Some(model.clone()),
+                        None => None,
                     }
                 },
                 brand: {
                     match &request.context.device.brand {
-                        Some(brand) => brand.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.brand is required for upstream".to_string(),
-                        }),
+                        Some(brand) => Some(brand.clone()),
+                        None => None,
                     }
                 },
                 carrier: {
@@ -607,20 +580,14 @@ impl Client for Fwb {
                 },
                 screenheight: {
                     match request.context.device.h {
-                        Some(h) => h,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.h is required for upstream".to_string(),
-                        }),
+                        Some(h) => Some(h),
+                        None => None,
                     }
                 },
                 screenwidth: {
                     match request.context.device.w {
-                        Some(w) => w,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.w is required for upstream".to_string(),
-                        }),
+                        Some(w) => Some(w),
+                        None => None,
                     }
                 },
                 orientation: {

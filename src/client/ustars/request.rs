@@ -32,13 +32,18 @@ pub struct UstarsRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub openudid_md5: Option<String>,
     pub app_name: String,
-    pub app_package: String,
-    pub app_version: String,
-    pub ip: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub app_package: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub app_version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ip: Option<String>,
     pub user_agent: String,
     pub mac: String,
-    pub model: String,
-    pub brand: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub brand: Option<String>,
     pub os_type: String,
     pub os_version: String,
     pub device_width: i32,
@@ -55,8 +60,10 @@ pub struct UstarsRequest {
     pub max_duration: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_length: Option<i32>,
-    pub dpi: i32,
-    pub density: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dpi: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub density: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub imsi: Option<String>,
     pub network: String,

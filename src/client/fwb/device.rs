@@ -5,7 +5,8 @@ use super::FwbGeo;
 #[derive(Serialize)]
 #[derive(Deserialize)]
 pub struct FwbDevice {
-    pub os: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub os: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub osv: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -38,21 +39,29 @@ pub struct FwbDevice {
     pub mac: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub macidmd5: Option<String>,
-    pub ip: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ip: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ipv6: Option<String>,
     pub ua: String,
-    pub connectiontype: i32,
-    pub devicetype: i32,
-    pub make: String,
-    pub model: String,
-    pub brand: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub connectiontype: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub devicetype: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub make: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub brand: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub carrier: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub flashver: Option<String>,
-    pub screenheight: i32,
-    pub screenwidth: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub screenheight: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub screenwidth: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub orientation: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
