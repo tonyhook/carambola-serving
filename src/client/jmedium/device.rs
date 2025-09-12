@@ -77,8 +77,10 @@ pub struct JmediumDevice {
     pub imsi: Option<String>,
     pub width: i32,
     pub height: i32,
-    pub density: f64,
-    pub dpi: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub density: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dpi: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ppi: Option<i32>,
     pub orientation: i32,

@@ -402,20 +402,14 @@ impl Client for Jmedium {
                 },
                 density: {
                     match request.context.device.pxratio {
-                        Some(pxratio) => pxratio,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.pxratio is required for upstream".to_string(),
-                        }),
+                        Some(pxratio) => Some(pxratio),
+                        None => None,
                     }
                 },
                 dpi: {
                     match request.context.device.ppi {
-                        Some(ppi) => ppi,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.ppi is required for upstream".to_string(),
-                        }),
+                        Some(ppi) => Some(ppi),
+                        None => None,
                     }
                 },
                 ppi: {
