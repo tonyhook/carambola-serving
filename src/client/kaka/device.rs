@@ -1,0 +1,69 @@
+use serde::{Deserialize, Serialize};
+
+use super::{KakaCaid, KakaNetwork};
+
+#[derive(Serialize)]
+#[derive(Deserialize)]
+pub struct KakaDevice {
+    #[serde(rename = "androidId")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub android_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub oaid: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub idfa: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub caids: Option<Vec<KakaCaid>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub aaid: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub paid: Option<String>,
+    #[serde(rename = "type")]
+    pub device_type: i32,
+    pub platform: i32,
+    #[serde(rename = "osVersion")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub os_version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub make: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
+    pub ua: String,
+    pub ip: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mac: Option<String>,
+    pub network: KakaNetwork,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dpi: Option<i32>,
+    #[serde(rename = "screenHeight")]
+    pub screen_height: i32,
+    #[serde(rename = "screenWidth")]
+    pub screen_width: i32,
+    #[serde(rename = "installedApp")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub installed_app: Option<String>,
+    #[serde(rename = "bootMark")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub boot_mark: Option<String>,
+    #[serde(rename = "updateMark")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub update_mark: Option<String>,
+    #[serde(rename = "deviceInitTime")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub device_init_time: Option<String>,
+    #[serde(rename = "systemUpdateTime")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub system_update_time: Option<String>,
+    #[serde(rename = "systemBootTime")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub system_boot_time: Option<String>,
+    #[serde(rename = "appstoreVersion")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub appstore_version: Option<String>,
+    #[serde(rename = "hmscoreVersion")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hmscore_version: Option<String>,
+    #[serde(rename = "appList")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub app_list: Option<Vec<String>>,
+}
