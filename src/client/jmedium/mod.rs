@@ -869,7 +869,7 @@ impl Client for Jmedium {
                                 Some(kwai_landing_page_url) => kwai_landing_page_url.clone(),
                                 None => {
                                     match &ad_info.landing_page_url {
-                                        Some(landing_page_url) => replace_macro(&landing_page_url),
+                                        Some(landing_page_url) => replace_macro(&request, &identifiers, &landing_page_url),
                                         None => "".to_string(),
                                     }
                                 },
@@ -896,7 +896,7 @@ impl Client for Jmedium {
                                         nurl = nurl.replace("__MF_AD_REQID__", request_id.to_string().as_str());
                                         nurl = nurl.replace("__MF_WIN_ECPM__", "__WIN_PRICE__");
                                         nurl = nurl.replace("__MF_LOSS_PR__", "__2ND_PRICE__");
-                                        burl.push(replace_macro(&nurl));
+                                        burl.push(replace_macro(&request, &identifiers, &nurl));
                                     }
                                     Some(burl)
                                 },
@@ -912,7 +912,7 @@ impl Client for Jmedium {
                                         nurl = nurl.replace("__MF_AD_REQID__", request_id.to_string().as_str());
                                         nurl = nurl.replace("__MF_WIN_ECPM__", "__LOSE_PRICE__");
                                         nurl = nurl.replace("__MF_LOSS_PR__", "");
-                                        lurl.push(replace_macro(&nurl));
+                                        lurl.push(replace_macro(&request, &identifiers, &nurl));
                                     }
                                     Some(lurl)
                                 },
@@ -1253,7 +1253,7 @@ impl Client for Jmedium {
                                         event_vec.push(Event {
                                             eventtype: 501,
                                             method: 1,
-                                            url: replace_macro(url),
+                                            url: replace_macro(&request, &identifiers, url),
                                             header: None,
                                             content: None,
                                         });
@@ -1262,7 +1262,7 @@ impl Client for Jmedium {
                                         event_vec.push(Event {
                                             eventtype: 502,
                                             method: 1,
-                                            url: replace_macro(url),
+                                            url: replace_macro(&request, &identifiers, url),
                                             header: None,
                                             content: None,
                                         });
@@ -1273,7 +1273,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 501,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1287,7 +1287,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 509,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1301,7 +1301,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 509,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1315,7 +1315,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 502,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1329,7 +1329,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 601,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1343,7 +1343,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 602,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1357,7 +1357,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 607,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1371,7 +1371,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 608,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1385,7 +1385,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 609,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1399,7 +1399,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 603,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1413,7 +1413,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 604,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1427,7 +1427,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 605,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1441,7 +1441,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 503,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1455,7 +1455,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 504,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1469,7 +1469,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 505,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1483,7 +1483,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 502,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1497,7 +1497,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 506,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1511,7 +1511,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 507,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1525,7 +1525,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 701,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1539,7 +1539,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 502,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1553,7 +1553,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 705,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1567,7 +1567,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 724,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1581,7 +1581,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 711,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1595,7 +1595,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 710,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1609,7 +1609,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 708,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1623,7 +1623,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 709,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1637,7 +1637,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 712,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1651,7 +1651,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 713,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1665,7 +1665,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 714,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1679,7 +1679,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 715,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1693,7 +1693,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 716,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1707,7 +1707,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 717,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1721,7 +1721,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 718,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1735,7 +1735,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 702,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1749,7 +1749,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 703,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1763,7 +1763,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 704,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1777,7 +1777,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 706,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1791,7 +1791,7 @@ impl Client for Jmedium {
                                                 event_vec.push(Event {
                                                     eventtype: 707,
                                                     method: 1,
-                                                    url: replace_macro(url),
+                                                    url: replace_macro(&request, &identifiers, url),
                                                     header: None,
                                                     content: None,
                                                 });
@@ -1811,7 +1811,7 @@ impl Client for Jmedium {
                                                         event_vec.push(Event {
                                                             eventtype: 502,
                                                             method: 502,
-                                                            url: replace_macro(click_area_report_urls),
+                                                            url: replace_macro(&request, &identifiers, click_area_report_urls),
                                                             header: None,
                                                             content: Some(format!("{{\
                                                                 \"sld\":\"__SLD__\",\
@@ -1888,7 +1888,7 @@ impl Client for Jmedium {
 
 }
 
-fn replace_macro(orig: &String) -> String {
+fn replace_macro(request: &Request, identifiers: &Identifiers, orig: &String) -> String {
     let mut replaced = orig.clone();
 
     replaced = replaced.replace("__MF_IFR__", "__LOSE_REASON__");
@@ -1912,6 +1912,8 @@ fn replace_macro(orig: &String) -> String {
     replaced = replaced.replace("__MF_PLAY_PROGRESS_RATE__", "__VIDEO_PLAY_RATIO__");
     replaced = replaced.replace("__MF_EVENT_TIME_MS__", "__EVENT_TIME_START__");
     replaced = replaced.replace("__MF_EVENT_TIME__", "__EVENT_TIME_START_S__");
+    replaced = replaced.replace("__MF_EVENT_START_TIME_MS__", "__EVENT_TIME_START__");
+    replaced = replaced.replace("__MF_EVENT_START_TIME__", "__EVENT_TIME_START_S__");
     replaced = replaced.replace("__MF_EVENT_END_TIME_MS__", "__EVENT_TIME_END__");
     replaced = replaced.replace("__MF_EVENT_END_TIME__", "__EVENT_TIME_END_S__");
     replaced = replaced.replace("__MF_CLICK_ID__", "__CLICK_ID__");
@@ -1940,6 +1942,96 @@ fn replace_macro(orig: &String) -> String {
     replaced = replaced.replace("__MF_TURN_Y__", "__TURN_Y__");
     replaced = replaced.replace("__MF_TURN_Z__", "__TURN_Z__");
     replaced = replaced.replace("__MF_TURN_TIME__", "__TURN_TIME__");
+
+    replaced = replaced.replace("__MF_SLOT_SCREEN_X__", "__LT_X__");
+    replaced = replaced.replace("__MF_SLOT_SCREEN_Y__", "__LT_Y__");
+
+    replace_macro_device(request, identifiers, &replaced)
+}
+
+fn replace_macro_device(request: &Request, identifiers: &Identifiers, orig: &String) -> String {
+    let mut replaced = orig.clone();
+
+    match identifiers.get_id(511, 0) {
+        Some(uid) => {
+            replaced = replaced.replace("__MF_MAC__", &uid.id);
+
+            let md5 = md5::compute(&uid.id.replace(":", "").as_bytes());
+            replaced = replaced.replace("__MF_MAC3__", &format!("{:x}", md5));
+        },
+        None => (),
+    }
+    match identifiers.get_id(512, 0) {
+        Some(uid) => {
+            replaced = replaced.replace("__MF_MAC2__", &uid.id.to_lowercase());
+        },
+        None => (),
+    }
+    match identifiers.get_id(509, 0) {
+        Some(uid) => {
+            replaced = replaced.replace("__MF_ANDROID_ID__", &uid.id);
+
+            let mut hasher = Sha1::new();
+            hasher.update(uid.id.clone());
+            let result = format!("{:x}", hasher.finalize());
+            replaced = replaced.replace("__MF_ANDROID_ID2__", result.as_str());
+            replaced = replaced.replace("__MF_ANDROID_ID3__", result.to_uppercase().as_str());
+        },
+        None => (),
+    }
+    match identifiers.get_id(501, 0) {
+        Some(uid) => {
+            replaced = replaced.replace("__MF_IMEI__", &uid.id);
+
+            let md5 = md5::compute(uid.id.clone());
+            replaced = replaced.replace("__MF_IMEI2__", &format!("{:x}", md5));
+
+            let mut hasher = Sha1::new();
+            hasher.update(uid.id.clone());
+            let result = format!("{:x}", hasher.finalize());
+            replaced = replaced.replace("__MF_IMEI3__", result.to_uppercase().as_str());
+        },
+        None => (),
+    }
+    match identifiers.get_id(502, 0) {
+        Some(uid) => {
+            replaced = replaced.replace("__MF_IMEI2__", &uid.id.to_lowercase());
+        },
+        None => (),
+    }
+    match identifiers.get_id(505, 0) {
+        Some(uid) => {
+            replaced = replaced.replace("__MF_OAID__", &uid.id);
+        },
+        None => (),
+    }
+    match identifiers.get_id(507, 0) {
+        Some(uid) => {
+            replaced = replaced.replace("__MF_IDFA__", &uid.id);
+
+            let md5 = md5::compute(uid.id.clone());
+            replaced = replaced.replace("__MF_IDFA2__", &format!("{:X}", md5));
+
+            let mut hasher = Sha1::new();
+            hasher.update(uid.id.clone());
+            let result = format!("{:x}", hasher.finalize());
+            replaced = replaced.replace("__MF_IDFA3__", result.to_uppercase().as_str());
+        },
+        None => (),
+    }
+    match identifiers.get_id(508, 0) {
+        Some(uid) => {
+            replaced = replaced.replace("__MF_IDFA2__", &uid.id.to_uppercase());
+        },
+        None => (),
+    }
+
+    match request.context.device.pxratio {
+        Some(pxratio) => {
+            replaced = replaced.replace("__MF_DENSITY__", &format!("{:.2}", pxratio));
+        },
+        None => (),
+    }
 
     replaced
 }
