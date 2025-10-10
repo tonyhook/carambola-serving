@@ -1410,7 +1410,7 @@ fn replace_macro(orig: &String) -> String {
 
     replaced = replaced.replace("__AIT__", "__SLD__");
     replaced = replaced.replace("__LATITUDE__", "__LAT__");
-    replaced = replaced.replace("__LONGITUDE__", "__LNG__");
+    replaced = replaced.replace("__LONGITUDE__", "__LON__");
 
     replaced = replaced.replace("__TS_SECOND__", "__TS_S__");
 

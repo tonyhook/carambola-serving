@@ -622,15 +622,10 @@ impl Client for Billowlink {
                 device_initialize_time: {
                     match &request.context.device.inittime {
                         Some(inittime) => inittime.clone(),
-                        None => {
-                            match &request.context.device.birthtime {
-                                Some(birthtime) => birthtime.clone(),
-                                None => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.inittime is required for upstream".to_string(),
-                                }),
-                            }
-                        },
+                        None => return Err(ResultMessage {
+                            code: 998,
+                            message: "request.context.device.inittime is required for upstream".to_string(),
+                        }),
                     }
                 },
                 boot_time_sec: {

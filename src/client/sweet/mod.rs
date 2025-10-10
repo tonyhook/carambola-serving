@@ -357,16 +357,34 @@ impl Client for Sweet {
                         }
                     },
                     mcc: {
-                        "460".to_string()
+                        match &request.context.device.mccmnc {
+                            Some(mccmnc) => {
+                                if mccmnc.len() >= 3 {
+                                    mccmnc[0..3].to_string()
+                                } else {
+                                    "460".to_string()
+                                }
+                            },
+                            None => "460".to_string(),
+                        }
                     },
                     mnc: {
-                        match &request.context.device.carrier {
-                            Some(carrier) => {
-                                match carrier.as_str() {
-                                    "cmcc" => "00".to_string(),
-                                    "unicom" => "01".to_string(),
-                                    "telecom" => "03".to_string(),
-                                    _ => "00".to_string(),
+                        match &request.context.device.mccmnc {
+                            Some(mccmnc) => {
+                                if mccmnc.len() >= 6 {
+                                    mccmnc[4..6].to_string()
+                                } else {
+                                    match &request.context.device.carrier {
+                                        Some(carrier) => {
+                                            match carrier.as_str() {
+                                                "cmcc" => "00".to_string(),
+                                                "unicom" => "01".to_string(),
+                                                "telecom" => "11".to_string(),
+                                                _ => "00".to_string(),
+                                            }
+                                        },
+                                        None => "00".to_string(),
+                                    }
                                 }
                             },
                             None => "00".to_string(),
@@ -468,7 +486,7 @@ impl Client for Sweet {
                     }
                 },
                 serialno: {
-                    Some("".to_string())
+                    request.context.device.serial.clone()
                 },
                 an_id: {
                     match identifiers.get_id(509, 0) {
@@ -1384,7 +1402,7 @@ fn replace_macro(orig: &String) -> String {
     replaced = replaced.replace("__ADOWN_Y__", "__ABS_DOWN_Y__");
     replaced = replaced.replace("__AUP_X__", "__ABS_UP_X__");
     replaced = replaced.replace("__AUP_Y__", "__ABS_UP_Y__");
-    replaced = replaced.replace("__LONGITUDE__", "__LNG__");
+    replaced = replaced.replace("__LONGITUDE__", "__LON__");
     replaced = replaced.replace("__LATITUDE__", "__LAT__");
     replaced = replaced.replace("__DISPLAY_LUX__", "__LT_X__");
     replaced = replaced.replace("__DISPLAY_LUY__", "__LT_Y__");

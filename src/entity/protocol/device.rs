@@ -17,6 +17,8 @@ pub struct Device {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub model: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub serial: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub os: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub osv: Option<String>,
@@ -81,6 +83,8 @@ pub struct Device {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub carrier: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub mccmnc: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub contype: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ip: Option<String>,
@@ -92,10 +96,6 @@ pub struct Device {
     #[serde(deserialize_with = "convert_string_from_number")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub boottime: Option<String>,
-    #[serde(default)]
-    #[serde(deserialize_with = "convert_string_from_number")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub birthtime: Option<String>,
     #[serde(default)]
     #[serde(deserialize_with = "convert_string_from_number")]
     #[serde(skip_serializing_if = "Option::is_none")]

@@ -282,11 +282,7 @@ impl Client for Spinview {
                 }
             },
             serialno: {
-                None
-                // match request.context.device.serial {
-                //     Some(serial) => Some(serial.clone()),
-                //     None => None,
-                // }
+                request.context.device.serial.clone()
             },
             screen_orientation: {
                 match request.context.device.orientation {

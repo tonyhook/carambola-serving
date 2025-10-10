@@ -124,12 +124,7 @@ impl Client for Huichuan {
                 dit: {
                     match &request.context.device.inittime {
                         Some(inittime) => Some(inittime.clone()),
-                        None => {
-                            match &request.context.device.birthtime {
-                                Some(birthtime) => Some(birthtime.clone()),
-                                None => None,
-                            }
-                        },
+                        None => None,
                     }
                 },
                 sut: {

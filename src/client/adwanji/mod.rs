@@ -643,7 +643,7 @@ impl Client for Adwanji {
                     }
                 },
                 serialno: {
-                    None
+                    request.context.device.serial.clone()
                 },
                 language: {
                     match &request.context.device.lang {
@@ -727,15 +727,10 @@ impl Client for Adwanji {
                 birthtime: {
                     match &request.context.device.inittime {
                         Some(inittime) => inittime.clone(),
-                        None => {
-                            match &request.context.device.birthtime {
-                                Some(birthtime) => birthtime.clone(),
-                                None => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.inittime is required for upstream".to_string(),
-                                }),
-                            }
-                        },
+                        None => return Err(ResultMessage {
+                            code: 998,
+                            message: "request.context.device.inittime is required for upstream".to_string(),
+                        }),
                     }
                 },
                 osupdatetime: {
@@ -1933,7 +1928,7 @@ fn replace_macro(orig: &String) -> String {
     replaced = replaced.replace("__BTN_L_UP_X__", "__BUTTON_LT_X__");
     replaced = replaced.replace("__BTN_L_UP_Y__", "__BUTTON_LT_Y__");
 
-    replaced = replaced.replace("__LONGITUDE__", "__LNG__");
+    replaced = replaced.replace("__LONGITUDE__", "__LON__");
     replaced = replaced.replace("__LATITUDE__", "__LAT__");
 
     replaced = replaced.replace("__E_END_S__", "__EVENT_TIME_END_S__");

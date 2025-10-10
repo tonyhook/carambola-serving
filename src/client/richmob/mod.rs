@@ -703,24 +703,45 @@ impl Client for Richmob {
                     }
                 },
                 mcc: {
-                    "460".to_string()
+                    match &request.context.device.mccmnc {
+                        Some(mccmnc) => {
+                            if mccmnc.len() >= 3 {
+                                mccmnc[0..3].to_string()
+                            } else {
+                                "460".to_string()
+                            }
+                        },
+                        None => "460".to_string(),
+                    }
                 },
                 mnc: {
-                    match &request.context.device.carrier {
-                        Some(carrier) => {
-                            match carrier.as_str() {
-                                "cmcc" => "00".to_string(),
-                                "unicom" => "01".to_string(),
-                                "telecom" => "11".to_string(),
-                                _ => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.carrier should be cmcc/unicom/telecom for upstream".to_string(),
-                                }),
+                    match &request.context.device.mccmnc {
+                        Some(mccmnc) => {
+                            if mccmnc.len() >= 6 {
+                                mccmnc[4..6].to_string()
+                            } else {
+                                match &request.context.device.carrier {
+                                    Some(carrier) => {
+                                        match carrier.as_str() {
+                                            "cmcc" => "00".to_string(),
+                                            "unicom" => "01".to_string(),
+                                            "telecom" => "11".to_string(),
+                                            _ => return Err(ResultMessage {
+                                                code: 998,
+                                                message: "request.context.device.carrier should be cmcc/unicom/telecom for upstream".to_string(),
+                                            }),
+                                        }
+                                    },
+                                    None => return Err(ResultMessage {
+                                        code: 998,
+                                        message: "request.context.device.carrier should be cmcc/unicom/telecom for upstream".to_string(),
+                                    }),
+                                }
                             }
                         },
                         None => return Err(ResultMessage {
                             code: 998,
-                            message: "request.context.device.carrier is required for upstream".to_string(),
+                            message: "request.context.device.carrier should be cmcc/unicom/telecom for upstream".to_string(),
                         }),
                     }
                 },
@@ -733,12 +754,7 @@ impl Client for Richmob {
                 sys_init_time: {
                     match &request.context.device.inittime {
                         Some(inittime) => Some(inittime.clone()),
-                        None => {
-                            match &request.context.device.birthtime {
-                                Some(birthtime) => Some(birthtime.clone()),
-                                None => None,
-                            }
-                        },
+                        None => None,
                     }
                 },
                 api_level: {
@@ -2387,7 +2403,7 @@ fn replace_macro(orig: &String) -> String {
     replaced = replaced.replace("__TIME_START_SE__", "__EVENT_TIME_START_S__");
     replaced = replaced.replace("__TIME_END_SE__", "__EVENT_TIME_END_S__");
 
-    replaced = replaced.replace("__LONGITUDE__", "__LNG__");
+    replaced = replaced.replace("__LONGITUDE__", "__LON__");
     replaced = replaced.replace("__LATITUDE__", "__LAT__");
     replaced = replaced.replace("__USERAGENT__", "__UA__");
 

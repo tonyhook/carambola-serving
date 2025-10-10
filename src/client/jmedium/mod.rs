@@ -429,7 +429,7 @@ impl Client for Jmedium {
                     }
                 },
                 serialno: {
-                    None
+                    request.context.device.serial.clone()
                 },
             },
             device_id: JmediumDeviceId {
@@ -644,28 +644,35 @@ impl Client for Jmedium {
                     }
                 },
                 mcc: {
-                    match &request.context.device.carrier {
-                        Some(carrier) => {
-                            match carrier.as_str() {
-                                "cmcc" => Some("460".to_string()),
-                                "unicom" => Some("460".to_string()),
-                                "telecom" => Some("460".to_string()),
-                                "cbn" => Some("460".to_string()),
-                                _ => None,
+                    match &request.context.device.mccmnc {
+                        Some(mccmnc) => {
+                            if mccmnc.len() >= 3 {
+                                Some(mccmnc[0..3].to_string())
+                            } else {
+                                Some("460".to_string())
                             }
                         },
                         None => None,
                     }
                 },
                 mnc: {
-                    match &request.context.device.carrier {
-                        Some(carrier) => {
-                            match carrier.as_str() {
-                                "cmcc" => Some("00".to_string()),
-                                "unicom" => Some("01".to_string()),
-                                "telecom" => Some("03".to_string()),
-                                "cbn" => Some("15".to_string()),
-                                _ => None,
+                    match &request.context.device.mccmnc {
+                        Some(mccmnc) => {
+                            if mccmnc.len() >= 6 {
+                                Some(mccmnc[4..6].to_string())
+                            } else {
+                                match &request.context.device.carrier {
+                                    Some(carrier) => {
+                                        match carrier.as_str() {
+                                            "cmcc" => Some("00".to_string()),
+                                            "unicom" => Some("01".to_string()),
+                                            "telecom" => Some("03".to_string()),
+                                            "cbn" => Some("15".to_string()),
+                                            _ => None,
+                                        }
+                                    },
+                                    None => None,
+                                }
                             }
                         },
                         None => None,

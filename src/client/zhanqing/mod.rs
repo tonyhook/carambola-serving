@@ -1556,7 +1556,7 @@ fn replace_macro(orig: &String) -> String {
     let mut replaced = orig.clone();
 
     replaced = replaced.replace("$$LAT$$", "__LAT__");
-    replaced = replaced.replace("$$LON$$", "__LNG__");
+    replaced = replaced.replace("$$LON$$", "__LON__");
     replaced = replaced.replace("$$DOWN_X$$", "__ABS_DOWN_X__");
     replaced = replaced.replace("$$DOWN_Y$$", "__ABS_DOWN_Y__");
     replaced = replaced.replace("$$UP_X$$", "__ABS_UP_X__");

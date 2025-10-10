@@ -441,8 +441,7 @@ impl Client for Yiwei {
                         format!("{}", time.format("%Y-%m-%d %H:%M:%S.3fZ"))
                     },
                     serial_no: {
-                        // request.context.device.serial.clone()
-                        None
+                        request.context.device.serial.clone()
                     },
                     meid: {
                         match identifiers.get_id(520, 0) {
@@ -566,48 +565,39 @@ impl Client for Yiwei {
                                 }
                             },
                             mcc: {
-                                match &request.context.device.carrier {
-                                    Some(carrier) => {
-                                        match carrier.as_str() {
-                                            "cmcc" => Some(460),
-                                            "unicom" => Some(460),
-                                            "telecom" => Some(460),
-                                            _ => None,
+                                match &request.context.device.mccmnc {
+                                    Some(mccmnc) => {
+                                        if mccmnc.len() >= 3 {
+                                            Some(mccmnc[0..3].to_string().parse().unwrap())
+                                        } else {
+                                            Some(460)
                                         }
                                     },
                                     None => None,
                                 }
-                                // match &request.context.device.mccmnc {
-                                //     Some(mccmnc) => {
-                                //         match mccmnc.split("-").nth(0) {
-                                //             Some(mcc) => mcc.to_string(),
-                                //             None => None,
-                                //         }
-                                //     },
-                                //     None => None,
-                                // }
                             },
                             mnc: {
-                                match &request.context.device.carrier {
-                                    Some(carrier) => {
-                                        match carrier.as_str() {
-                                            "cmcc" => Some(0),
-                                            "unicom" => Some(1),
-                                            "telecom" => Some(3),
-                                            _ => None,
+                                match &request.context.device.mccmnc {
+                                    Some(mccmnc) => {
+                                        if mccmnc.len() >= 6 {
+                                            Some(mccmnc[4..6].to_string().parse().unwrap())
+                                        } else {
+                                            match &request.context.device.carrier {
+                                                Some(carrier) => {
+                                                    match carrier.as_str() {
+                                                        "cmcc" => Some(0),
+                                                        "unicom" => Some(1),
+                                                        "telecom" => Some(3),
+                                                        "cbn" => Some(15),
+                                                        _ => None,
+                                                    }
+                                                },
+                                                None => None,
+                                            }
                                         }
                                     },
                                     None => None,
                                 }
-                                // match &request.context.device.mccmnc {
-                                //     Some(mccmnc) => {
-                                //         match mccmnc.split("-").nth(1) {
-                                //             Some(mcc) => mcc.to_string(),
-                                //             None => None,
-                                //         }
-                                //     },
-                                //     None => None,
-                                // }
                             },
                             conn_type: {
                                 match &request.context.device.contype {

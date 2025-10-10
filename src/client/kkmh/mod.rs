@@ -372,12 +372,7 @@ impl Client for Kkmh {
                 device_init_sec: {
                     match &request.context.device.inittime {
                         Some(inittime) => Some(inittime.split(".").nth(0).unwrap().to_string()),
-                        None => {
-                            match &request.context.device.birthtime {
-                                Some(birthtime) => Some(birthtime.split(".").nth(0).unwrap().to_string()),
-                                None => None,
-                            }
-                        },
+                        None => None,
                     }
                 },
                 device_start_sec: {

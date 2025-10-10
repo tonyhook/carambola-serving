@@ -436,15 +436,10 @@ impl Client for Fanglin {
                 birth_time: {
                     match &request.context.device.inittime {
                         Some(inittime) => inittime.clone(),
-                        None => {
-                            match &request.context.device.birthtime {
-                                Some(birthtime) => birthtime.clone(),
-                                None => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.inittime is required for upstream".to_string(),
-                                }),
-                            }
-                        },
+                        None => return Err(ResultMessage {
+                            code: 998,
+                            message: "request.context.device.inittime is required for upstream".to_string(),
+                        }),
                     }
                 },
                 os_com_time: {

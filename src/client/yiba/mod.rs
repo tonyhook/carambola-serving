@@ -504,12 +504,7 @@ impl Client for Yiba {
             sys_init_time: {
                 match &request.context.device.inittime {
                     Some(inittime) => Some(inittime.split(".").nth(0).unwrap().to_string()),
-                    None => {
-                        match &request.context.device.birthtime {
-                            Some(birthtime) => Some(birthtime.split(".").nth(0).unwrap().to_string()),
-                            None => None,
-                        }
-                    },
+                    None => None,
                 }
             },
             sys_start_nano_sec: {
@@ -521,12 +516,7 @@ impl Client for Yiba {
             sys_init_nano_sec: {
                 match &request.context.device.inittime {
                     Some(inittime) => Some(inittime.clone()),
-                    None => {
-                        match &request.context.device.birthtime {
-                            Some(birthtime) => Some(birthtime.clone()),
-                            None => None,
-                        }
-                    },
+                    None => None,
                 }
             },
             sys_memory_size: {
@@ -1472,7 +1462,7 @@ fn replace_macro(orig: &String) -> String {
     replaced = replaced.replace("__UP_SCREEN_X__", "__ABS_DOWN_X__");
     replaced = replaced.replace("__UP_SCREEN_Y__", "__ABS_DOWN_Y__");
 
-    replaced = replaced.replace("__LONGITUDE__", "__LNG__");
+    replaced = replaced.replace("__LONGITUDE__", "__LON__");
     replaced = replaced.replace("__LATITUDE__", "__LAT__");
 
     replaced = replaced.replace("__DURATION__", "__VIDEO_TIME__");

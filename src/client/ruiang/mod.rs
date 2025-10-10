@@ -322,7 +322,10 @@ impl Client for Ruiang {
                 }
             },
             serialno: {
-                "".to_string()
+                match &request.context.device.serial {
+                    Some(serial) => serial.clone(),
+                    None => "".to_string(),
+                }
             },
             rom_ver: {
                 match &request.context.device.romv {
