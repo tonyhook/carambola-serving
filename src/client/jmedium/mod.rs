@@ -1950,6 +1950,9 @@ fn replace_macro(request: &Request, identifiers: &Identifiers, orig: &String) ->
     replaced = replaced.replace("__MF_TURN_Z__", "__TURN_Z__");
     replaced = replaced.replace("__MF_TURN_TIME__", "__TURN_TIME__");
 
+    replaced = replaced.replace("__MF_MAX_SHOW_RATIO__", "__SHOW_RATIO__");
+    replaced = replaced.replace("__MF_SHOW_TIME_MS__", "__SHOW_DURATION__");
+    replaced = replaced.replace("__MF_SHOW_TIME__", "__SHOW_DURATION_S__");
     replaced = replaced.replace("__MF_SLOT_SCREEN_X__", "__LT_X__");
     replaced = replaced.replace("__MF_SLOT_SCREEN_Y__", "__LT_Y__");
 

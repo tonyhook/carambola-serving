@@ -1945,7 +1945,7 @@ fn replace_macro(orig: &String) -> String {
     replaced = replaced.replace("__TYPE__", "__VIDEO_PLAY_TYPE__");
     replaced = replaced.replace("__BEHAVIOR__", "__VIDEO_PLAY_TRIGGER__");
     replaced = replaced.replace("__STATUS__", "__VIDEO_PLAY_STATUS__");
-    replaced = replaced.replace("__P_DURATION__", "__VIDEO_PLAY_DURATION__");
+    replaced = replaced.replace("__P_DURATION__", "__VIDEO_PLAY_PROGRESS_L__");
     replaced = replaced.replace("_RATE__", "__VIDEO_PLAY_RATIO__");
 
     replaced

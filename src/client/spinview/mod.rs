@@ -132,7 +132,7 @@ impl Client for Spinview {
                 }
             },
             os_name: {
-                None
+                request.context.device.uiname.clone()
             },
             os_version: {
                 request.context.device.osv.clone()
@@ -1483,8 +1483,11 @@ fn replace_macro(orig: &String) -> String {
     replaced = replaced.replace("__TYPE__", "__VIDEO_PLAY_TYPE__");
     replaced = replaced.replace("__BEHAIVOR__", "__VIDEO_PLAY_TRIGGER__");
     replaced = replaced.replace("__STATUS__", "__VIDEO_PLAY_STATUS__");
-    replaced = replaced.replace("__PLAY_TIME__", "__VIDEO_PLAY_PROGRESS_S__");
-    replaced = replaced.replace("__PLAY_TIME_MS__", "__VIDEO_PLAY_PROGRESS__");
+    replaced = replaced.replace("__PLAY_TIME__", "__VIDEO_PLAY_DURATION_S__");
+    replaced = replaced.replace("__PLAY_TIME_MS__", "__VIDEO_PLAY_DURATION__");
+    replaced = replaced.replace("__STAY_D__", "__VIDEO_PAGE_DURATION__");
+    replaced = replaced.replace("__SHOW_DURATIONS__", "__SHOW_DURATIONS__");
+    replaced = replaced.replace("__SHOW_RATE__", "__SHOW_RATIO__");
 
     replaced
 }

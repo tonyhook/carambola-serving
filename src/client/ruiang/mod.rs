@@ -985,7 +985,7 @@ fn replace_macro(orig: &String) -> String {
     replaced = replaced.replace("__VIDEO_EVENTTIME__", "__TS__");
     replaced = replaced.replace("__VIDEO_PROCESS__", "__VIDEO_PLAY_PROGRESS__");
     replaced = replaced.replace("__VIDEO_MS_PROCESS__", "__VIDEO_PLAY_PROGRESS_S__");
-    replaced = replaced.replace("__VIDEO_TIME_PROCESS__", "__VIDEO_PLAY_DURATION__");
+    replaced = replaced.replace("__VIDEO_TIME_PROCESS__", "__VIDEO_PLAY_PROGRESS_L__");
     replaced = replaced.replace("__VIDEO_RATE__", "__VIDEO_PLAY_RATIO__");
     replaced = replaced.replace("__VIDEO_DURATION__", "__VIDEO_TIME__");
     replaced = replaced.replace("__BEHAVIOR__", "__VIDEO_PLAY_TRIGGER_0__");

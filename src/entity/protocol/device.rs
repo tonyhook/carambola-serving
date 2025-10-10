@@ -41,6 +41,8 @@ pub struct Device {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hmsv: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub uiname: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub uiv: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub storename: Option<String>,
