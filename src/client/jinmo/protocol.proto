@@ -1,0 +1,383 @@
+syntax = "proto3";
+
+package protobuf.jinmo.rtbSsp;
+
+message BidRequest {
+  string request_id = 1;        // 每次请求的唯一标识
+  int64 media_id = 2;
+  repeated ImpObject imp_list = 3;        // 广告位曝光的Imp对象列表
+  DeviceObject device = 4;        // 设备信息
+  MediaAppObject media_app = 5;        // 媒体app信息
+  UserObject user = 6;        // 用户信息
+  string api_version = 7;        // api版本号
+  int64 timeout = 8;         // 请求的过期时间戳 毫秒
+}
+
+// 曝光Imp信息
+message ImpObject {
+  string imp_id = 1;    // imp的曝光id
+  string space_id = 2;    // 广告位ID
+  string keyword = 3;    // 搜索关键词
+  repeated string tags = 4;    // 标签信息
+  int32 space_width = 5;    // 广告位宽度(像素)
+  int32 space_height = 6;    // 广告位高度(像素)
+  repeated MaterialType material_type = 7;    // 广告位支持的素材类型
+  AdSlotType ad_slot_type = 8;    // 广告位类型
+  repeated InteractionType interaction_type = 9;    // 曝光支持的交互类型
+  BidType bid_type = 10;   // 支持的竞价类型 枚举值：1.cpm; 2.cpc;
+  int64 cpm_bid_floor = 11;   // rtb-cpm竞价底价(分/千次曝光)
+  int64 cpc_bid_floor = 12;   // rtb-cpm竞价底价(分/点击)
+}
+
+// 设备信息
+message DeviceObject {
+  DeviceType device_type = 1;    // 设备类型
+  OsType os_type = 2;    // 操作系统类型
+  string os_version = 3;    // 操作系统版本；如果获取不到，填写unknown(小写） os版本
+  string model = 4;    // 设备型号 如：iPhoneX, KNT-AL10
+  string brand = 5;    // 设备厂商/品牌 如：huawei、xiaomi
+  int32 screen_width = 6;    // 设备竖屏状态时的屏幕宽。取设备物理像素
+  int32 screen_height = 7;    // 设备竖屏状态时的屏幕高。取设备物理像素
+  DeviceIdObject device_ids = 8;    // 设备id信息
+  GeoObject geo = 9;    // 设备实时地理位置(有助于提升填充&出价)
+  string user_agent = 10;   // 客户端标准User Agent
+  NetworkObject network = 11;   // 网络信息
+  string country = 12;   // 国家，⽰例："CN"
+  string language = 13;   // 语⾔，⽰例："zh-Hans-CN"
+  string time_zone = 14;    // 时区，⽰例："28800"
+  int32 cpu_num = 15;   // CPU数⽬
+  int64 system_disk_size = 16;    // 设备磁盘大小(单位：字节；优化广告填充）
+  int64 system_available_size = 17;    // 设备可用磁盘大小(单位：字节；优化广告填充）
+  int64 system_memory_size = 18;    // 设备内存大小(单位：字节；优化广告填充）
+  string hwv = 19;   // 硬件版本, 如 "HUAWEI R9"
+  int32  ppi = 20;   // 每英⼨像素个数，单位：ppi
+  string rom_version = 21;   // ⼿机 ROM 版本
+  string hms_ver = 22;   // 华为安卓设备的HMS Core的版本号，保留原始值
+  string hwag_ver = 23;   // 华为安卓设备的AG（应⽤市 场）的版本号，保留原始值
+  string device_name = 24;   // 设备名称的md5值
+  string device_name_md5 = 25;   // 设备名称的md5值
+  string mac = 26;   // 设备MAC地址
+  string mac_md5 = 27;   // 设备MAC地址 md5 32位小写
+  string sys_compiling_time = 28;   // 系统编译时间getLong(“ro.build.date.utc”) * 1000
+  string os_birth_time = 29;   // 设备初始化时间(9位小数，PDD使用) 例：1647545718.123456789
+  string os_boot_time = 30;   // 设备启动时间(整数，PDD和中广协CAID使用)
+  string os_boot_mark = 31;   // 设备启动标识 原值示例：取原值进⾏传输 iOS：1623815045.970028 Android：ec7f4f33-411a-47bc-8067-744a4e7e0723
+  string os_update_time = 32;   // 设备更新时间(6位小数，PDD和中广协CAID使用)
+  string os_update_mark = 33;   // 设备更新标识 原值示例：取原值进⾏传输 iOS：1581141691.570419583 Android：1004697.709999999
+  string client_time = 34;    // 客⼾端的时间。格式为 yyyyMM-dd HH:mm:ss.SSSZ{+|-}HhMm 格 式的字符串
+  repeated string installed_packages = 35;   // 设备上已安装的包名(有助于提升填充&出价)
+
+  string app_store_version = 36;     // 应用商店版本
+  string imsi = 37;                  // IMSI卡串信息
+  BatteryStatus battery_status = 38; // 电池充电状态(iOS 设备必须)
+  int32 battery_power = 39;          // 电池电量比例(iOS 设备必须)例如: 60 代表 60%，80 代表 80%
+  double cpu_freq = 40;              // 处理器主频,iOS 必传
+  OrientationType orientation = 41;      // 屏幕方向 0:未知 1:竖屏 2:横屏
+  int32 logical_width = 42;          // 屏幕逻辑分辨率宽
+  int32 logical_height = 43;         // 屏幕逻辑分辨率高
+  int32 dpi = 44;                    // DPI: 屏幕每英寸的像素数
+  float density = 45;                // density 屏幕密度值，通常是 1.0, 2.0, 3.0 等
+  int32 osl = 46;                    // 安卓API版本,如23
+  string serial_no = 47;             // 移动设备序列号
+  string hardware_model = 48;       // iOS硬件型号版本model, IOS需填
+  string hardware_machine = 49;     // iOS 系统型号，IOS 需填
+  AuthStatus auth_status = 50;      // 广告标识授权情况，是否允许获取 IDFA，仅IOS系统填写 0：未确定 1：受限制 2：被拒绝 3：授权3
+}
+
+// 设备ID信息
+message DeviceIdObject {
+  string imei = 1;    // android 设备的IMEI
+  string imei_md5 = 2;    // IMEI md5  32位小写
+  string android_id = 3;    // AndroidId
+  string android_id_md5 = 4;    // AndroidId md5 32位小写
+  string oaid = 5;    // OAID
+  string oaid_md5 = 6;    // oaid md5 32位小写
+  string idfa = 7;    // ios设备 IDFA
+  string idfa_md5 = 8;    // IDFA md5 32位小写
+  repeated CaidObject caid_list = 9;    // CAID信息列表
+  string idfv = 10;   // iOS 设备的 IDFV
+  string idfv_md5 = 11;   // iOS 设备的 IDFV md5 32位小写
+  string paid = 12;   // 拼多多paid1.3参考：https://pfile.pddpic.com/sakura-file/b3332403-d6c5-4331-a327-5335976c2b17.pdf
+  string paid_1_4 = 13;   // 拼多多paid1.4 参考：https://pfile.pddpic.com/sakura-file/f0105c71-c111-46d1-a1ea-3d294e001120.pdf
+}
+
+// CAID信息
+message CaidObject {
+  string version = 1;    // CAID版本号
+  string caid = 2;    // CAID
+}
+
+// 设备地理位置
+message GeoObject {
+  double lat = 1;     // 用户原始GPS坐标的纬度 -90至+90
+  double lng = 2;     // 用户原始GPS坐标的经度 -180至+180
+  CoordinateType coordinate_type = 3; // 坐标类型
+  LaccuStatus laccu = 4;      // 定位精准度，IOS 操作系统必传
+  double accuracy_m = 5;      // 定位精度，米数
+}
+
+// 网络信息
+message NetworkObject {
+  NetworkConnectType connect_type = 1;    // 联网方式
+  string ipv4 = 2;    // IPV4地址
+  string ipv6 = 3;    // IPV6地址
+  CarrierType carrier = 4;    // 运营商
+  string ssid = 5;    // ⽆线⽹ ssid 名称
+  string wifi_mac = 6;    // wifi 路由器的 Mac 地址
+}
+
+// 媒体app信息
+message MediaAppObject {
+  string package_name = 1;    //应用包名
+  string app_name = 2;    //应用名称
+  string app_version = 3;    //应用版本号
+  NetworkProtocolType network_protocol = 4;    // 标记媒体对http和https的支持情况(包含监测链接/素材/隐私/权限)
+}
+
+// 用户信息
+message UserObject {
+  string user_id = 1;     // 用户在媒体广告平台系统内的id
+  GenderType gender = 2;  // 性别
+  string age = 3;         // 年龄
+  string keywords = 4;    // 用户关键字
+}
+
+message BidResponse {
+  int32 code = 1; // 返回码 非0表示请求失败
+  string msg = 2; // 返回码说明
+  string request_id = 3; // 请求时的request_id
+  string response_id = 4; // 响应id
+  repeated AdObject ad_list = 5; // 广告列表
+}
+
+//  广告信息
+message AdObject {
+  string imp_id = 1;    // 请求时imp_list中的曝光id
+  string track_id = 2;    // 用于本广告链路追踪
+  string space_id = 3;    // 广告位id
+  BidType bid_type = 4;    // 竞价类型 枚举值：1.cpm; 2.cpc;
+  int64 bid_price = 5;    // 出价 单位：分
+  AdAppObject ad_app = 6;    // 广告app信息
+  InteractionObject interaction = 7;    // 交互信息
+  MaterialObject material = 8;    // 素材信息
+  int64 expire_time = 9;   // 广告过期时间戳
+  int32 incentive_time = 10;   // 激励视频最少需要播放的时长 单位：秒
+  LogoObject logo_info = 11;   // logo信息
+  BtnObject btn_info = 12;   // 按钮信息
+  TrackObject track_info = 13;   // 行为跟踪链接
+}
+
+// 广告app信息
+message AdAppObject {
+  string app_name = 1;    // 应用名称
+  string package_name = 2;    // 应用包名
+  string app_version = 3;    // 应用版本号
+  string app_desc = 4;    // 应用描述
+  int64 app_size = 5;    // 应用大小 单位：字节
+  string app_developer = 6;    // 应用开发者
+  string privacy_policy_link = 7;    // 隐私协议链接
+  string permissions_link = 8;    // 用户权限链接
+  ImageObject app_icon = 9;    // 应用图标信息
+  string download_url = 10;   // 下载链接
+  int64 download_url_expires = 11;   // 下载链接过期时间戳
+  string file_md5 = 12;   // 文件md5
+  string app_desc_url = 13;   // 应用介绍页
+  sint64 itunes_id = 14;   // ios应用id
+}
+
+// 交互信息
+message InteractionObject {
+  InteractionType interaction_type = 1;    // 交互类型
+  string deeplink_url = 2;    // 调起deeplink的地址
+  string universal_link_url = 3;    // iOS Universal Link
+  string market_deeplink_url = 4;    // 应用市场调起链接
+  string download_url = 5;    // 应用下载地址
+  string landing_url = 6;    // 落地页链接
+  string wx_mini_program_id = 7;    // 小程序原始id
+  string wx_mini_program_path = 8;    // 小程序路径
+}
+
+// 素材信息
+message MaterialObject {
+  string title = 1;    // 标题
+  string sub_title = 2;    // 副标题
+  string desc = 3;    // 描述
+  MaterialType material_type = 4;    // 素材类型
+  repeated ImageObject image_list = 5;    // 图片列表
+  repeated VideoObject video_list = 6;    // 视频列表
+  ImageObject icon_image = 7;    // 图标信息
+}
+
+// 图片信息
+message ImageObject {
+  string url = 1;    // 图片链接
+  int32 width = 2;    // 图片宽度
+  int32 height = 3;    // 图片高度
+}
+
+// 视频信息
+message VideoObject {
+  string cover_image = 1;    // 封面图片
+  string video_url = 2;    // 视频地址
+  int32 duration = 3;    // 视频时长 单位：秒
+  VideoType video_type = 4;    // 视频横竖版类型
+  int64 url_expires = 5;    // 视频地址过期时间戳
+  int32 width = 6;    // 视频宽度
+  int32 height = 7;    // 视频高度
+}
+
+// logo信息
+message LogoObject {
+  string title = 1;    // logo标题
+  ImageObject image = 2;    // logo图片
+}
+
+// 按钮信息
+message BtnObject {
+  string btn_name = 1;    // 按钮文案
+}
+
+message TrackObject {
+  repeated string win_notice_urls = 1;    // 竞胜成功通知；宏替换内容：__PRICE__ 广告成交价格；单位：分，int型
+  repeated string view_monitor_urls = 2;    // 曝光监控
+  repeated string click_monitor_urls = 3;    // 点击监控
+  repeated string download_start_monitor_urls = 4;    // 下载开始监控
+  repeated string download_finish_monitor_urls = 5;    // 下载完成监控
+  repeated string download_install_monitor_urls = 6;    // 下载完成开始安装监控
+  repeated string download_installed_monitor_urls = 7;    // 下载完成安装结束监控
+  repeated string dp_click_monitor_urls = 8;   // deeplink点击_
+  repeated string dp_success_monitor_urls = 9;   // deeplink检测已安装唤起成功，需要支持秒级时间戳宏替换，替换宏__TS__
+  repeated string dp_failed_monitor_urls = 10;   // deeplink检测已安装唤起失败，需要支持秒级时间戳宏替换，替换宏__TS__
+  repeated string video_play_start_monitor_urls = 11;   // 视频开始播放
+  repeated string video_play_end_monitor_urls = 12;   // 视频播放完成
+  repeated string video_play_25_monitor_urls = 13;   // 视频播放至25%
+  repeated string video_play_50_monitor_urls = 14;   // 视频播放至50%
+  repeated string video_play_75_monitor_urls = 15;   // 视频播放至75%
+  repeated string video_pause_monitor_urls = 16;   // 视频暂停
+  repeated string video_continue_monitor_urls = 17;   // 视频继续播放
+  repeated string video_skip_monitor_urls = 18;   // 视频跳出
+}
+
+// 素材类型
+enum MaterialType {
+  material_type_unknown = 0;
+  material_type_image = 1;    // 图片
+  material_type_video = 2;    // 视频
+}
+
+// 广告位类型
+enum AdSlotType {
+  ad_slot_type_unknown = 0;
+  ad_slot_type_splash = 1;    //开屏
+  ad_slot_type_interstitial = 2;    //插屏
+  ad_slot_type_feeds = 3;    //信息流
+  ad_slot_type_banner = 4;    //banner
+  ad_slot_type_incentive = 5;    //激励视频
+}
+
+// 交互类型
+enum InteractionType {
+  interaction_type_unknown = 0;
+  interaction_type_app_download = 1;    // app下载
+  interaction_type_deeplink = 2;    // 跳转deeplink
+  interaction_type_landing_url = 3;    // 跳转落地页
+  interaction_type_mini_program = 4;    // 跳转小程序
+  interaction_type_universal_link = 5;    // 跳转IOS universal_link
+}
+
+// 出价方式
+enum BidType {
+  bid_type_unknown = 0;
+  bid_type_cpm = 1;    // CPM计费
+  bid_type_cpc = 2;    // CPC计费
+}
+
+// 设备类型
+enum DeviceType {
+  device_type_unknown = 0;
+  device_type_phone = 1;    // 手机
+  device_type_pad = 2;    // 平板
+  device_type_pc = 3;    // 电脑
+  device_type_smart_tv = 4;    // 智能电视
+}
+
+// 操作系统
+enum OsType {
+  os_type_unknown = 0;
+  os_type_android = 1;        // android
+  os_type_ios = 2;        // ios
+}
+
+// 联网方式
+enum NetworkConnectType {
+  network_connect_type_unknown = 0;
+  network_connect_type_wired = 1;                        // 网线
+  network_connect_wifi = 2;                        // Wifi
+  network_connect_mobile = 3 [deprecated = true];    // 移动网络
+  network_connect_2G = 4;                        // 移动数据-2G
+  network_connect_3G = 5;                        // 移动数据-3G
+  network_connect_4G = 6;                        // 移动数据-4G
+  network_connect_5G = 7;                        // 移动数据-5G
+}
+
+// 运营商
+enum CarrierType {
+  carrier_type_unknown = 0;
+  carrier_type_china_mobile = 1;        // 中国移动
+  carrier_type_china_unicom = 2;        // 中国联通
+  carrier_type_china_telecom = 3;        // 中国电信
+}
+
+// http和https支持情况
+enum NetworkProtocolType {
+  network_protocol_type_unknown = 0;
+  network_protocol_type_all = 1; // 都支持
+  network_protocol_type_https = 2; // 只支持https
+  network_protocol_type_http = 3; // 只支持http
+}
+
+// 性别
+enum GenderType {
+  gender_type_unknown = 0;
+  gender_type_male = 1;    // 男
+  gender_type_female = 2;    // 女
+}
+
+enum VideoType {
+  video_type_unknown = 0;
+  video_type_vertical = 1; // 竖版视频
+  video_type_horizontal = 2; // 横版视频
+}
+
+enum OrientationType {
+  orientation_type_unknown = 0;     // 未知
+  orientation_type_portrait = 1;    // 竖屏
+  orientation_type_landscape = 2;   // 横屏
+}
+
+enum BatteryStatus {
+  battery_status_unknown = 0;     // 电池状态未知
+  battery_status_not_charging = 1; // 不在充电
+  battery_status_charging = 2;     // 正在充电
+  battery_status_full = 3;         // 满电
+}
+
+enum AuthStatus {
+  auth_status_unspecified = 0; // 未确定，开发者尚未请求用户许可
+  auth_status_restricted  = 1; // 受限制，用户可以在设备级别关闭 idfa
+  auth_status_denied      = 2; // 被拒绝，用户明确选择退出 idfa
+  auth_status_authorized  = 3; // 已授权，可以继续获取 idfa
+}
+
+enum CoordinateType {
+  coordinate_unknown = 0; // 未知
+  coordinate_wgs84 = 1;   // 全球卫星定位系统坐标系
+  coordinate_gcj02 = 2;   // 国家测绘局坐标系（火星坐标系）
+  coordinate_bd09 = 3;    // 百度坐标系
+}
+
+enum LaccuStatus {
+  laccu_unknown = 0; // 未知
+  laccu_precise = 1; // 定位精准
+  laccu_inaccurate = 2; // 定位不准确
+}
