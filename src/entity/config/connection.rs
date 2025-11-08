@@ -14,6 +14,7 @@ pub struct Connection {
     pub client_mode: i32,
     pub client_ekey: String,
     pub client_ikey: String,
+    pub client_format: String,
     pub vendor_port: i32,
     pub vendor_mode: i32,
     pub vendor_ekey: String,

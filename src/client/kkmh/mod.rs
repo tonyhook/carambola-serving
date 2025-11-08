@@ -128,6 +128,27 @@ impl Client for Kkmh {
                     None => (),
                 }
 
+                // patch for kkmh ad types
+                ad_types.clear();
+                match connection.client_format.as_str() {
+                    "banner" => {
+                        ad_types.push(0);
+                    },
+                    "interstitial" => {
+                        ad_types.push(6);
+                    },
+                    "splash" => {
+                        ad_types.push(2);
+                    },
+                    "feeds" => {
+                        ad_types.push(1);
+                    },
+                    "video" => {
+                        ad_types.push(3);
+                    },
+                    _ => (),
+                }
+
                 imp_kkmh.ext = Some(KkmhImpExt {
                     inventory_types: None,
                     ad_types: Some(ad_types),

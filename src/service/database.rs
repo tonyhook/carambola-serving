@@ -99,6 +99,7 @@ impl Database {
                 ad_client_port.ekey,
                 ad_client_port.ikey,
                 ad_client_port.filter,
+                ad_client_port.format,
                 ad_vendor_port.id,
                 ad_vendor_port.mode,
                 ad_vendor.ekey,
@@ -125,7 +126,7 @@ impl Database {
 
         for row in result {
             let mut row = row.unwrap();
-            let test: Vec<u8> = row.take(14).unwrap();
+            let test: Vec<u8> = row.take(15).unwrap();
             let apppackage: Option<Value> = row.take(4);
             let appname: Option<Value> = row.take(5);
             let filter: Option<Value> = row.take(9);
@@ -189,17 +190,18 @@ impl Database {
                 client_ekey: row.take(7).unwrap(),
                 client_ikey: row.take(8).unwrap(),
                 filter: rule_set.clone(),
-                vendor_port: row.take(10).unwrap(),
-                vendor_mode: row.take(11).unwrap(),
-                vendor_ekey: row.take(12).unwrap(),
-                vendor_ikey: row.take(13).unwrap(),
+                client_format: row.take(10).unwrap(),
+                vendor_port: row.take(11).unwrap(),
+                vendor_mode: row.take(12).unwrap(),
+                vendor_ekey: row.take(13).unwrap(),
+                vendor_ikey: row.take(14).unwrap(),
                 test: test[0] == 1,
-                timeout: row.take(15).unwrap(),
-                priority: row.take(16).unwrap(),
-                upstream_ratio: row.take(17).unwrap(),
-                rebate_ratio: row.take(18).unwrap(),
-                downstream_ratio: row.take(19).unwrap(),
-                default_price: row.take(20).unwrap(),
+                timeout: row.take(16).unwrap(),
+                priority: row.take(17).unwrap(),
+                upstream_ratio: row.take(18).unwrap(),
+                rebate_ratio: row.take(19).unwrap(),
+                downstream_ratio: row.take(20).unwrap(),
+                default_price: row.take(21).unwrap(),
             };
             connections.push(connection);
         }
