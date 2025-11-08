@@ -12,7 +12,9 @@ pub struct Geo {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub lon: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub accur: Option<i32>,
+    pub laccu: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub accur: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub coordinate: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]

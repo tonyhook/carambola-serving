@@ -400,14 +400,14 @@ impl Client for Jinmo {
                                     }
                                 },
                                 laccu: {
-                                    // geo.laccu.clone()
-                                    None
+                                    match geo.laccu {
+                                        Some(0) => Some(1),
+                                        Some(1) => Some(2),
+                                        _ => Some(0),
+                                    }
                                 },
                                 accuracy_m: {
-                                    match geo.accur {
-                                        Some(accur) => Some(accur as f64),
-                                        None => None,
-                                    }
+                                    geo.accur.clone()
                                 },
                             }),
                             None => None,
@@ -496,8 +496,7 @@ impl Client for Jinmo {
                         request.context.device.sysdisksize.clone()
                     },
                     system_available_size: {
-                        // request.context.device.sysavailabledisksize.clone()
-                        None
+                        request.context.device.sysavailabledisksize.clone()
                     },
                     system_memory_size: {
                         request.context.device.sysmemory.clone()

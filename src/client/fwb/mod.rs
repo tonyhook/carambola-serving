@@ -614,12 +614,7 @@ impl Client for Fwb {
                                 lon: geo.lon,
                                 coordinate: geo.coordinate,
                                 timestamp: geo.timestamp,
-                                accu: {
-                                    match geo.accur {
-                                        Some(accur) => Some(accur as f64),
-                                        None => None,
-                                    }
-                                },
+                                accu: geo.accur.clone(),
                                 city: geo.city.clone(),
                                 province: geo.province.clone(),
                                 district: geo.district.clone(),

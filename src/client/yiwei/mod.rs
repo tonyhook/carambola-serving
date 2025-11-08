@@ -635,7 +635,10 @@ impl Client for Yiwei {
                                         geo.lon.clone()
                                     },
                                     accuracy: {
-                                        geo.accur.clone()
+                                        match geo.accur {
+                                            Some(accur) => Some(accur as i32),
+                                            None => None,
+                                        }
                                     },
                                     source: {
                                         geo.geotype.clone()

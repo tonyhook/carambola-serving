@@ -299,7 +299,12 @@ impl Client for Adwanji {
                                 }
                             },
                             timestamp: None,
-                            accu: geo.accur,
+                            accu: {
+                                match geo.accur {
+                                    Some(accur) => Some(accur as i32),
+                                    None => None,
+                                }
+                            },
                             city_code: None,
                             city: None,
                         },

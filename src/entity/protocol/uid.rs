@@ -8,4 +8,5 @@ pub struct Uid {
     pub id: String,
     pub ver: Option<String>,
     pub vendor: Option<String>,
+    pub time: Option<i64>,
 }

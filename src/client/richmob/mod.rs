@@ -607,8 +607,8 @@ impl Client for Richmob {
                 laccu: {
                     match &request.context.device.geo {
                         Some(geo) => {
-                            match geo.accur {
-                                Some(_) => 0,
+                            match geo.laccu {
+                                Some(laccu) => laccu,
                                 None => 1,
                             }
                         },

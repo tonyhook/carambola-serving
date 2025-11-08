@@ -33,6 +33,8 @@ pub struct Device {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hwmachine: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub romname: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub romv: Option<String>,
     #[serde(default)]
     #[serde(deserialize_with = "convert_string_from_number")]
@@ -54,6 +56,8 @@ pub struct Device {
     pub app: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sysmemory: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sysavailabledisksize: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sysdisksize: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]

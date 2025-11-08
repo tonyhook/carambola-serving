@@ -701,7 +701,12 @@ impl Client for Sweet {
                     request.context.device.lmt.clone()
                 },
                 laccu: {
-                    None
+                    match &request.context.device.geo {
+                        Some(geo) => {
+                            geo.laccu.clone()
+                        },
+                        None => None,
+                    }
                 },
                 boot_mark: {
                     request.context.device.bootmark.clone()
