@@ -9,6 +9,7 @@ pub struct HttpPool {
     pub pool_fanglin: Arc<RwLock<Client>>,
     pub pool_fwb: Arc<RwLock<Client>>,
     pub pool_huichuan: Arc<RwLock<Client>>,
+    pub pool_huoli: Arc<RwLock<Client>>,
     pub pool_jinmo: Arc<RwLock<Client>>,
     pub pool_jmedium: Arc<RwLock<Client>>,
     pub pool_kaka: Arc<RwLock<Client>>,
@@ -60,6 +61,13 @@ impl HttpPool {
                 .pool_idle_timeout(Duration::from_millis(1000))
                 .build().unwrap())),
             pool_huichuan: Arc::new(RwLock::new(reqwest::ClientBuilder::new()
+                .tcp_keepalive(Duration::from_secs(60))
+                .gzip(true)
+                .no_brotli()
+                .no_deflate()
+                .pool_idle_timeout(Duration::from_millis(1000))
+                .build().unwrap())),
+            pool_huoli: Arc::new(RwLock::new(reqwest::ClientBuilder::new()
                 .tcp_keepalive(Duration::from_secs(60))
                 .gzip(true)
                 .no_brotli()
