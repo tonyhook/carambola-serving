@@ -263,61 +263,61 @@ impl Client for Mfocus {
                                         "200" => (),
                                         "50010" => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: format!("upstream error: signature expired: {}", response_mfocus.msg.to_string()),
                                             });
                                         },
                                         "50011" => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: format!("upstream error: invalid appkey: {}", response_mfocus.msg.to_string()),
                                             });
                                         },
                                         "50012" => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: format!("upstream error: invalid vender: {}", response_mfocus.msg.to_string()),
                                             });
                                         },
                                         "50013" => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: format!("upstream error: wrong signature: {}", response_mfocus.msg.to_string()),
                                             });
                                         },
                                         "50020" => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: format!("upstream error: invalid field: {}", response_mfocus.msg.to_string()),
                                             });
                                         },
                                         "50041" => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: format!("upstream error: wrong deadid: {}", response_mfocus.msg.to_string()),
                                             });
                                         },
                                         "50042" => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: format!("upstream error: deal is not active: {}", response_mfocus.msg.to_string()),
                                             });
                                         },
                                         "50043" => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: format!("upstream error: deal is suspended: {}", response_mfocus.msg.to_string()),
                                             });
                                         },
                                         "50044" => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: format!("upstream error: wrong ad id: {}", response_mfocus.msg.to_string()),
                                             });
                                         },
                                         _ => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: format!("upstream error: {} {}", response_mfocus.code, response_mfocus.msg.to_string()),
                                             });
                                         },

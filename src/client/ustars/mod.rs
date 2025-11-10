@@ -541,6 +541,11 @@ impl Client for Ustars {
                         code: 993,
                         message: "".to_string(),
                     });
+                } else if status == 400 || status == 409 {
+                    return Err(ResultMessage {
+                        code: 994,
+                        message: "".to_string(),
+                    });
                 } else {
                     return Err(ResultMessage {
                         code: 992,

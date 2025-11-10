@@ -505,7 +505,7 @@ impl Client for Huichuan {
                                         "0" => (),
                                         code => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: {
                                                     match &response_huichuan.reason {
                                                         Some(reason) => format!("upstream error {}: {}", code, reason),

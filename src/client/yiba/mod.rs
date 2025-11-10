@@ -608,7 +608,7 @@ impl Client for Yiba {
                                     match response_yiba.code {
                                         2001 => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: "upstream error: no budget".to_string(),
                                             });
                                         },

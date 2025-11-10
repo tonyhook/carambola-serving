@@ -32,6 +32,7 @@ pub const PERFORMANCE_BIDDING_INVALID:               &str = "ZK";
 pub const PERFORMANCE_BEYOND_CLIENT_TRAFFIC_CONTROL: &str = "ZL";
 pub const PERFORMANCE_LOST_KEY_FIELD:                &str = "ZM";
 pub const PERFORMANCE_CLIENT_ANTI_FRAUD:             &str = "ZN";
+pub const PERFORMANCE_REQUEST_REJECTED:              &str = "ZO";
 
 #[derive(Clone)]
 pub struct Cache {

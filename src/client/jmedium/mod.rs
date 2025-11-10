@@ -751,19 +751,25 @@ impl Client for Jmedium {
                                         200 => (),
                                         210924 => {
                                             return Err(ResultMessage {
-                                                code: 993,
+                                                code: 994,
+                                                message: "".to_string(),
+                                            });
+                                        },
+                                        210926 => {
+                                            return Err(ResultMessage {
+                                                code: 994,
                                                 message: "".to_string(),
                                             });
                                         },
                                         110001 => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: format!("upstream error: {}", response_jmedium.msg),
                                             });
                                         }
                                         _ => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: format!("upstream error code {}: {}", response_jmedium.code, response_jmedium.msg),
                                             });
                                         },

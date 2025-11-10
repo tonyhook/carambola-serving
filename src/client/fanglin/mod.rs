@@ -617,7 +617,7 @@ impl Client for Fanglin {
                                         },
                                         code => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: format!("upstream error code {}", code),
                                             });
                                         },

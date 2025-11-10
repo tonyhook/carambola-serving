@@ -595,37 +595,37 @@ impl Client for Kkmh {
                                         },
                                         1002 => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: format!("upstream error: {}", &json.message.unwrap_or("lost key parameter".to_string())),
                                             });
                                         },
                                         1003 => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: format!("upstream error: {}", &json.message.unwrap_or("invalid value".to_string())),
                                             });
                                         },
                                         1004 => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: format!("upstream error: {}", &json.message.unwrap_or("invalid input".to_string())),
                                             });
                                         },
                                         1005 => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: format!("upstream error: {}", json.message.unwrap()),
                                             });
                                         },
                                         1006 => {
                                             return Err(ResultMessage {
-                                                code: 993,
+                                                code: 994,
                                                 message: "".to_string(),
                                             });
                                         },
                                         _ => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: "upstream error: unknown code".to_string(),
                                             });
                                         },

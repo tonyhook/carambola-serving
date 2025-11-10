@@ -991,13 +991,13 @@ impl Client for Yiwei {
                                             match json.msg {
                                                 Some(msg) => {
                                                     return Err(ResultMessage {
-                                                        code: 992,
+                                                        code: 994,
                                                         message: format!("upstream error: {}", msg),
                                                     });
                                                 },
                                                 None => {
                                                     return Err(ResultMessage {
-                                                        code: 992,
+                                                        code: 994,
                                                         message: "upstream error".to_string(),
                                                     });
                                                 },

@@ -910,49 +910,49 @@ impl Client for Richmob {
                                         },
                                         1002 => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: "upstream error: processing failed".to_string(),
                                             });
                                         },
                                         1003 => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: "upstream error: lost key parameter".to_string(),
                                             });
                                         },
                                         1004 => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: "upstream error: parameter convert failed".to_string(),
                                             });
                                         },
                                         1005 => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: "upstream error: invalid input".to_string(),
                                             });
                                         },
                                         1006 => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: "upstream error: bad phone number format".to_string(),
                                             });
                                         },
                                         1007 => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: "upstream error: invalid request".to_string(),
                                             });
                                         },
                                         1008 => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: "upstream error: invalid ip".to_string(),
                                             });
                                         },
                                         1009 => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: "upstream error: internal error".to_string(),
                                             });
                                         },

@@ -546,7 +546,7 @@ impl Client for Zhanqing {
                                             });
                                         } else {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: format!("upstream error: {}", json.message),
                                             });
                                         }

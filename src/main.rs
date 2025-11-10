@@ -415,6 +415,9 @@ async fn handler(
                     993 => {
                         cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_NOT_BIDDING);
                     },
+                    994 => {
+                        cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_REQUEST_REJECTED);
+                    },
                     997 => {
                         cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_TRANS_FROM_FAILED);
                     },

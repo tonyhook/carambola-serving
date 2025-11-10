@@ -535,7 +535,7 @@ impl Client for Ruiang {
                                         });
                                     } else {
                                         return Err(ResultMessage {
-                                            code: 992,
+                                            code: 994,
                                             message: format!("upstream error {}: {}", json.code, json.message),
                                         });
                                     }
