@@ -111,6 +111,49 @@ impl Cache {
 
     // upstream response
 
+    pub fn update_response_price(&self, client_port: i32, vendor_port: i32, bundle: &String, price: i32) {
+        let cache = self.clone();
+        let bundle = Arc::new(bundle.to_string());
+        tokio::spawn({
+            async move {
+                cache.update_response_price_async(client_port, vendor_port, &bundle, price).await;
+            }
+        });
+    }
+
+    async fn update_response_price_async(&self, client_port: i32, vendor_port: i32, bundle: &String, price: i32) {
+        let utc: DateTime<Utc> = Utc::now();
+        let hour = utc.hour();
+        let minute_aligned = utc.minute() / GLOBAL_CONFIG.get().unwrap().performance_interval * GLOBAL_CONFIG.get().unwrap().performance_interval;
+        let minute_fragment = utc.minute() - minute_aligned;
+        let second = utc.second();
+
+        let key = format!("CO{:0>2}{:0>2}:{}:{}:{}", hour, minute_aligned, client_port, vendor_port, bundle.replace(":", "_"));
+        let expire = 14400 - minute_fragment * 60 - second - GLOBAL_CONFIG.get().unwrap().performance_interval * 60;
+
+        let connection = self.pw.get();
+
+        match connection {
+            Ok(mut connection) => {
+                let result = redis::cmd("INCRBY").arg(&key).arg(price).query::<Option<i32>>(&mut connection);
+                match result {
+                    Ok(result) => {
+                        match result {
+                            Some(result) => {
+                                if result == price {
+                                    let _ = redis::cmd("EXPIRE").arg(&key).arg(expire).query::<Option<u32>>(&mut connection);
+                                }
+                            },
+                            None => (),
+                        }
+                    },
+                    Err(_) => (),
+                }
+            },
+            Err(_) => (),
+        }
+    }
+
     pub fn update_response_tracker(&self, client_port: i32, tracker: String) {
         let cache = self.clone();
         tokio::spawn({

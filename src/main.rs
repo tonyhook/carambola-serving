@@ -382,6 +382,8 @@ async fn handler(
                     Some(seatbid) => {
                         for seatbid1 in seatbid {
                             for bid in &seatbid1.bid {
+                                cache.update_response_price(client_port, vendor_port.0, &bundle, bid.price);
+
                                 let mut tracker = "".to_string();
                                 for event in &bid.media.display.event {
                                     if event.eventtype == 501 {
