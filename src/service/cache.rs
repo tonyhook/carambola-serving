@@ -37,6 +37,7 @@ pub const PERFORMANCE_REQUEST_REJECTED:              &str = "ZO";
 #[derive(Clone)]
 pub struct Cache {
     pub pw: Pool<Client>, // performance (write)
+    pub lw: Pool<Client>, // response tracker list (write)
     pub nw: Pool<Client>, // notification bundle, url & cost (write)
     pub nr: Pool<Client>, // notification bundle, url & cost (read)
     pub s: Pool<Client>, // id generator
@@ -53,6 +54,7 @@ impl Cache {
     pub fn new(config: &EnvConfig) -> Self {
         Self {
             pw: Pool::builder().build(redis::Client::open(config.performance_connection_write.clone()).unwrap()).unwrap(),
+            lw: Pool::builder().build(redis::Client::open(config.log_connection_write.clone()).unwrap()).unwrap(),
             nw: Pool::builder().build(redis::Client::open(config.notification_connection_write.clone()).unwrap()).unwrap(),
             nr: Pool::builder().build(redis::Client::open(config.notification_connection_read.clone()).unwrap()).unwrap(),
             s: Pool::builder().build(redis::Client::open(config.idgenerator_connection.clone()).unwrap()).unwrap(),
@@ -102,6 +104,30 @@ impl Cache {
                     },
                     Err(_) => (),
                 }
+            },
+            Err(_) => (),
+        }
+    }
+
+    // upstream response
+
+    pub fn update_response_tracker(&self, client_port: i32, tracker: String) {
+        let cache = self.clone();
+        tokio::spawn({
+            async move {
+                cache.update_response_tracker_async(client_port, tracker).await;
+            }
+        });
+    }
+
+    async fn update_response_tracker_async(&self, client_port: i32, tracker: String) {
+        let key = format!("LS:{}", client_port);
+
+        let connection = self.lw.get();
+
+        match connection {
+            Ok(mut connection) => {
+                let _ = redis::cmd("SET").arg(&key).arg(&tracker).query::<Option<String>>(&mut connection);
             },
             Err(_) => (),
         }

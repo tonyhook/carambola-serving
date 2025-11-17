@@ -30,6 +30,7 @@ pub struct EnvConfig {
     pub db_connection: String,
 
     pub performance_connection_write: String,
+    pub log_connection_write: String,
     pub notification_connection_write: String,
     pub notification_connection_read: String,
     pub idgenerator_connection: String,
@@ -62,6 +63,7 @@ impl EnvConfig {
             db_connection: yaml["db_connection"].as_str().unwrap_or("").to_string(),
 
             performance_connection_write: yaml["performance_connection_write"].as_str().unwrap_or("").to_string(),
+            log_connection_write: yaml["log_connection_write"].as_str().unwrap_or("").to_string(),
             notification_connection_write: yaml["notification_connection_write"].as_str().unwrap_or("").to_string(),
             notification_connection_read: yaml["notification_connection_read"].as_str().unwrap_or("").to_string(),
             idgenerator_connection: yaml["idgenerator_connection"].as_str().unwrap_or("").to_string(),
@@ -380,6 +382,18 @@ async fn handler(
                     Some(seatbid) => {
                         for seatbid1 in seatbid {
                             for bid in &seatbid1.bid {
+                                let mut tracker = "".to_string();
+                                for event in &bid.media.display.event {
+                                    if event.eventtype == 501 {
+                                        if event.url.split("//").collect::<Vec<&str>>().len() < 2 {
+                                            continue;
+                                        }
+                                        let host = event.url.split("//").collect::<Vec<&str>>()[1].split("/").collect::<Vec<&str>>()[0];
+                                        tracker = tracker + "|" + host;
+                                    }
+                                }
+                                cache.update_response_tracker(client_port, tracker[0..].to_string());
+
                                 match &bid.media.display.banner {
                                     Some(_) => {
                                         asset += 1;
