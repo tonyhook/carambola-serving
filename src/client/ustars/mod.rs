@@ -29,8 +29,8 @@ impl Client for Ustars {
     async fn request(request: &Request, connection: &Connection, pool: &HttpPool, cache: &Cache) -> Result<Response, ResultMessage> {
         let position_id = connection.client_tag_id.split("|").nth(0).unwrap();
         let media_id = connection.client_tag_id.split("|").nth(1).unwrap();
-        let app_key = &connection.client_ekey;
-        let app_secret = &connection.client_ikey;
+        let app_key = connection.client_tag_id.split("|").nth(2).unwrap();
+        let app_secret = connection.client_tag_id.split("|").nth(3).unwrap();
 
         let request_id = cache.get_sequence();
 
@@ -1379,8 +1379,7 @@ impl Client for Ustars {
         let mut buffer = [0u8; 16];
         buffer[..pos].copy_from_slice(plaintext);
 
-        let key = connection.client_ikey.as_bytes();
-
+        let key = connection.client_tag_id.split("|").nth(3).unwrap().as_bytes();
         let cipher = Aes128EcbEnc::new(key[0..16].into())
             .encrypt_padded_mut::<Pkcs7>(&mut buffer, pos)
             .unwrap();

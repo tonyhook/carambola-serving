@@ -1206,6 +1206,8 @@ impl Client for Mygolbs {
     }
 
     fn encrypt_price(price: i32, _iv: &String, connection: &Connection) -> String {
+        let secret = connection.client_tag_id.split("|").nth(2).unwrap();
+
         let message = format!("{}", price);
         let plaintext = message.as_bytes();
         let pos = if plaintext.len() > 16 {
@@ -1217,10 +1219,10 @@ impl Client for Mygolbs {
         buffer[..pos].copy_from_slice(plaintext);
 
         let mut key = [0u8; 16];
-        if connection.client_ekey.len() == 16 {
-            key[0..16].copy_from_slice(connection.client_ekey.as_bytes());
+        if secret.len() == 16 {
+            key[0..16].copy_from_slice(secret.as_bytes());
         } else {
-            key[0..16].copy_from_slice(&hex::decode(&connection.client_ekey).unwrap());
+            key[0..16].copy_from_slice(&hex::decode(secret).unwrap());
         };
 
         let cipher = Aes128EcbEnc::new(key[0..16].into())

@@ -48,7 +48,7 @@ pub struct Kaka {
 impl Client for Kaka {
 
     async fn request(request: &Request, connection: &Connection, pool: &HttpPool, cache: &Cache) -> Result<Response, ResultMessage> {
-        let id = connection.client_tag_id.clone();
+        let id = connection.client_tag_id.split("|").nth(0).unwrap();
 
         let request_id = cache.get_sequence();
 
@@ -320,7 +320,7 @@ impl Client for Kaka {
                 },
             }),
             imps: [KakaImp {
-                id,
+                id: id.to_string(),
                 ad_type: {
                     let mut ad_type = 0;
                     let instl = request.item[0].spec.display.instl;
@@ -1052,7 +1052,7 @@ impl Client for Kaka {
         let mut buffer = [0u8; 16];
         buffer[..pos].copy_from_slice(plaintext);
 
-        let key = connection.client_ekey.as_bytes();
+        let key = connection.client_tag_id.split("|").nth(1).unwrap().as_bytes();
 
         let cipher = Aes128EcbEnc::new(key[0..16].into())
             .encrypt_padded_mut::<Pkcs7>(&mut buffer, pos)

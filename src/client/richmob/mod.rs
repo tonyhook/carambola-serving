@@ -786,7 +786,7 @@ impl Client for Richmob {
                 },
             },
             adslot: RichmobAdslot {
-                slot_id: connection.client_tag_id.clone(),
+                slot_id: connection.client_tag_id.split("|").nth(0).unwrap().to_string(),
                 ad_type: {
                     let mut ad_type = 0;
                     if assets.get_banner_size() > 0 {
@@ -2379,7 +2379,7 @@ impl Client for Richmob {
         let mut buffer = [0u8; 16];
         buffer[..pos].copy_from_slice(plaintext);
 
-        let key = connection.client_ekey.as_bytes();
+        let key = connection.client_tag_id.split("|").nth(1).unwrap().as_bytes();
 
         let cipher = Aes128EcbEnc::new(key[0..16].into())
             .encrypt_padded_mut::<Pkcs7>(&mut buffer, pos)

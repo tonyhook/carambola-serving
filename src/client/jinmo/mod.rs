@@ -1387,7 +1387,7 @@ impl Client for Jinmo {
         let mut buffer = [0u8; 16];
         buffer[..pos].copy_from_slice(plaintext);
 
-        let key = connection.client_ekey.as_bytes();
+        let key = connection.client_tag_id.split("|").nth(2).unwrap().as_bytes();
 
         let cipher = Aes128EcbEnc::new(key[0..16].into())
             .encrypt_padded_mut::<Pkcs7>(&mut buffer, pos)

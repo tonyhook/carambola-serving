@@ -32,8 +32,8 @@ pub struct Spinview {
 impl Client for Spinview {
 
     async fn request(request: &Request, connection: &Connection, pool: &HttpPool, cache: &Cache) -> Result<Response, ResultMessage> {
-        let slot_id = &connection.client_tag_id;
-        let token = &connection.client_ekey;
+        let slot_id = connection.client_tag_id.split("|").nth(0).unwrap();
+        let token = connection.client_tag_id.split("|").nth(1).unwrap();
 
         let request_id = cache.get_sequence();
 
@@ -1439,7 +1439,7 @@ impl Client for Spinview {
         let mut buffer = [0u8; 16];
         buffer[..pos].copy_from_slice(plaintext);
 
-        let key = connection.client_ekey.as_bytes();
+        let key = connection.client_tag_id.split("|").nth(1).unwrap().as_bytes();
 
         let cipher = Aes256EcbEnc::new(key[0..32].into())
             .encrypt_padded_mut::<Pkcs7>(&mut buffer, pos)

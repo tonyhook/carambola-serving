@@ -96,8 +96,6 @@ impl Database {
                 ad_client_port.apppackage,
                 ad_client_port.appname,
                 ad_client_port.mode,
-                ad_client_port.ekey,
-                ad_client_port.ikey,
                 ad_client_port.filter,
                 ad_client_port.format,
                 ad_vendor_port.id,
@@ -126,10 +124,10 @@ impl Database {
 
         for row in result {
             let mut row = row.unwrap();
-            let test: Vec<u8> = row.take(15).unwrap();
+            let test: Vec<u8> = row.take(13).unwrap();
             let apppackage: Option<Value> = row.take(4);
             let appname: Option<Value> = row.take(5);
-            let filter: Option<Value> = row.take(9);
+            let filter: Option<Value> = row.take(7);
 
             let apppackage = match apppackage {
                 Some(Value::Bytes(apppackage)) => {
@@ -187,21 +185,19 @@ impl Database {
                 client_media_apppackage: apppackage,
                 client_media_appname: appname,
                 client_mode: row.take(6).unwrap(),
-                client_ekey: row.take(7).unwrap(),
-                client_ikey: row.take(8).unwrap(),
                 filter: rule_set.clone(),
-                client_format: row.take(10).unwrap(),
-                vendor_port: row.take(11).unwrap(),
-                vendor_mode: row.take(12).unwrap(),
-                vendor_ekey: row.take(13).unwrap(),
-                vendor_ikey: row.take(14).unwrap(),
+                client_format: row.take(8).unwrap(),
+                vendor_port: row.take(9).unwrap(),
+                vendor_mode: row.take(10).unwrap(),
+                vendor_ekey: row.take(11).unwrap(),
+                vendor_ikey: row.take(12).unwrap(),
                 test: test[0] == 1,
-                timeout: row.take(16).unwrap(),
-                priority: row.take(17).unwrap(),
-                upstream_ratio: row.take(18).unwrap(),
-                rebate_ratio: row.take(19).unwrap(),
-                downstream_ratio: row.take(20).unwrap(),
-                default_price: row.take(21).unwrap(),
+                timeout: row.take(14).unwrap(),
+                priority: row.take(15).unwrap(),
+                upstream_ratio: row.take(16).unwrap(),
+                rebate_ratio: row.take(17).unwrap(),
+                downstream_ratio: row.take(18).unwrap(),
+                default_price: row.take(19).unwrap(),
             };
             connections.push(connection);
         }

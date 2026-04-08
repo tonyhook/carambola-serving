@@ -98,7 +98,7 @@ impl Client for Fwb {
                     request_id.to_string()
                 },
                 tagid: {
-                    connection.client_tag_id.clone()
+                    connection.client_tag_id.split("|").nth(0).unwrap().to_string()
                 },
                 bidfloor: {
                     Some(Price::to_client(connection, request.item[0].flr.map(f64::from)) / 100.0)
@@ -1715,12 +1715,12 @@ impl Client for Fwb {
     }
 
     fn encrypt_price(price: i32, iv: &String, connection: &Connection) -> String {
-        let mut ekey_base64 = connection.client_ekey.replace("-", "+").replace("_", "/");
+        let mut ekey_base64 = connection.client_tag_id.split("|").nth(1).unwrap().replace("-", "+").replace("_", "/");
         while ekey_base64.len() % 4 != 0 {
             ekey_base64.push_str("=");
         }
         let ekey = BASE64_STANDARD.decode(ekey_base64);
-        let mut ikey_base64 = connection.client_ikey.replace("-", "+").replace("_", "/");
+        let mut ikey_base64 = connection.client_tag_id.split("|").nth(2).unwrap().replace("-", "+").replace("_", "/");
         while ikey_base64.len() % 4 != 0 {
             ikey_base64.push_str("=");
         }

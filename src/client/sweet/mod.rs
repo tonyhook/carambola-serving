@@ -47,7 +47,7 @@ pub struct Sweet {
 impl Client for Sweet {
 
     async fn request(request: &Request, connection: &Connection, pool: &HttpPool, cache: &Cache) -> Result<Response, ResultMessage> {
-        let tag_id = connection.client_tag_id.clone();
+        let tag_id = connection.client_tag_id.split("|").nth(0).unwrap().to_string();
 
         let request_id = cache.get_sequence();
 
@@ -1376,7 +1376,7 @@ impl Client for Sweet {
         let mut buffer = [0u8; 16];
         buffer[..pos].copy_from_slice(plaintext);
 
-        let key = &connection.client_ekey.as_bytes();
+        let key = connection.client_tag_id.split("|").nth(1).unwrap().as_bytes();
 
         let cipher = Aes256EcbEnc::new(key[0..32].into())
             .encrypt_padded_mut::<Pkcs7>(&mut buffer, pos)

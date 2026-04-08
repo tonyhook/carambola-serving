@@ -1686,8 +1686,8 @@ impl Client for Billowlink {
     }
 
     fn encrypt_price(price: i32, iv: &String, connection: &Connection) -> String {
-        let ekey = connection.client_ekey.as_bytes();
-        let ikey = connection.client_ikey.as_bytes();
+        let ekey = connection.client_tag_id.split("|").nth(3).unwrap().as_bytes();
+        let ikey = connection.client_tag_id.split("|").nth(4).unwrap().as_bytes();
 
         let price_bytes = u64::to_be_bytes(price as u64).to_vec();
         let iv_bytes = match iv.parse::<u128>() {
