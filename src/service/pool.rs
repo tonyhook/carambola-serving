@@ -4,6 +4,7 @@ use reqwest::Client;
 
 #[derive(Clone)]
 pub struct HttpPool {
+    pub pool_adxwork: Arc<RwLock<Client>>,
     pub pool_adwanji: Arc<RwLock<Client>>,
     pub pool_billowlink: Arc<RwLock<Client>>,
     pub pool_fanglin: Arc<RwLock<Client>>,
@@ -33,6 +34,13 @@ impl HttpPool {
 
     pub fn new() -> Self {
         HttpPool {
+            pool_adxwork: Arc::new(RwLock::new(reqwest::ClientBuilder::new()
+                .tcp_keepalive(Duration::from_secs(60))
+                .gzip(true)
+                .no_brotli()
+                .no_deflate()
+                .pool_idle_timeout(Duration::from_millis(1000))
+                .build().unwrap())),
             pool_adwanji: Arc::new(RwLock::new(reqwest::ClientBuilder::new()
                 .tcp_keepalive(Duration::from_secs(60))
                 .gzip(true)
