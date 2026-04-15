@@ -5,6 +5,7 @@ pub mod result_message;
 pub mod client;
 pub mod dummy;
 pub mod adwanji;
+pub mod adxflow;
 pub mod adxwork;
 pub mod billowlink;
 pub mod fanglin;
@@ -37,6 +38,7 @@ pub use client::Client;
 
 pub use dummy::Dummy;
 pub use adwanji::Adwanji;
+pub use adxflow::Adxflow;
 pub use adxwork::Adxwork;
 pub use billowlink::Billowlink;
 pub use fanglin::Fanglin;
