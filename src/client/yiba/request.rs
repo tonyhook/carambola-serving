@@ -12,64 +12,116 @@ pub struct YibaRequest {
     pub app_version: String,
     pub os_type: String,
     pub os_version: String,
-    pub imei: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub imei: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub imei_md5: Option<String>,
-    pub oaid: String,
-    pub oaid_md5: String,
-    pub android_id: String,
-    pub android_id_md5: String,
-    pub idfa: String,
-    pub idfa_md5: String,
-    pub idfv: String,
-    pub caid: String,
-    pub openudid: String,
-    pub openudid_md5: String,
-    pub ip: String,
-    pub ipv6: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub oaid: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub oaid_md5: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub android_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub android_id_md5: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub idfa: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub idfa_md5: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub idfv: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub caid: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub caid_version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub openudid: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub openudid_md5: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ip: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ipv6: Option<String>,
     pub user_agent: String,
-    pub mac: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mac: Option<String>,
     pub brand: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vendor: Option<String>,
     pub model: String,
-    pub device_type: i32,
-    pub orientation: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub device_type: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub orientation: Option<i32>,
     pub device_width: i32,
     pub device_height: i32,
     pub width: i32,
     pub height: i32,
-    pub paid: String,
-    pub aaid: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub paid: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub aaid: Option<String>,
     pub ppi: i32,
-    pub density: f64,
-    pub imsi: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub density: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub imsi: Option<String>,
     pub carrier_type: String,
     pub connection_type: i32,
-    pub longitude: f64,
-    pub latitude: f64,
-    pub user_gender: i32,
-    pub user_age: i32,
-    pub user_keywords: Vec<String>,
-    pub video_type: Vec<String>,
-    pub min_duration: i32,
-    pub max_duration: i32,
-    pub max_length: i32,
-    pub boot_mark: String,
-    pub update_mark: String,
-    pub app_list: Vec<String>,
-    pub appstore_version: String,
-    pub hms_version: String,
-    pub sys_name: String,
-    pub sys_boot_time: String,
-    pub sys_update_time: String,
-    pub sys_init_time: String,
-    pub sys_start_nano_sec: String,
-    pub sys_update_nano_sec: String,
-    pub sys_init_nano_sec: String,
-    pub sys_memory_size: String,
-    pub sys_disk_size: String,
-    pub sys_time_zone: String,
-    pub hardware_machine: String,
-    pub rom_version: String,
-    pub country: String,
-    pub language: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub longitude: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub latitude: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user_gender: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user_age: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user_keywords: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub video_type: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub min_duration: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_duration: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_length: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub boot_mark: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub update_mark: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub app_list: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub appstore_version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hms_version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sys_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sys_boot_time: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sys_update_time: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sys_init_time: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sys_start_nano_sec: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sys_update_nano_sec: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sys_init_nano_sec: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sys_memory_size: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sys_disk_size: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sys_time_zone: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hardware_machine: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rom_version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub country: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub language: Option<String>,
 }

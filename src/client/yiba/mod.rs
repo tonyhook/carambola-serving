@@ -126,8 +126,8 @@ impl Client for Yiba {
             },
             imei: {
                 match identifiers.get_id(501, 0) {
-                    Some(uid) => uid.id.clone(),
-                    None => "".to_string(),
+                    Some(uid) => Some(uid.id.clone()),
+                    None => None,
                 }
             },
             imei_md5: {
@@ -138,80 +138,77 @@ impl Client for Yiba {
             },
             oaid: {
                 match identifiers.get_id(505, 0) {
-                    Some(uid) => uid.id.clone(),
-                    None => "".to_string(),
+                    Some(uid) => Some(uid.id.clone()),
+                    None => None,
                 }
             },
             oaid_md5: {
                 match identifiers.get_id(506, 0) {
-                    Some(uid) => uid.id.clone(),
-                    None => "".to_string(),
+                    Some(uid) => Some(uid.id.clone()),
+                    None => None,
                 }
             },
             android_id: {
                 match identifiers.get_id(509, 0) {
-                    Some(uid) => uid.id.clone(),
-                    None => "".to_string(),
+                    Some(uid) => Some(uid.id.clone()),
+                    None => None,
                 }
             },
             android_id_md5: {
                 match identifiers.get_id(510, 0) {
-                    Some(uid) => uid.id.clone(),
-                    None => "".to_string(),
+                    Some(uid) => Some(uid.id.clone()),
+                    None => None,
                 }
             },
             idfa: {
                 match identifiers.get_id(507, 0) {
-                    Some(uid) => uid.id.clone(),
-                    None => "".to_string(),
+                    Some(uid) => Some(uid.id.clone()),
+                    None => None,
                 }
             },
             idfa_md5: {
                 match identifiers.get_id(508, 0) {
-                    Some(uid) => uid.id.clone(),
-                    None => "".to_string(),
+                    Some(uid) => Some(uid.id.clone()),
+                    None => None,
                 }
             },
             idfv: {
                 match identifiers.get_id(515, 0) {
-                    Some(uid) => uid.id.clone(),
-                    None => "".to_string(),
+                    Some(uid) => Some(uid.id.clone()),
+                    None => None,
                 }
             },
             caid: {
                 match identifiers.get_id(513, 0) {
-                    Some(uid) => uid.id.clone(),
-                    None => "".to_string(),
+                    Some(uid) => Some(uid.id.clone()),
+                    None => None,
+                }
+            },
+            caid_version: {
+                match identifiers.get_id(513, 0) {
+                    Some(uid) => uid.ver.clone(),
+                    None => None,
                 }
             },
             openudid: {
-                "".to_string()
+                None
             },
             openudid_md5: {
-                "".to_string()
+                None
             },
             ip: {
-                match &request.context.device.ip {
-                    Some(ip) => ip.clone(),
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.ip is required for upstream".to_string(),
-                    }),
-                }
+                request.context.device.ip.clone()
             },
             ipv6: {
-                match &request.context.device.ipv6 {
-                    Some(ipv6) => ipv6.clone(),
-                    None => "::".to_string(),
-                }
+                request.context.device.ipv6.clone()
             },
             user_agent: {
                 request.context.device.ua.clone()
             },
             mac: {
                 match identifiers.get_id(511, 0) {
-                    Some(uid) => uid.id.clone(),
-                    None => "".to_string(),
+                    Some(uid) => Some(uid.id.clone()),
+                    None => None,
                 }
             },
             brand: {
@@ -222,6 +219,9 @@ impl Client for Yiba {
                         message: "request.context.device.brand is required for upstream".to_string(),
                     }),
                 }
+            },
+            vendor: {
+                request.context.device.make.clone()
             },
             model: {
                 match &request.context.device.model {
@@ -234,32 +234,21 @@ impl Client for Yiba {
             },
             device_type: {
                 match request.context.device.devicetype {
-                    Some(devicetype) => {
-                        match devicetype {
-                            1 => 1,
-                            2 => 0,
-                            3 => 3,
-                            4 => 1,
-                            5 => 2,
-                            6 => 0,
-                            7 => 3,
-                            8 => 0,
-                            _ => 0,
-                        }
-                    },
-                    None => 0,
+                    Some(1) => Some(1),
+                    Some(3) => Some(3),
+                    Some(4) => Some(1),
+                    Some(5) => Some(2),
+                    Some(7) => Some(3),
+                    Some(_) => Some(0),
+                    None => None,
                 }
             },
             orientation: {
                 match request.context.device.orientation {
-                    Some(orientation) => {
-                        match orientation {
-                            501 => 1,
-                            502 => 2,
-                            _ => 0,
-                        }
-                    },
-                    None => 0,
+                    Some(501) => Some(1),
+                    Some(502) => Some(2),
+                    Some(_) => Some(0),
+                    None => None,
                 }
             },
             device_width: {
@@ -300,14 +289,14 @@ impl Client for Yiba {
             },
             paid: {
                 match identifiers.get_id(519, 0) {
-                    Some(uid) => uid.id.clone(),
-                    None => "".to_string(),
+                    Some(uid) => Some(uid.id.clone()),
+                    None => None,
                 }
             },
             aaid: {
                 match identifiers.get_id(514, 0) {
-                    Some(uid) => uid.id.clone(),
-                    None => "".to_string(),
+                    Some(uid) => Some(uid.id.clone()),
+                    None => None,
                 }
             },
             ppi: {
@@ -321,17 +310,14 @@ impl Client for Yiba {
             },
             density: {
                 match request.context.device.pxratio {
-                    Some(pxratio) => pxratio,
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.pxratio is required for upstream".to_string(),
-                    }),
+                    Some(pxratio) => Some(pxratio),
+                    None => None,
                 }
             },
             imsi: {
                 match identifiers.get_id(503, 0) {
-                    Some(uid) => uid.id.clone(),
-                    None => "".to_string(),
+                    Some(uid) => Some(uid.id.clone()),
+                    None => None,
                 }
             },
             carrier_type: {
@@ -376,63 +362,53 @@ impl Client for Yiba {
             longitude: {
                 match &request.context.device.geo {
                     Some(geo) => {
-                        match geo.lon {
-                            Some(lon) => {
-                                lon
-                            },
-                            None => 0.0,
-                        }
+                        geo.lon.clone()
                     },
-                    None => 0.0,
+                    None => None,
                 }
             },
             latitude: {
                 match &request.context.device.geo {
                     Some(geo) => {
-                        match geo.lat {
-                            Some(lat) => {
-                                lat
-                            },
-                            None => 0.0,
-                        }
+                        geo.lat.clone()
                     },
-                    None => 0.0,
+                    None => None,
                 }
             },
             user_gender: {
                 match &request.context.user.gender {
                     Some(gender) => {
                         match gender.as_str() {
-                            "M" => 1,
-                            "F" => 2,
-                            "O" => 0,
-                            _ => 0,
+                            "M" => Some(1),
+                            "F" => Some(2),
+                            "O" => Some(0),
+                            _ => Some(0),
                         }
                     }
-                    None => 0,
+                    None => None,
                 }
             },
             user_age: {
                 match request.context.user.yob {
                     Some(yob) => {
                         let year = Local::now().year();
-                        year - yob
+                        Some(year - yob)
                     },
-                    None => 0,
+                    None => None,
                 }
             },
             user_keywords: {
                 match &request.context.user.keywords {
-                    Some(keywords) => keywords.split(",").map(|s| s.to_string()).collect(),
-                    None => [].to_vec(),
+                    Some(keywords) => Some(keywords.split(",").map(|s| s.to_string()).collect()),
+                    None => None,
                 }
             },
             video_type: {
-                let mut video_type = vec![];
                 if assets.get_asset_size("video") == 1 && assets.get_asset_size("video") == assets.get_asset_total_size() {
                     let video = assets.get_current_asset("video").unwrap().video.clone().unwrap();
                     match video.mime {
                         Some(mime) => {
+                            let mut video_type = vec![];
                             for mime1 in mime {
                                 let type1 = mime1.split("/").nth(1);
                                 match type1 {
@@ -442,171 +418,143 @@ impl Client for Yiba {
                                     None => (),
                                 }
                             }
+                            Some(video_type)
                         },
-                        None => (),
+                        None => None,
                     }
+                } else {
+                    None
                 }
-                video_type
             },
             min_duration: {
-                let mut min_duration = 0;
                 if assets.get_asset_size("video") == 1 && assets.get_asset_size("video") == assets.get_asset_total_size() {
                     let video = assets.get_current_asset("video").unwrap().video.clone().unwrap();
                     match video.mindur {
                         Some(mindur) => {
-                            min_duration = mindur;
+                            Some(mindur)
                         },
-                        None => (),
+                        None => None,
                     }
+                } else {
+                    None
                 }
-                min_duration
             },
             max_duration: {
-                let mut max_duration = 0;
                 if assets.get_asset_size("video") == 1 && assets.get_asset_size("video") == assets.get_asset_total_size() {
                     let video = assets.get_current_asset("video").unwrap().video.clone().unwrap();
                     match video.maxdur {
                         Some(maxdur) => {
-                            max_duration = maxdur;
+                            Some(maxdur)
                         },
-                        None => (),
+                        None => None,
                     }
+                } else {
+                    None
                 }
-                max_duration
             },
             max_length: {
-                let mut max_size = 0;
                 if assets.get_asset_size("video") == 1 && assets.get_asset_size("video") == assets.get_asset_total_size() {
                     let video = assets.get_current_asset("video").unwrap().video.clone().unwrap();
                     match video.maxsize {
                         Some(maxsize) => {
-                            max_size = maxsize;
+                            Some(maxsize)
                         },
-                        None => (),
+                        None => None,
                     }
+                } else {
+                    None
                 }
-                max_size
             },
             boot_mark: {
-                match &request.context.device.bootmark {
-                    Some(bootmark) => bootmark.clone(),
-                    None => "".to_string(),
-                }
+                request.context.device.bootmark.clone()
             },
             update_mark: {
-                match &request.context.device.updatemark {
-                    Some(updatemark) => updatemark.clone(),
-                    None => "".to_string(),
-                }
+                request.context.device.updatemark.clone()
             },
             app_list: {
                 match &request.context.device.app {
-                    Some(app) => app.split(",").map(|s| s.to_string()).collect(),
-                    None => vec![],
+                    Some(app) => Some(app.split(",").map(|s| s.to_string()).collect()),
+                    None => None,
                 }
             },
             appstore_version: {
-                match &request.context.device.storev {
-                    Some(storev) => storev.clone(),
-                    None => "".to_string(),
-                }
+                request.context.device.storev.clone()
             },
             hms_version: {
-                match &request.context.device.hmsv {
-                    Some(hmsv) => hmsv.clone(),
-                    None => "".to_string(),
-                }
+                request.context.device.hmsv.clone()
             },
             sys_name: {
-                "".to_string()
+                match identifiers.get_id(527, 0) {
+                    Some(uid) => Some(uid.id.clone()),
+                    None => None,
+                }
             },
             sys_boot_time: {
                 match &request.context.device.boottime {
-                    Some(boottime) => boottime.split(".").nth(0).unwrap().to_string(),
-                    None => "".to_string(),
+                    Some(boottime) => Some(boottime.split(".").nth(0).unwrap().to_string()),
+                    None => None,
                 }
             },
             sys_update_time: {
                 match &request.context.device.updatetime {
-                    Some(updatetime) => updatetime.split(".").nth(0).unwrap().to_string(),
-                    None => "".to_string(),
+                    Some(updatetime) => Some(updatetime.split(".").nth(0).unwrap().to_string()),
+                    None => None,
                 }
             },
             sys_init_time: {
                 match &request.context.device.inittime {
-                    Some(inittime) => inittime.split(".").nth(0).unwrap().to_string(),
+                    Some(inittime) => Some(inittime.split(".").nth(0).unwrap().to_string()),
                     None => {
                         match &request.context.device.birthtime {
-                            Some(birthtime) => birthtime.split(".").nth(0).unwrap().to_string(),
-                            None => "".to_string(),
+                            Some(birthtime) => Some(birthtime.split(".").nth(0).unwrap().to_string()),
+                            None => None,
                         }
                     },
                 }
             },
             sys_start_nano_sec: {
-                match &request.context.device.boottime {
-                    Some(boottime) => boottime.clone(),
-                    None => "".to_string(),
-                }
+                request.context.device.boottime.clone()
             },
             sys_update_nano_sec: {
-                match &request.context.device.updatetime {
-                    Some(updatetime) => updatetime.clone(),
-                    None => "".to_string(),
-                }
+                request.context.device.updatetime.clone()
             },
             sys_init_nano_sec: {
                 match &request.context.device.inittime {
-                    Some(inittime) => inittime.clone(),
+                    Some(inittime) => Some(inittime.clone()),
                     None => {
                         match &request.context.device.birthtime {
-                            Some(birthtime) => birthtime.clone(),
-                            None => "".to_string(),
+                            Some(birthtime) => Some(birthtime.clone()),
+                            None => None,
                         }
                     },
                 }
             },
             sys_memory_size: {
                 match &request.context.device.sysmemory {
-                    Some(sysmemory) => sysmemory.to_string(),
-                    None => "".to_string(),
+                    Some(sysmemory) => Some(sysmemory.to_string()),
+                    None => None,
                 }
             },
             sys_disk_size: {
                 match &request.context.device.sysdisksize {
-                    Some(sysdisksize) => sysdisksize.to_string(),
-                    None => "".to_string(),
+                    Some(sysdisksize) => Some(sysdisksize.to_string()),
+                    None => None,
                 }
             },
             sys_time_zone: {
-                match &request.context.device.timezone {
-                    Some(timezone) => timezone.clone(),
-                    None => "".to_string(),
-                }
+                request.context.device.timezone.clone()
             },
             hardware_machine: {
-                match &request.context.device.hwmachine {
-                    Some(hwmachine) => hwmachine.clone(),
-                    None => "".to_string(),
-                }
+                request.context.device.hwmachine.clone()
             },
             rom_version: {
-                match &request.context.device.romv {
-                    Some(romv) => romv.clone(),
-                    None => "".to_string(),
-                }
+                request.context.device.romv.clone()
             },
             country: {
-                match &request.context.device.country {
-                    Some(country) => country.clone(),
-                    None => "".to_string(),
-                }
+                request.context.device.country.clone()
             },
             language: {
-                match &request.context.device.lang {
-                    Some(lang) => lang.clone(),
-                    None => "".to_string(),
-                }
+                request.context.device.lang.clone()
             },
         };
 
@@ -1486,6 +1434,8 @@ impl Client for Yiba {
     }
 
     fn encrypt_price(price: i32, _iv: &String, connection: &Connection) -> String {
+        let secret = connection.client_tag_id.split("|").nth(1).unwrap();
+
         let message = format!("{}", price);
         let plaintext = message.as_bytes();
         let pos = if plaintext.len() > 16 {
@@ -1496,7 +1446,7 @@ impl Client for Yiba {
         let mut buffer = [0u8; 16];
         buffer[..pos].copy_from_slice(plaintext);
 
-        let key = connection.client_ekey.as_bytes();
+        let key = &hex::decode(secret).unwrap();
 
         let cipher = Aes128EcbEnc::new(key[0..16].into())
             .encrypt_padded_mut::<Pkcs7>(&mut buffer, pos)
