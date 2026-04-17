@@ -1,0 +1,177 @@
+syntax = "proto3";
+
+package rtb;
+
+// ============================================
+// 请求协议定义
+// ============================================
+
+message BidRequest {
+  string id = 1;                          // 请求ID，唯一标识本次请求
+  string api_version = 2;                 // 接口版本号
+  repeated Imp imp = 3;                   // 曝光机会列表
+  App app = 4;                            // APP信息
+  Device device = 5;                      // 设备信息
+  User user = 6;                          // 用户信息（可选）
+  int32 timeout = 7;                      // 请求超时时间（单位：毫秒）
+}
+
+// 曝光机会
+message Imp {
+  string id = 1;                          // 曝光ID，标识唯一一次曝光机会
+  string slot_id = 2;                     // 广告位ID（对接时提供）
+  int32 ad_type = 3;                      // 广告类型 1-信息流 2-开屏 3-banner 4-插屏 9-激励视频
+  int32 bid_floor = 4;                    // 竞价底价，单位：分/CPM
+  int32 width = 5;                        // 广告位宽度（像素）
+  int32 height = 6;                       // 广告位高度（像素）
+}
+
+// 设备信息
+message Device {
+  string ua = 1;                          // User-Agent
+  string ip = 2;                          // 客户端真实IP（IPv4）
+  string ipv6 = 3;                        // 客户端真实IP（IPv6），ip和ipv6至少填一个
+  int32 device_type = 4;                  // 设备类型 0-未知 1-手机 2-平板 3-PC 4-电视
+  string make = 5;                        // 设备制造商
+  string brand = 6;                       // 设备品牌
+  string model = 7;                       // 设备型号
+  int32 os = 8;                           // 操作系统 0-未知 1-Android 2-iOS 3-Windows
+  string osv = 9;                         // 操作系统版本号
+  int32 network_type = 10;                // 网络类型 0-未知 1-WiFi 2-2G 3-3G 4-4G 5-5G
+  int32 carrier = 11;                     // 运营商 0-未知 1-移动 2-联通 3-电信
+  int32 width = 12;                       // 屏幕宽度
+  int32 height = 13;                      // 屏幕高度
+  int32 orientation = 14;                 // 屏幕方向 0-未知 1-竖屏 2-横屏
+  float density = 15;                     // 屏幕密度
+  int32 ppi = 16;                         // 屏幕PPI
+  
+  // 设备标识（Android）
+  string imei = 20;                       // IMEI原始值
+  string imei_md5 = 21;                   // IMEI MD5值（32位，大写）
+  string android_id = 22;                 // Android ID原始值
+  string android_id_md5 = 23;             // Android ID MD5值
+  string oaid = 24;                       // OAID原始值
+  string oaid_md5 = 25;                   // OAID MD5值
+  
+  // 设备标识（iOS）
+  string idfa = 30;                       // IDFA原始值
+  string idfa_md5 = 31;                   // IDFA MD5值（32位，大写）
+  repeated CAID caids = 32;               // CAID列表
+  
+  // 拼多多归因参数构建字段
+  string boot_time = 33;                  // 系统启动时间，单位：秒（保留整数）示例："1600607106"
+  string update_time = 34;                // 系统更新时间，小数点前10位后6位 示例："1647545826.588793"
+  string birth_time = 35;                 // 设备初始化时间，小数点前10位后9位 示例："1647545718.125795458"
+  
+  // Tanx归因字段
+  string boot_mark = 36;                  // Tanx归因字段：系统启动标识，原值传输
+  string update_mark = 37;                // Tanx归因字段：系统更新标识，原值传输
+  
+  // 拼多多归因参数
+  string paid = 38;                       // 拼多多归因参数V1.3
+  string paid_14 = 39;                    // 拼多多归因参数V1.4
+  
+  // 地理位置
+  Geo geo = 40;                           // 地理位置信息
+  
+  message Geo {
+    double lat = 1;                       // 纬度 [-90.0, +90.0]
+    double lon = 2;                       // 经度 [-180.0, +180.0]
+  }
+  
+  message CAID {
+    string caid = 1;                      // CAID值
+    string version = 2;                   // CAID版本号
+  }
+}
+
+// APP信息
+message App {
+  string id = 1;                          // 应用ID
+  string name = 2;                        // 应用名称
+  string bundle = 3;                      // 应用包名
+  string version = 4;                     // 应用版本号
+}
+
+// 用户信息
+message User {
+  repeated string install_apps = 1;       // 用户已安装的APP包名列表
+}
+
+// ============================================
+// 响应协议定义
+// ============================================
+
+message BidResponse {
+  string id = 1;                          // 请求ID，与BidRequest.id一致
+  int32 status_code = 2;                  // 响应状态码 0-有广告 1-无广告
+  string msg = 3;                         // 状态描述（可选）
+  repeated SeatBid seat_bid = 4;          // 广告位响应列表
+}
+
+message SeatBid {
+  string seat = 1;                        // 席位标识
+  repeated Bid bid = 2;                   // 广告列表
+}
+
+message Bid {
+  string id = 1;                          // 广告ID
+  string imp_id = 2;                      // 对应BidRequest.imp.id
+  string creative_id = 3;                 // 创意ID
+  int32 price = 4;                        // 出价，单位：分/CPM
+  
+  // 广告物料
+  Material material = 10;                 // 广告素材
+  Links links = 11;                       // 链接信息
+  Tracking tracking = 12;                 // 追踪信息
+  AppInfo app_info = 13;                  // 应用信息（下载类广告必填）
+  
+  message Material {
+    string title = 1;                     // 标题
+    string desc = 2;                      // 描述
+    repeated string image_urls = 3;       // 图片URL列表
+    string video_url = 4;                 // 视频URL
+    string video_cover_url = 5;           // 视频封面URL
+    int32 video_duration = 6;             // 视频时长（秒）
+    string icon_url = 7;                  // 图标URL
+    int32 width = 8;                      // 宽度
+    int32 height = 9;                     // 高度
+  }
+  
+  message Links {
+    string click_url = 1;                 // 点击URL（落地页）
+    string deeplink = 2;                  // 深度链接（APP唤醒）
+    string universal_link = 3;            // iOS Universal Link
+  }
+  
+  message Tracking {
+    repeated string imp_urls = 1;         // 曝光监测URL列表
+    repeated string click_urls = 2;       // 点击监测URL列表
+    string win_notice_url = 3;            // 竞价成功通知URL
+    string lose_notice_url = 4;           // 竞价失败通知URL
+    Hc hc = 5;                            // 汇川相关统计字段
+  }
+  
+  message AppInfo {
+    string bundle = 1;                    // 应用包名
+    string name = 2;                      // 应用名称
+    string download_url = 3;              // 下载URL
+    string version = 4;                   // 版本号
+    int32 package_size = 5;               // 安装包大小（字节）
+    string package_md5 = 6;               // 安装包MD5
+    string developer = 7;                 // 开发者信息
+    string privacy_policy = 8;            // 隐私协议链接
+    string permission_url = 9;            // 权限列表链接
+    string function_url = 10;             // 功能介绍链接
+  }
+
+  // 汇川相关统计字段
+  message Hc {
+    string end_vurl = 1;                  // 展现结束反馈URL
+    string furl = 2;                      // 失败反馈URL
+    string scheme_feedback_url = 3;       // 唤端反馈URL
+    string eurl = 4;                      // 特殊事件反馈URL
+    string video_play_url = 5;            // 视频播放打点URL
+    string click_area_report_url = 6;     // 点击坐标上报URL
+  }
+}
