@@ -141,29 +141,39 @@ impl Client for Kkmh {
                     None
                 },
                 name: {
-                    match &request.context.app {
-                        Some(app) => app.name.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.app is required for upstream".to_string(),
-                        }),
+                    match &connection.client_media_appname {
+                        Some(client_media_appname) => client_media_appname.clone(),
+                        None => {
+                            match &request.context.app {
+                                Some(app) => app.name.clone(),
+                                None => return Err(ResultMessage {
+                                    code: 998,
+                                    message: "request.context.app is required for upstream".to_string(),
+                                }),
+                            }
+                        },
                     }
                 },
                 bundle: {
-                    match &request.context.app {
-                        Some(app) => {
-                            match &app.bundle {
-                                Some(bundle) => bundle.clone(),
+                    match &connection.client_media_apppackage {
+                        Some(client_media_apppackage) => client_media_apppackage.clone(),
+                        None => {
+                            match &request.context.app {
+                                Some(app) => {
+                                    match &app.bundle {
+                                        Some(bundle) => bundle.clone(),
+                                        None => return Err(ResultMessage {
+                                            code: 998,
+                                            message: "request.context.app.bundle is required for upstream".to_string(),
+                                        }),
+                                    }
+                                }
                                 None => return Err(ResultMessage {
                                     code: 998,
-                                    message: "request.context.app.bundle is required for upstream".to_string(),
+                                    message: "request.context.app is required for upstream".to_string(),
                                 }),
                             }
-                        }
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.app is required for upstream".to_string(),
-                        }),
+                        },
                     }
                 },
                 version: {

@@ -101,15 +101,28 @@ impl Client for Richmob {
                 match &request.context.app {
                     Some(app) => RichmobApp {
                         app_name: {
-                            app.name.clone()
+                            match &connection.client_media_appname {
+                                Some(client_media_appname) => client_media_appname.clone(),
+                                None => app.name.clone(),
+                            }
                         },
                         package_name: {
-                            match &app.bundle {
-                                Some(bundle) => bundle.clone(),
-                                None => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.app.bundle is required for upstream".to_string(),
-                                }),
+                            match &connection.client_media_apppackage {
+                                Some(client_media_apppackage) => client_media_apppackage.clone(),
+                                None => {
+                                    match &connection.client_media_apppackage {
+                                        Some(client_media_apppackage) => client_media_apppackage.clone(),
+                                        None => {
+                                            match &app.bundle {
+                                                Some(bundle) => bundle.clone(),
+                                                None => return Err(ResultMessage {
+                                                    code: 998,
+                                                    message: "request.context.app.bundle is required for upstream".to_string(),
+                                                }),
+                                            }
+                                        },
+                                    }
+                                },
                             }
                         },
                         app_category: {

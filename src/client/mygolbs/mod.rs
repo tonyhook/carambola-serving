@@ -36,15 +36,25 @@ impl Client for Mygolbs {
             app_id: app_id.to_string(),
             pid: pid.to_string(),
             appname: {
-                match &request.context.app {
-                    Some(app) => Some(app.name.clone()),
-                    None => None,
+                match &connection.client_media_appname {
+                    Some(client_media_appname) => Some(client_media_appname.clone()),
+                    None => {
+                        match &request.context.app {
+                            Some(app) => Some(app.name.clone()),
+                            None => None,
+                        }
+                    },
                 }
             },
             bundle_id: {
-                match &request.context.app {
-                    Some(app) => app.bundle.clone(),
-                    None => None,
+                match &connection.client_media_apppackage {
+                    Some(client_media_apppackage) => Some(client_media_apppackage.clone()),
+                    None => {
+                        match &request.context.app {
+                            Some(app) => app.bundle.clone(),
+                            None => None,
+                        }
+                    },
                 }
             },
             appversion: {

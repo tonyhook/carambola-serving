@@ -128,6 +128,8 @@ impl Database {
                 ad_client.code,
                 ad_client_port.id,
                 ad_client_port.tag_id,
+                ad_client_media.apppackage,
+                ad_client_media.name,
                 ad_client_port.mode,
                 ad_client_port.ekey,
                 ad_client_port.ikey,
@@ -141,12 +143,13 @@ impl Database {
                 ad_connection.cost_ratio,
                 ad_connection.default_price,
                 configuration_id
-            FROM ad_connection, ad_client, ad_client_port, ad_vendor, ad_vendor_media, ad_vendor_port
+            FROM ad_connection, ad_client, ad_client_media, ad_client_port, ad_vendor, ad_vendor_media, ad_vendor_port
             WHERE ad_connection.enabled AND NOT ad_connection.deleted
             AND ad_connection.valid_from <= NOW()
             AND ad_connection.valid_to >= NOW()
             AND ad_connection.client_port_id = ad_client_port.id
             AND ad_client_port.mode <> 3
+            AND ad_client_port.client_media_id = ad_client_media.id
             AND ad_client_port.client_id = ad_client.id
             AND ad_connection.vendor_port_id = ad_vendor_port.id
             AND ad_vendor_port.mode <> 3
@@ -157,25 +160,52 @@ impl Database {
         for row in result {
             let mut row = row.unwrap();
             let test: Vec<u8> = row.take(7).unwrap();
-            let connection_id: i32 = row.take(16).unwrap();
+            let apppackage: Option<Value> = row.take(4);
+            let appname: Option<Value> = row.take(5);
+            let connection_id: i32 = row.take(18).unwrap();
+
+            let apppackage = match apppackage {
+                Some(Value::Bytes(apppackage)) => {
+                    if apppackage.len() > 0 {
+                        Some(String::from_utf8(apppackage).unwrap())
+                    } else {
+                        None
+                    }
+                },
+                _ => None,
+            };
+
+            let appname = match appname {
+                Some(Value::Bytes(appname)) => {
+                    if appname.len() > 0 {
+                        Some(String::from_utf8(appname).unwrap())
+                    } else {
+                        None
+                    }
+                },
+                _ => None,
+            };
+
 
             let connection = Connection {
                 id: row.take(0).unwrap(),
                 client_code: row.take(1).unwrap(),
                 client_port: row.take(2).unwrap(),
                 client_tag_id: row.take(3).unwrap(),
-                client_mode: row.take(4).unwrap(),
-                client_ekey: row.take(5).unwrap(),
-                client_ikey: row.take(6).unwrap(),
+                client_media_apppackage: apppackage,
+                client_media_appname: appname,
+                client_mode: row.take(6).unwrap(),
+                client_ekey: row.take(7).unwrap(),
+                client_ikey: row.take(8).unwrap(),
                 test: test[0] == 1,
-                vendor_port: row.take(8).unwrap(),
-                vendor_mode: row.take(9).unwrap(),
-                vendor_ekey: row.take(10).unwrap(),
-                vendor_ikey: row.take(11).unwrap(),
-                timeout: row.take(12).unwrap(),
-                priority: row.take(13).unwrap(),
-                cost_ratio: row.take(14).unwrap(),
-                default_price: row.take(15).unwrap(),
+                vendor_port: row.take(10).unwrap(),
+                vendor_mode: row.take(11).unwrap(),
+                vendor_ekey: row.take(12).unwrap(),
+                vendor_ikey: row.take(13).unwrap(),
+                timeout: row.take(14).unwrap(),
+                priority: row.take(15).unwrap(),
+                cost_ratio: row.take(16).unwrap(),
+                default_price: row.take(17).unwrap(),
                 configuration: {
                     *configurations.iter().find(|c|c.id == connection_id).unwrap()
                 },

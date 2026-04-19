@@ -51,14 +51,19 @@ impl Client for Yiba {
                 Price::to_client(connection, request.item[0].flr)
             },
             app_name: {
-                match &request.context.app {
-                    Some(app) => {
-                        app.name.clone()
-                    },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.app is required for upstream".to_string(),
-                    }),
+                match &connection.client_media_appname {
+                    Some(client_media_appname) => client_media_appname.clone(),
+                    None => {
+                        match &request.context.app {
+                            Some(app) => {
+                                app.name.clone()
+                            },
+                            None => return Err(ResultMessage {
+                                code: 998,
+                                message: "request.context.app is required for upstream".to_string(),
+                            }),
+                        }
+                    }
                 }
             },
             app_package: {

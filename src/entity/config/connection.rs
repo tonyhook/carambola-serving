@@ -9,6 +9,8 @@ pub struct Connection {
     pub client_code: String,
     pub client_port: i32,
     pub client_tag_id: String,
+    pub client_media_apppackage: Option<String>,
+    pub client_media_appname: Option<String>,
     pub client_mode: i32,
     pub client_ekey: String,
     pub client_ikey: String,
