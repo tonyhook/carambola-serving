@@ -15,6 +15,7 @@ use sha1::Sha1;
 use tokio_cron_scheduler::{Job, JobScheduler};
 use tower_http::compression::CompressionLayer;
 use tower::Service;
+use wildmatch::WildMatch;
 
 type HmacSha1 = Hmac<Sha1>;
 
@@ -315,6 +316,12 @@ async fn handler(
             cache.set_request_amount_bundle(client_port, vendor_port.0, &bundle);
         }
 
+        // check key fields of connection
+        if !match_key_field(&request, connection) {
+            cache.update_performance(client_port, vendor_port.0, &bundle, PERFORMANCE_LOST_KEY_FIELD);
+            continue;
+        }
+
         // build request
         let request = AssertUnwindSafe(query(&request, connection, &pool, &cache)).catch_unwind();
 
@@ -593,6 +600,919 @@ async fn handler(
 
     final_response.seatbid = Some(final_seatbid);
     Ok(Json(final_response))
+}
+
+fn match_rule(request: &Request, entry: &Entry) -> bool {
+    let identifiers = Identifiers::new(request);
+
+    match entry {
+        Entry::Rule(rule) => {
+            let mut request_value = None;
+            let mut request_value_type = "string";
+
+            match rule.field.as_str() {
+                "app#bundle" => {
+                    match &request.context.app {
+                        Some(app) => {
+                            request_value = app.bundle.clone();
+                            request_value_type = "string";
+                        },
+                        None => (),
+                    }
+                },
+                "app#domain" => {
+                    match &request.context.app {
+                        Some(app) => {
+                            request_value = app.domain.clone();
+                            request_value_type = "string";
+                        },
+                        None => (),
+                    }
+                },
+                "app#name" => {
+                    match &request.context.app {
+                        Some(app) => {
+                            request_value = Some(app.name.clone());
+                            request_value_type = "string";
+                        },
+                        None => (),
+                    }
+                },
+                "app#paid" => {
+                    match &request.context.app {
+                        Some(app) => {
+                            request_value = Some(app.paid.to_string());
+                            request_value_type = "category";
+                        },
+                        None => (),
+                    }
+                },
+                "app#storeid" => {
+                    match &request.context.app {
+                        Some(app) => {
+                            request_value = app.storeid.clone();
+                            request_value_type = "string";
+                        },
+                        None => (),
+                    }
+                },
+                "app#storeurl" => {
+                    match &request.context.app {
+                        Some(app) => {
+                            request_value = app.storeurl.clone();
+                            request_value_type = "string";
+                        },
+                        None => (),
+                    }
+                },
+                "app#ver" => {
+                    match &request.context.app {
+                        Some(app) => {
+                            request_value = app.ver.clone();
+                            request_value_type = "string";
+                        },
+                        None => (),
+                    }
+                },
+                "device#app" => {
+                    request_value = request.context.device.app.clone();
+                    request_value_type = "string";
+                },
+                "device#bootmark" => {
+                    request_value = request.context.device.bootmark.clone();
+                    request_value_type = "string";
+                },
+                "device#boottime" => {
+                    request_value = request.context.device.boottime.clone();
+                    request_value_type = "string";
+                },
+                "device#brand" => {
+                    request_value = request.context.device.brand.clone();
+                    request_value_type = "string";
+                },
+                "device#carrier" => {
+                    request_value = request.context.device.carrier.clone();
+                    request_value_type = "category";
+                },
+                "device#contype" => {
+                    request_value = match &request.context.device.contype {
+                        Some(contype) => Some(contype.to_string()),
+                        None => None,
+                    };
+                    request_value_type = "category";
+                },
+                "device#country" => {
+                    request_value = request.context.device.country.clone();
+                    request_value_type = "string";
+                },
+                "device#h" => {
+                    request_value = match &request.context.device.h {
+                        Some(h) => Some(h.to_string()),
+                        None => None,
+                    };
+                    request_value_type = "number";
+                },
+                "device#hmsv" => {
+                    request_value = request.context.device.hmsv.clone();
+                    request_value_type = "string";
+                },
+                "device#hwmachine" => {
+                    request_value = request.context.device.hwmachine.clone();
+                    request_value_type = "string";
+                },
+                "device#hwmodel" => {
+                    request_value = request.context.device.hwmodel.clone();
+                    request_value_type = "string";
+                },
+                "device#hwname" => {
+                    request_value = request.context.device.hwname.clone();
+                    request_value_type = "string";
+                },
+                "device#hwv" => {
+                    request_value = request.context.device.hwv.clone();
+                    request_value_type = "string";
+                },
+                "device#inittime" => {
+                    request_value = request.context.device.inittime.clone();
+                    request_value_type = "string";
+                },
+                "device#ip" => {
+                    request_value = request.context.device.ip.clone();
+                    request_value_type = "string";
+                },
+                "device#ipv6" => {
+                    request_value = request.context.device.ipv6.clone();
+                    request_value_type = "string";
+                },
+                "device#lang" => {
+                    request_value = request.context.device.lang.clone();
+                    request_value_type = "string";
+                },
+                "device#lmt" => {
+                    request_value = match &request.context.device.lmt {
+                        Some(lmt) => Some(lmt.to_string()),
+                        None => None,
+                    };
+                    request_value_type = "category";
+                },
+                "device#make" => {
+                    request_value = request.context.device.make.clone();
+                    request_value_type = "string";
+                },
+                "device#mntid" => {
+                    request_value = request.context.device.mntid.clone();
+                    request_value_type = "string";
+                },
+                "device#model" => {
+                    request_value = request.context.device.model.clone();
+                    request_value_type = "string";
+                },
+                "device#orientation" => {
+                    request_value = match &request.context.device.orientation {
+                        Some(orientation) => Some(orientation.to_string()),
+                        None => None,
+                    };
+                    request_value_type = "category";
+                },
+                "device#os" => {
+                    request_value = match &request.context.device.os {
+                        Some(os) => Some(os.to_string()),
+                        None => None,
+                    };
+                    request_value_type = "category";
+                },
+                "device#oslevel" => {
+                    request_value = match &request.context.device.oslevel {
+                        Some(oslevel) => Some(oslevel.to_string()),
+                        None => None,
+                    };
+                    request_value_type = "number";
+                },
+                "device#osv" => {
+                    request_value = request.context.device.osv.clone();
+                    request_value_type = "string";
+                },
+                "device#ppi" => {
+                    request_value = match &request.context.device.ppi {
+                        Some(ppi) => Some(ppi.to_string()),
+                        None => None,
+                    };
+                    request_value_type = "number";
+                },
+                "device#pxratio" => {
+                    request_value = match &request.context.device.pxratio {
+                        Some(pxratio) => Some(pxratio.to_string()),
+                        None => None,
+                    };
+                    request_value_type = "number";
+                },
+                "device#romtime" => {
+                    request_value = request.context.device.romtime.clone();
+                    request_value_type = "string";
+                },
+                "device#romv" => {
+                    request_value = request.context.device.romv.clone();
+                    request_value_type = "string";
+                },
+                "device#size" => {
+                    request_value = match &request.context.device.size {
+                        Some(size) => Some(size.to_string()),
+                        None => None,
+                    };
+                    request_value_type = "number";
+                },
+                "device#skan" => {
+                    request_value = match &request.context.device.skan {
+                        Some(skan) => Some(skan.join(",")),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "device#storename" => {
+                    request_value = request.context.device.storename.clone();
+                    request_value_type = "string";
+                },
+                "device#storev" => {
+                    request_value = request.context.device.storev.clone();
+                    request_value_type = "string";
+                },
+                "device#sysbatterypower" => {
+                    request_value = match &request.context.device.sysbatterypower {
+                        Some(sysbatterypower) => Some(sysbatterypower.to_string()),
+                        None => None,
+                    };
+                    request_value_type = "number";
+                },
+                "device#sysbatterystatus" => {
+                    request_value = match &request.context.device.sysbatterystatus {
+                        Some(sysbatterystatus) => Some(sysbatterystatus.to_string()),
+                        None => None,
+                    };
+                    request_value_type = "category";
+                },
+                "device#syscpu" => {
+                    request_value = match &request.context.device.syscpu {
+                        Some(syscpu) => Some(syscpu.to_string()),
+                        None => None,
+                    };
+                    request_value_type = "number";
+                },
+                "device#syscpufreq" => {
+                    request_value = match &request.context.device.syscpufreq {
+                        Some(syscpufreq) => Some(syscpufreq.to_string()),
+                        None => None,
+                    };
+                    request_value_type = "number";
+                },
+                "device#sysdisksize" => {
+                    request_value = match &request.context.device.sysdisksize {
+                        Some(sysdisksize) => Some(sysdisksize.to_string()),
+                        None => None,
+                    };
+                    request_value_type = "number";
+                },
+                "device#sysmemory" => {
+                    request_value = match &request.context.device.sysmemory {
+                        Some(sysmemory) => Some(sysmemory.to_string()),
+                        None => None,
+                    };
+                    request_value_type = "number";
+                },
+                "device#timezone" => {
+                    request_value = request.context.device.timezone.clone();
+                    request_value_type = "string";
+                },
+                "device#type" => {
+                    request_value = match &request.context.device.devicetype {
+                        Some(devicetype) => Some(devicetype.to_string()),
+                        None => None,
+                    };
+                    request_value_type = "category";
+                },
+                "device#ua" => {
+                    request_value = Some(request.context.device.ua.clone());
+                    request_value_type = "string";
+                },
+                "device#uiv" => {
+                    request_value = request.context.device.uiv.clone();
+                    request_value_type = "string";
+                },
+                "device#updatemark" => {
+                    request_value = request.context.device.updatemark.clone();
+                    request_value_type = "string";
+                },
+                "device#updatetime" => {
+                    request_value = request.context.device.updatetime.clone();
+                    request_value_type = "string";
+                },
+                "device#w" => {
+                    request_value = match &request.context.device.w {
+                        Some(w) => Some(w.to_string()),
+                        None => None,
+                    };
+                    request_value_type = "number";
+                },
+                "device#xff" => {
+                    request_value = request.context.device.xff.clone();
+                    request_value_type = "string";
+                },
+                "id#501" => {
+                    request_value = match identifiers.get_id(501, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#502" => {
+                    request_value = match identifiers.get_id(502, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#503" => {
+                    request_value = match identifiers.get_id(503, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#504" => {
+                    request_value = match identifiers.get_id(504, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#505" => {
+                    request_value = match identifiers.get_id(505, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#506" => {
+                    request_value = match identifiers.get_id(506, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#507" => {
+                    request_value = match identifiers.get_id(507, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#508" => {
+                    request_value = match identifiers.get_id(508, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#509" => {
+                    request_value = match identifiers.get_id(509, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#510" => {
+                    request_value = match identifiers.get_id(510, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#511" => {
+                    request_value = match identifiers.get_id(511, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#512" => {
+                    request_value = match identifiers.get_id(512, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#513" => {
+                    request_value = match identifiers.get_id(513, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#514" => {
+                    request_value = match identifiers.get_id(514, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#515" => {
+                    request_value = match identifiers.get_id(515, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#516" => {
+                    request_value = match identifiers.get_id(516, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#517" => {
+                    request_value = match identifiers.get_id(517, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#518" => {
+                    request_value = match identifiers.get_id(518, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#519" => {
+                    request_value = match identifiers.get_id(519, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#520" => {
+                    request_value = match identifiers.get_id(520, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#521" => {
+                    request_value = match identifiers.get_id(521, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#522" => {
+                    request_value = match identifiers.get_id(522, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#523" => {
+                    request_value = match identifiers.get_id(523, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#524" => {
+                    request_value = match identifiers.get_id(524, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#525" => {
+                    request_value = match identifiers.get_id(525, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#526" => {
+                    request_value = match identifiers.get_id(526, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#527" => {
+                    request_value = match identifiers.get_id(527, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#528" => {
+                    request_value = match identifiers.get_id(528, 0) {
+                        Some(uid) => Some(uid.id.clone()),
+                        None => None,
+                    };
+                    request_value_type = "string";
+                },
+                "id#513#2025" => {
+                    let mut caid = match identifiers.get_id(513, 0) {
+                        Some(uid) => {
+                            match &uid.ver {
+                                Some(ver) => {
+                                    if ver.len() >= 4 && &ver[0..4] >= "2025" {
+                                        Some(uid.id.clone())
+                                    } else {
+                                        None
+                                    }
+                                },
+                                None => None,
+                            }
+                        },
+                        None => None,
+                    };
+                    if caid.is_none() {
+                        caid = match identifiers.get_id(513, 1) {
+                            Some(uid) => {
+                                match &uid.ver {
+                                    Some(ver) => {
+                                    if ver.len() >= 4 && &ver[0..4] >= "2025" {
+                                            Some(uid.id.clone())
+                                        } else {
+                                            None
+                                        }
+                                    },
+                                    None => None,
+                                }
+                            },
+                            None => None,
+                        };
+                    }
+
+                    request_value = caid;
+                    request_value_type = "string";
+                },
+                _ => (),
+            };
+
+            match request_value_type {
+                "string" => {
+                    match rule.operator.as_str() {
+                        "is not null" => {
+                            match request_value {
+                                Some(request_value) => {
+                                    if request_value.len() > 0 {
+                                        true
+                                    } else {
+                                        false
+                                    }
+                                }
+                                None => false,
+                            }
+                        },
+                        "=" => {
+                            match request_value {
+                                Some(request_value) => {
+                                    match &rule.value {
+                                        Some(Options::String(rule_value)) => {
+                                            request_value.as_str() == rule_value.as_str()
+                                        },
+                                        _ => true,
+                                    }
+                                }
+                                None => false,
+                            }
+                        },
+                        "!=" => {
+                            match request_value {
+                                Some(request_value) => {
+                                    match &rule.value {
+                                        Some(Options::String(rule_value)) => {
+                                            request_value.as_str() != rule_value.as_str()
+                                        },
+                                        _ => true,
+                                    }
+                                }
+                                None => false,
+                            }
+                        },
+                        "contains" => {
+                            match request_value {
+                                Some(request_value) => {
+                                    match &rule.value {
+                                        Some(Options::String(rule_value)) => {
+                                            if rule_value.len() > 0 {
+                                                request_value.contains(rule_value.as_str())
+                                            } else {
+                                                true
+                                            }
+                                        },
+                                        _ => true,
+                                    }
+                                }
+                                None => false,
+                            }
+                        },
+                        "like" => {
+                            match request_value {
+                                Some(request_value) => {
+                                    match &rule.value {
+                                        Some(Options::String(rule_value)) => {
+                                            if rule_value.len() > 0 {
+                                                WildMatch::new(&rule_value).matches(request_value.as_str())
+                                            } else {
+                                                true
+                                            }
+                                        },
+                                        _ => true,
+                                    }
+                                }
+                                None => false,
+                            }
+                        },
+                        _ => true,
+                    }
+                },
+                "category" => {
+                    match rule.operator.as_str() {
+                        "is not null" => {
+                            match request_value {
+                                Some(request_value) => {
+                                    if request_value.len() > 0 {
+                                        true
+                                    } else {
+                                        false
+                                    }
+                                }
+                                None => false,
+                            }
+                        },
+                        "=" => {
+                            match request_value {
+                                Some(request_value) => {
+                                    match &rule.value {
+                                        Some(Options::String(rule_value)) => {
+                                            request_value.as_str() == rule_value.as_str()
+                                        },
+                                        _ => true,
+                                    }
+                                }
+                                None => false,
+                            }
+                        },
+                        "!=" => {
+                            match request_value {
+                                Some(request_value) => {
+                                    match &rule.value {
+                                        Some(Options::String(rule_value)) => {
+                                            request_value.as_str() != rule_value.as_str()
+                                        },
+                                        _ => true,
+                                    }
+                                }
+                                None => false,
+                            }
+                        },
+                        "in" => {
+                            match request_value {
+                                Some(request_value) => {
+                                    match &rule.value {
+                                        Some(Options::Category(rule_value)) => {
+                                            if rule_value.len() > 0 {
+                                                rule_value.contains(&request_value)
+                                            } else {
+                                                false
+                                            }
+                                        },
+                                        _ => true,
+                                    }
+                                }
+                                None => false,
+                            }
+                        },
+                        "not in" => {
+                            match request_value {
+                                Some(request_value) => {
+                                    match &rule.value {
+                                        Some(Options::Category(rule_value)) => {
+                                            if rule_value.len() > 0 {
+                                                !rule_value.contains(&request_value)
+                                            } else {
+                                                true
+                                            }
+                                        },
+                                        _ => true,
+                                    }
+                                }
+                                None => false,
+                            }
+                        },
+                        _ => true,
+                    }
+                },
+                "number" => {
+                    match rule.operator.as_str() {
+                        "is not null" => {
+                            match request_value {
+                                Some(request_value) => {
+                                    match request_value.parse::<f64>() {
+                                        Ok(_) => {
+                                            true
+                                        },
+                                        Err(_) => {
+                                            false
+                                        },
+                                    }
+                                }
+                                None => false,
+                            }
+                        },
+                        "=" => {
+                            match request_value {
+                                Some(request_value) => {
+                                    match &rule.value {
+                                        Some(Options::Number(rule_value)) => {
+                                            match request_value.parse::<f64>() {
+                                                Ok(request_value_n) => {
+                                                    request_value_n == *rule_value
+                                                },
+                                                Err(_) => false,
+                                            }
+                                        },
+                                        _ => true,
+                                    }
+                                }
+                                None => false,
+                            }
+                        },
+                        "!=" => {
+                            match request_value {
+                                Some(request_value) => {
+                                    match &rule.value {
+                                        Some(Options::Number(rule_value)) => {
+                                            match request_value.parse::<f64>() {
+                                                Ok(request_value_n) => {
+                                                    request_value_n != *rule_value
+                                                },
+                                                Err(_) => false,
+                                            }
+                                        },
+                                        _ => true,
+                                    }
+                                }
+                                None => false,
+                            }
+                        },
+                        ">" => {
+                            match request_value {
+                                Some(request_value) => {
+                                    match &rule.value {
+                                        Some(Options::Number(rule_value)) => {
+                                            match request_value.parse::<f64>() {
+                                                Ok(request_value_n) => {
+                                                    request_value_n > *rule_value
+                                                },
+                                                Err(_) => false,
+                                            }
+                                        },
+                                        _ => true,
+                                    }
+                                }
+                                None => false,
+                            }
+                        },
+                        ">=" => {
+                            match request_value {
+                                Some(request_value) => {
+                                    match &rule.value {
+                                        Some(Options::Number(rule_value)) => {
+                                            match request_value.parse::<f64>() {
+                                                Ok(request_value_n) => {
+                                                    request_value_n >= *rule_value
+                                                },
+                                                Err(_) => false,
+                                            }
+                                        },
+                                        _ => true,
+                                    }
+                                }
+                                None => false,
+                            }
+                        },
+                        "<" => {
+                            match request_value {
+                                Some(request_value) => {
+                                    match &rule.value {
+                                        Some(Options::Number(rule_value)) => {
+                                            match request_value.parse::<f64>() {
+                                                Ok(request_value_n) => {
+                                                    request_value_n < *rule_value
+                                                },
+                                                Err(_) => false,
+                                            }
+                                        },
+                                        _ => true,
+                                    }
+                                }
+                                None => false,
+                            }
+                        },
+                        "<=" => {
+                            match request_value {
+                                Some(request_value) => {
+                                    match &rule.value {
+                                        Some(Options::Number(rule_value)) => {
+                                            match request_value.parse::<f64>() {
+                                                Ok(request_value_n) => {
+                                                    request_value_n <= *rule_value
+                                                },
+                                                Err(_) => false,
+                                            }
+                                        },
+                                        _ => true,
+                                    }
+                                }
+                                None => false,
+                            }
+                        },
+                        _ => true,
+                    }
+                },
+                "boolean" => {
+                    match rule.operator.as_str() {
+                        "is not null" => {
+                            match request_value {
+                                Some(request_value) => {
+                                    match request_value.parse::<bool>() {
+                                        Ok(_) => {
+                                            true
+                                        },
+                                        Err(_) => {
+                                            false
+                                        },
+                                    }
+                                }
+                                None => false,
+                            }
+                        },
+                        "=" => {
+                            match request_value {
+                                Some(request_value) => {
+                                    match &rule.value {
+                                        Some(Options::Boolean(rule_value)) => {
+                                            match request_value.parse::<bool>() {
+                                                Ok(request_value_b) => {
+                                                    request_value_b == *rule_value
+                                                },
+                                                Err(_) => false,
+                                            }
+                                        },
+                                        _ => true,
+                                    }
+                                },
+                                None => false,
+                            }
+                        },
+                        _ => true,
+                    }
+                },
+                _ => true,
+            }
+        },
+        Entry::RuleSet(rule_set) => {
+            match_rule_set(request, rule_set)
+        },
+    }
+}
+
+fn match_rule_set(request: &Request, rule_set: &RuleSet) -> bool {
+    let mut result = true;
+
+    match rule_set.condition.as_str() {
+        "and" => {
+            result = true;
+            for rule in rule_set.rules.iter() {
+                result &= match_rule(request, rule);
+            }
+        },
+        "or" => {
+            result = false;
+            for rule in rule_set.rules.iter() {
+                result |= match_rule(request, rule);
+            }
+        },
+        _ => (),
+    }
+
+    result
+}
+
+fn match_key_field(request: &Request, connection: &Connection) -> bool {
+    match &connection.filter {
+        Some(filter) => {
+            match_rule_set(request, filter)
+        },
+        None => {
+            true
+        },
+    }
 }
 
 async fn win(

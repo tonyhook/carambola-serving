@@ -133,11 +133,12 @@ impl Database {
                 ad_client_port.mode,
                 ad_client_port.ekey,
                 ad_client_port.ikey,
-                ad_connection.test,
+                ad_client_port.filter,
                 ad_vendor_port.id,
                 ad_vendor_port.mode,
                 ad_vendor.ekey,
                 ad_vendor.ikey,
+                ad_connection.test,
                 ad_vendor_port.timeout,
                 ad_connection.priority,
                 ad_connection.cost_ratio,
@@ -159,10 +160,11 @@ impl Database {
 
         for row in result {
             let mut row = row.unwrap();
-            let test: Vec<u8> = row.take(7).unwrap();
+            let test: Vec<u8> = row.take(14).unwrap();
             let apppackage: Option<Value> = row.take(4);
             let appname: Option<Value> = row.take(5);
-            let connection_id: i32 = row.take(18).unwrap();
+            let filter: Option<Value> = row.take(9);
+            let connection_id: i32 = row.take(19).unwrap();
 
             let apppackage = match apppackage {
                 Some(Value::Bytes(apppackage)) => {
@@ -186,6 +188,31 @@ impl Database {
                 _ => None,
             };
 
+            let rule_set = match filter {
+                Some(filter) => {
+                    match filter {
+                        Value::Bytes(filter) => {
+                            if filter.len() == 0 {
+                                None
+                            } else {
+                                let filter = String::from_utf8(filter).unwrap();
+                                let rule_set = serde_json::from_str(&filter);
+                                match rule_set {
+                                    Ok(rule_set) => {
+                                        Some(rule_set)
+                                    },
+                                    Err(_) => {
+                                        println!("Error parsing filter: {}", filter);
+                                        None
+                                    },
+                                }
+                            }
+                        },
+                        _ => None,
+                    }
+                },
+                None => None,
+            };
 
             let connection = Connection {
                 id: row.take(0).unwrap(),
@@ -197,15 +224,16 @@ impl Database {
                 client_mode: row.take(6).unwrap(),
                 client_ekey: row.take(7).unwrap(),
                 client_ikey: row.take(8).unwrap(),
-                test: test[0] == 1,
+                filter: rule_set.clone(),
                 vendor_port: row.take(10).unwrap(),
                 vendor_mode: row.take(11).unwrap(),
                 vendor_ekey: row.take(12).unwrap(),
                 vendor_ikey: row.take(13).unwrap(),
-                timeout: row.take(14).unwrap(),
-                priority: row.take(15).unwrap(),
-                cost_ratio: row.take(16).unwrap(),
-                default_price: row.take(17).unwrap(),
+                test: test[0] == 1,
+                timeout: row.take(15).unwrap(),
+                priority: row.take(16).unwrap(),
+                cost_ratio: row.take(17).unwrap(),
+                default_price: row.take(18).unwrap(),
                 configuration: {
                     *configurations.iter().find(|c|c.id == connection_id).unwrap()
                 },
