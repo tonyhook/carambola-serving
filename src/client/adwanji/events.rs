@@ -26,6 +26,14 @@ pub struct AdwanjiEvents {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dclsf: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub miniprogram_success: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub miniprogram_fail: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fail_notice: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub click_area_report_url: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub v_click: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub v_start: Option<Vec<String>>,

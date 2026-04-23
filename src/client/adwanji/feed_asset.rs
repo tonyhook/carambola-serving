@@ -5,7 +5,10 @@ use super::AdwanjiBannerAsset;
 #[derive(Serialize)]
 #[derive(Deserialize)]
 pub struct AdwanjiFeedAsset {
-    pub title: String,
-    pub desc: String,
-    pub imgs: Vec<AdwanjiBannerAsset>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub title: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub desc: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub imgs: Option<Vec<AdwanjiBannerAsset>>,
 }

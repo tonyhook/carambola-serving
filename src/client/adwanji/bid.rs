@@ -18,6 +18,12 @@ pub struct AdwanjiBid {
     pub download_type: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub deeplink: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub shake: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub wxappid: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub wxapppath: Option<String>,
     #[serde(rename(deserialize = "iosAppId", serialize = "iosAppId"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ios_app_id: Option<String>,

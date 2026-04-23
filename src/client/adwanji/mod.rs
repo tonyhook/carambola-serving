@@ -1,7 +1,11 @@
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 
+use aes::cipher::{block_padding::Pkcs7, BlockEncryptMut, KeyInit};
+use base64::prelude::*;
 use chrono::{Datelike, Local, TimeZone};
 use chrono_tz::Tz;
+use reqwest::Url;
+use urlencoding::encode;
 
 use crate::{protocol::*, Assets, Cache, Client, Connection, HttpPool, Identifiers, Price, ResultMessage};
 
@@ -10,6 +14,7 @@ pub mod app;
 pub mod banner_asset;
 pub mod banner_format;
 pub mod bid;
+pub mod caid;
 pub mod device;
 pub mod events;
 pub mod feed_asset;
@@ -27,6 +32,7 @@ pub use app::AdwanjiApp;
 pub use banner_asset::AdwanjiBannerAsset;
 pub use banner_format::AdwanjiBannerFormat;
 pub use bid::AdwanjiBid;
+pub use caid::AdwanjiCaid;
 pub use device::AdwanjiDevice;
 pub use events::AdwanjiEvents;
 pub use feed_asset::AdwanjiFeedAsset;
@@ -38,6 +44,8 @@ pub use response::AdwanjiResponse;
 pub use user::AdwanjiUser;
 pub use video_asset::AdwanjiVideoAsset;
 pub use video_format::AdwanjiVideoFormat;
+
+type Aes256EcbEnc = ecb::Encryptor<aes::Aes256>;
 
 pub struct Adwanji {
 
@@ -57,7 +65,7 @@ impl Client for Adwanji {
             },
             imp: AdwanjiImp {
                 slotid: {
-                    connection.client_tag_id.clone()
+                    connection.client_tag_id.split("|").nth(0).unwrap().to_string()
                 },
                 banner: {
                     match assets.get_banner() {
@@ -66,68 +74,28 @@ impl Client for Adwanji {
                                     w: {
                                         match displayfmt.w {
                                             Some(w) => w,
-                                            None => return Err(ResultMessage {
-                                                code: 998,
-                                                message: "request.item[0].spec.display.displayfmt.w is required for upstream".to_string(),
-                                            }),
+                                            None => 0,
                                         }
                                     },
                                     h: {
                                         match displayfmt.h {
                                             Some(h) => h,
-                                            None => return Err(ResultMessage {
-                                                code: 998,
-                                                message: "request.item[0].spec.display.displayfmt.h is required for upstream".to_string(),
-                                            }),
+                                            None => 0,
                                         }
                                     },
                                     pos: {
                                         match request.item[0].spec.display.pos {
-                                            Some(pos) => {
-                                                match pos {
-                                                    0 => return Err(ResultMessage {
-                                                        code: 998,
-                                                        message: "request.item[0].spec.display.pos should be 4/5/7/501 for upstream".to_string(),
-                                                    }),
-                                                    1 => return Err(ResultMessage {
-                                                        code: 998,
-                                                        message: "request.item[0].spec.display.pos should be 4/5/7/501 for upstream".to_string(),
-                                                    }),
-                                                    2 => return Err(ResultMessage {
-                                                        code: 998,
-                                                        message: "request.item[0].spec.display.pos should be 4/5/7/501 for upstream".to_string(),
-                                                    }),
-                                                    3 => return Err(ResultMessage {
-                                                        code: 998,
-                                                        message: "request.item[0].spec.display.pos should be 4/5/7/501 for upstream".to_string(),
-                                                    }),
-                                                    4 => 1,
-                                                    5 => 2,
-                                                    6 => return Err(ResultMessage {
-                                                        code: 998,
-                                                        message: "request.item[0].spec.display.pos should be 4/5/7/501 for upstream".to_string(),
-                                                    }),
-                                                    7 => {
-                                                        match request.item[0].spec.display.instl {
-                                                            0 => 4,
-                                                            1 => 5,
-                                                            _ => return Err(ResultMessage {
-                                                                code: 998,
-                                                                message: "request.item[0].spec.display.instl should be 0/1 for upstream".to_string(),
-                                                            }),
-                                                        }
-                                                    },
-                                                    501 => 4,
-                                                    _ => return Err(ResultMessage {
-                                                        code: 998,
-                                                        message: "request.item[0].spec.display.pos should be 4/5/7 for upstream".to_string(),
-                                                    }),
+                                            Some(4) => 1,
+                                            Some(5) => 2,
+                                            Some(7) => {
+                                                match request.item[0].spec.display.instl {
+                                                    0 => 4,
+                                                    1 => 5,
+                                                    _ => 4,
                                                 }
                                             },
-                                            None => return Err(ResultMessage {
-                                                code: 998,
-                                                message: "request.item[0].spec.display.pos is required for upstream".to_string(),
-                                            }),
+                                            Some(501) => 3,
+                                            _ => 3,
                                         }
                                     },
                                 }),
@@ -135,45 +103,29 @@ impl Client for Adwanji {
                     }
                 },
                 feed: {
-                    if (assets.get_asset_size("img") == 1 || assets.get_asset_size("img") == 3) && assets.get_asset_size("img") == assets.get_asset_total_size() {
+                    if assets.get_asset_size("img") > 0 && assets.get_asset_size("video") == 0 {
                         let img = assets.get_current_asset("img").unwrap().img.clone().unwrap();
                         Some(AdwanjiFeedFormat {
                             w: match img.w {
                                 Some(w) => Some(w),
-                                None => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.item[0].spec.display.nativefmt.asset.img.w is required for upstream".to_string(),
-                                }),
+                                None => None,
                             },
                             h: match img.h {
                                 Some(h) => Some(h),
-                                None => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.item[0].spec.display.nativefmt.asset.img.h is required for upstream".to_string(),
-                                }),
+                                None => None,
                             },
                             feedtype: if assets.get_asset_size("img") == 1 {
                                 [1].to_vec()
-                            } else if assets.get_asset_size("img") == 3 {
-                                [2].to_vec()
                             } else {
-                                return Err(ResultMessage {
-                                    code: 998,
-                                    message: "number of request.item[0].spec.display.nativefmt.asset.img should be 1 or 3 for upstream".to_string(),
-                                })
+                                [2].to_vec()
                             },
                         })
-                    } else if assets.get_asset_size("img") == 0 {
-                        None
                     } else {
-                        return Err(ResultMessage {
-                            code: 998,
-                            message: "number of request.item[0].spec.display.nativefmt.asset.img should be 0, 1 or 3 for upstream".to_string(),
-                        });
+                        None
                     }
                 },
                 video: {
-                    if assets.get_asset_size("video") == 1 && assets.get_asset_size("video") == assets.get_asset_total_size() {
+                    if assets.get_asset_size("video") >= 1 {
                         let video = assets.get_current_asset("video").unwrap().video.clone().unwrap();
                         Some(AdwanjiVideoFormat {
                             userid: {
@@ -188,14 +140,7 @@ impl Client for Adwanji {
                             maxduration: video.maxdur,
                         })
                     } else {
-                        if assets.get_asset_size("video") > 1 && assets.get_asset_size("video") == assets.get_asset_total_size() {
-                            return Err(ResultMessage {
-                                code: 998,
-                                message: "number of request.item[0].spec.display.nativefmt.asset.video should be 1 for upstream".to_string(),
-                            });
-                        } else {
-                            None
-                        }
+                        None
                     }
                 },
                 support_deeplink: {
@@ -223,10 +168,7 @@ impl Client for Adwanji {
                                 None => {
                                     match &app.bundle {
                                         Some(bundle) => bundle.clone(),
-                                        None => return Err(ResultMessage {
-                                            code: 998,
-                                            message: "request.context.app.bundle is required for upstream".to_string(),
-                                        }),
+                                        None => "".to_string(),
                                     }
                                 },
                             }
@@ -234,10 +176,7 @@ impl Client for Adwanji {
                         ver: {
                             match &app.ver {
                                 Some(ver) => ver.clone(),
-                                None => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.app.ver is required for upstream".to_string(),
-                                }),
+                                None => "".to_string(),
                             }
                         },
                         paid: {
@@ -259,10 +198,15 @@ impl Client for Adwanji {
                             }
                         },
                     },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.app is required for upstream".to_string(),
-                    }),
+                    None => AdwanjiApp {
+                        name: "".to_string(),
+                        bundle: "".to_string(),
+                        ver: "".to_string(),
+                        paid: 0,
+                        keywords: None,
+                        storeurl: None,
+                        itunesid: None,
+                    },
                 }
             },
             device: AdwanjiDevice {
@@ -273,22 +217,10 @@ impl Client for Adwanji {
                     match &request.context.device.geo {
                         Some(geo) => AdwanjiGeo {
                             lat: {
-                                match geo.lat {
-                                    Some(lat) => lat,
-                                    None => return Err(ResultMessage {
-                                        code: 998,
-                                        message: "request.context.device.geo.lat is required for upstream".to_string(),
-                                    }),
-                                }
+                                geo.lat.clone()
                             },
                             lon: {
-                                match geo.lon {
-                                    Some(lon) => lon,
-                                    None => return Err(ResultMessage {
-                                        code: 998,
-                                        message: "request.context.device.geo.lon is required for upstream".to_string(),
-                                    }),
-                                }
+                                geo.lon.clone()
                             },
                             coordinate: {
                                 match geo.coordinate {
@@ -308,19 +240,21 @@ impl Client for Adwanji {
                             city_code: None,
                             city: None,
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.geo is required for upstream".to_string(),
-                        }),
+                        None => AdwanjiGeo {
+                            lat: None,
+                            lon: None,
+                            coordinate: None,
+                            timestamp: None,
+                            accu: None,
+                            city_code: None,
+                            city: None,
+                        },
                     }
                 },
                 ip: {
                     match &request.context.device.ip {
-                        Some(ip) => ip.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.ip is required for upstream".to_string(),
-                        }),
+                        Some(ip) => Some(ip.clone()),
+                        None => None,
                     }
                 },
                 ipv6: {
@@ -341,149 +275,67 @@ impl Client for Adwanji {
                                 6 => 0,
                                 7 => 7,
                                 8 => 0,
-                                _ => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.type should be 1-8 for upstream".to_string(),
-                                }),
+                                _ => 0,
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.type is required for upstream".to_string(),
-                        }),
+                        None => 0,
                     }
                 },
                 make: {
-                    match &request.context.device.make {
-                        Some(make) => make.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.make is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.make.clone()
                 },
                 brand: {
-                    match &request.context.device.brand {
-                        Some(brand) => brand.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.brand is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.brand.clone()
                 },
                 model: {
-                    match &request.context.device.model {
-                        Some(model) => model.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.model is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.model.clone()
                 },
                 os: {
                     match request.context.device.os {
-                        Some(os) => {
-                            match os {
-                                2 => 0,
-                                13 => 1,
-                                _ => 9,
-                            }
-                        },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.os is required for upstream".to_string(),
-                        }),
+                        Some(2) => 0,
+                        Some(13) => 1,
+                        _ => 9,
                     }
                 },
                 osv: {
-                    match &request.context.device.osv {
-                        Some(osv) => osv.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.osv is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.osv.clone()
                 },
                 oslevel: {
-                    match request.context.device.oslevel {
-                        Some(oslevel) => oslevel,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.oslevel is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.oslevel.clone()
                 },
                 resolution: {
                     let width;
                     let height;
                     match request.context.device.w {
                         Some(w) => width = w,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.w is required for upstream".to_string(),
-                        }),
+                        None => width = 0,
                     }
                     match request.context.device.h {
                         Some(h) => height = h,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.h is required for upstream".to_string(),
-                        }),
+                        None => height = 0,
                     }
                     format!("{}{}{}", width.to_string(), "*".to_string(), height.to_string())
                 },
                 sh: {
-                    match request.context.device.h {
-                        Some(h) => h,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.h is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.h.clone()
                 },
                 sw: {
-                    match request.context.device.w {
-                        Some(w) => w,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.w is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.w.clone()
                 },
                 ppi: {
-                    match request.context.device.ppi {
-                        Some(ppi) => ppi,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.ppi is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.ppi.clone()
                 },
                 dpi: {
                     request.context.device.ppi.clone()
                 },
                 density: {
-                    match request.context.device.pxratio {
-                        Some(pxratio) => pxratio,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.pxratio is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.pxratio.clone()
                 },
                 orientation: {
                     match request.context.device.orientation {
-                        Some(orientation) => {
-                            match orientation {
-                                501 => 0,
-                                502 => 1,
-                                _ => 9,
-                            }
-                        },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.orientation is required for upstream".to_string(),
-                        }),
+                        Some(501) => 0,
+                        Some(502) => 1,
+                        _ => 9,
                     }
                 },
                 idfa: {
@@ -561,6 +413,19 @@ impl Client for Adwanji {
                         None => None,
                     }
                 },
+                caids: {
+                    let mut caids = vec![];
+                    for index in 0..=1 {
+                        if let Some(uid) = identifiers.get_id(513, index) {
+                            caids.push(AdwanjiCaid {
+                                id: uid.id.clone(),
+                                version: uid.ver.clone(),
+                            });
+                        }
+                    }
+                    if caids.is_empty() { None } else { Some(caids) }
+                },
+                aaid: None,
                 mac: {
                     match identifiers.get_id(511, 0) {
                         Some(uid) => Some(uid.id.clone()),
@@ -580,13 +445,7 @@ impl Client for Adwanji {
                     }
                 },
                 carrier: {
-                    match &request.context.device.carrier {
-                        Some(carrier) => carrier.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.carrier is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.carrier.clone()
                 },
                 conn: {
                     match &request.context.device.contype {
@@ -599,16 +458,10 @@ impl Client for Adwanji {
                                 5 => 3,
                                 6 => 4,
                                 7 => 5,
-                                _ => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.contype should be 1-7 for upstream".to_string(),
-                                }),
+                                _ => 0,
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.contype is required for upstream".to_string(),
-                        }),
+                        None => 0,
                     }
                 },
                 imsi: {
@@ -651,22 +504,10 @@ impl Client for Adwanji {
                     request.context.device.serial.clone()
                 },
                 language: {
-                    match &request.context.device.lang {
-                        Some(lang) => lang.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.lang is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.lang.clone()
                 },
                 countrycode: {
-                    match &request.context.device.country {
-                        Some(country) => country.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.country is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.country.clone()
                 },
                 uiver: {
                     request.context.device.uiv.clone()
@@ -697,109 +538,58 @@ impl Client for Adwanji {
                 },
                 starttime: {
                     match &request.context.device.boottime {
-                        Some(boottime) => boottime.split(".").nth(0).unwrap().to_string(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.boottime is required for upstream".to_string(),
-                        }),
+                        Some(boottime) => Some(boottime.split(".").nth(0).unwrap().to_string()),
+                        None => None,
                     }
                 },
                 startnanotime: {
-                    match &request.context.device.boottime {
-                        Some(boottime) => boottime.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.boottime is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.boottime.clone()
                 },
                 startmilltime: {
                     match &request.context.device.boottime {
                         Some(boottime) => {
-                            let mut slices = boottime.split(".");
-                            if slices.clone().count().eq(&2) {
-                                format!("{}.{}", &slices.nth(0).unwrap(), &slices.nth(1).unwrap()[..3])
-                            } else {
-                                format!("{}.{}", &slices.nth(0).unwrap(), "000")
-                            }
+                            let mut parts = boottime.splitn(2, ".");
+                            let secs = parts.next().unwrap_or("0");
+                            let millis = parts.next()
+                                .map(|frac| if frac.len() >= 3 { &frac[..3] } else { "000" })
+                                .unwrap_or("000");
+                            Some(format!("{}.{}", secs, millis))
                         }
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.boottime is required for upstream".to_string(),
-                        }),
+                        None => None,
                     }
                 },
+                mnt_id: {
+                    None
+                },
+                client_time: {
+                    Some(Local::now().timestamp_millis().to_string())
+                },
                 birthtime: {
-                    match &request.context.device.inittime {
-                        Some(inittime) => inittime.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.inittime is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.inittime.clone()
                 },
                 osupdatetime: {
                     match &request.context.device.updatetime {
-                        Some(updatetime) => updatetime.split(".").nth(0).unwrap().to_string(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.updatetime is required for upstream".to_string(),
-                        }),
+                        Some(updatetime) => Some(updatetime.split(".").nth(0).unwrap().to_string()),
+                        None => None,
                     }
                 },
                 osupdatenanotime: {
-                    match &request.context.device.updatetime {
-                        Some(boottime) => boottime.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.updatetime is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.updatetime.clone()
                 },
                 hwname: {
-                    match &request.context.device.hwname {
-                        Some(hwname) => hwname.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.hwname is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.hwname.clone()
                 },
                 hwmodel: {
-                    match &request.context.device.hwmodel {
-                        Some(hwmodel) => hwmodel.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.hwmodel is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.hwmodel.clone()
                 },
                 hwmachine: {
-                    match &request.context.device.hwmachine {
-                        Some(hwmachine) => hwmachine.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.hwmachine is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.hwmachine.clone()
                 },
                 sysmemory: {
-                    match request.context.device.sysmemory {
-                        Some(sysmemory) => sysmemory.to_string(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.sysmemory is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.sysmemory.map(|sysmemory| sysmemory.to_string())
                 },
                 sysdisksize: {
-                    match &request.context.device.sysdisksize {
-                        Some(sysdisksize) => sysdisksize.to_string(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.sysdisksize is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.sysdisksize.map(|sysdisksize| sysdisksize.to_string())
                 },
                 cpunum: {
                     match &request.context.device.syscpu {
@@ -821,37 +611,19 @@ impl Client for Adwanji {
                                 Ok(tz) => {
                                     let t = tz.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap();
                                     let utc = chrono_tz::UTC.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap();
-                                    (t.timestamp() - utc.timestamp()).to_string()
+                                   Some((t.timestamp() - utc.timestamp()).to_string())
                                 },
-                                Err(_) => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.timezone is malformat for upstream, should be like Asia/Shanghai".to_string(),
-                                }),
+                                Err(_) => None,
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.timezone is required for upstream".to_string(),
-                        }),
+                        None => None,
                     }
                 },
                 updatemark: {
-                    match &request.context.device.updatemark {
-                        Some(updatemark) => updatemark.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.updatemark is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.updatemark.clone()
                 },
                 bootmark: {
-                    match &request.context.device.bootmark {
-                        Some(bootmark) => bootmark.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.bootmark is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.bootmark.clone()
                 },
                 battery_status: {
                     match request.context.device.sysbatterystatus {
@@ -899,10 +671,7 @@ impl Client for Adwanji {
                                 Some(vendor) => {
                                     match vendor.parse::<i32>() {
                                         Ok(vendor) => Some(vendor),
-                                        Err(_) => return Err(ResultMessage {
-                                            code: 998,
-                                            message: "caid_vendor should be 0/1/2 for upstream".to_string(),
-                                        }),
+                                        Err(_) => Some(0),
                                     }
                                 }
                                 None => None,
@@ -928,10 +697,7 @@ impl Client for Adwanji {
                 id: {
                     match &request.context.user.id {
                         Some(id) => id.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.user.id is required for upstream".to_string(),
-                        }),
+                        None => "".to_string(),
                     }
                 },
                 gender: {
@@ -958,11 +724,8 @@ impl Client for Adwanji {
                 },
                 keywords: {
                     match &request.context.user.keywords {
-                        Some(keywords) => keywords.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.user.keywords is required for upstream".to_string(),
-                        }),
+                        Some(keywords) => Some(keywords.clone()),
+                        None => None,
                     }
                 },
             },
@@ -975,9 +738,11 @@ impl Client for Adwanji {
             let pool_adwanji = pool_adwanji_lock.read().unwrap();
             pool_adwanji.clone()
         };
-        let response_adwanji_raw = client.post("https://api.adwanji.com/ad/v5/")
+        let response_adwanji_raw = client.post("http://api.adx.admtvs.com/api/1/ad")
             .json(&request_adwanji)
             .header("Accept-Encoding", "gzip")
+            .header("Connection", "keep-alive")
+            .header("Content-Type", "application/json")
             .timeout(Duration::from_millis(connection.timeout))
             .send().await;
 
@@ -1002,6 +767,7 @@ impl Client for Adwanji {
                                     response_adwanji = json;
 
                                     match response_adwanji.code {
+                                        100 => (),
                                         101 => {
                                             return Err(ResultMessage {
                                                 code: 993,
@@ -1010,13 +776,13 @@ impl Client for Adwanji {
                                         },
                                         103 => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: "upstream error: parameter error".to_string(),
                                             });
                                         },
                                         104 => {
                                             return Err(ResultMessage {
-                                                code: 992,
+                                                code: 994,
                                                 message: "upstream error: unknown error".to_string(),
                                             });
                                         },
@@ -1026,7 +792,12 @@ impl Client for Adwanji {
                                                 message: "upstream error: beyond qps".to_string(),
                                             });
                                         },
-                                        _ => (),
+                                        _ => {
+                                            return Err(ResultMessage {
+                                                code: 994,
+                                                message: "upstream error: unknown error".to_string(),
+                                            });
+                                        },
                                     }
                                 },
                                 Err(error) => {
@@ -1104,8 +875,8 @@ impl Client for Adwanji {
                                         }
                                     },
                                     quickapplink: None,
-                                    wechatmppath: None,
-                                    wechatmpid: None,
+                                    wechatmppath: bid.wxapppath.clone(),
+                                    wechatmpid: bid.wxappid.clone(),
                                     marketurl: {
                                         match &bid.market_url {
                                             Some(market_url) => Some(market_url.clone()),
@@ -1143,7 +914,23 @@ impl Client for Adwanji {
                                         }
                                     },
                                     burl: None,
-                                    lurl: None,
+                                    lurl: {
+                                        match &bid.events {
+                                            Some(events) => {
+                                                match &events.fail_notice {
+                                                    Some(fail_notice) => {
+                                                        let mut lurl = Vec::<String>::new();
+                                                        for url in fail_notice {
+                                                            lurl.push(replace_macro(url));
+                                                        }
+                                                        Some(lurl)
+                                                    },
+                                                    None => None,
+                                                }
+                                            },
+                                            None => None,
+                                        }
+                                    },
                                     media: Ad {
                                         id: response_adwanji.id.clone(),
                                         display: Display {
@@ -1205,197 +992,218 @@ impl Client for Adwanji {
                                                 }
                                             },
                                             native: {
-                                                if assets.get_asset_total_size() > 0 {
-                                                    let mut asset_vec = vec![];
+                                                let mut asset_vec = vec![];
 
-                                                    match &bid.video {
-                                                        Some(video) => {
-                                                            if assets.get_asset_size("video") > 0 {
-                                                                asset_vec.push(Asset {
-                                                                    id: assets.consume_asset("video"),
-                                                                    req: 1,
-                                                                    video: Some(VideoAsset {
-                                                                        url: video.iurl.clone(),
-                                                                        mime: None,
-                                                                        w: video.w,
-                                                                        h: video.h,
-                                                                        dur: video.duration,
-                                                                        skipoffset: video.keep_duration,
-                                                                        size: video.size,
-                                                                        delivery: None,
-                                                                        orientation: None,
-                                                                        autolanding: video.is_auto_langding,
-                                                                        clickable: video.clickable,
-                                                                    }),
-                                                                    title: None,
-                                                                    img: None,
-                                                                    data: None,
-                                                                    html: None,
-                                                                    app: None,
-                                                                });
-                                                            }
-                                                            if assets.get_asset_size("video#cover") > 0 && video.cover_url.is_some() {
-                                                                asset_vec.push(Asset {
-                                                                    id: assets.consume_asset("video#cover"),
-                                                                    req: 0,
-                                                                    img: Some(ImageAsset {
-                                                                        url: video.cover_url.clone().unwrap(),
-                                                                        mime: None,
-                                                                        w: video.cover_w,
-                                                                        h: video.cover_h,
-                                                                        imagetype: Some(3),
-                                                                    }),
-                                                                    title: None,
-                                                                    video: None,
-                                                                    data: None,
-                                                                    html: None,
-                                                                    app: None,
-                                                                });
-                                                            }
-                                                            if assets.get_asset_size("video#icon") > 0 && video.ad_icon.is_some() {
-                                                                asset_vec.push(Asset {
-                                                                    id: assets.consume_asset("video#icon"),
-                                                                    req: 0,
-                                                                    img: Some(ImageAsset {
-                                                                        url: video.ad_icon.clone().unwrap(),
-                                                                        mime: None,
-                                                                        w: None,
-                                                                        h: None,
-                                                                        imagetype: Some(1),
-                                                                    }),
-                                                                    title: None,
-                                                                    video: None,
-                                                                    data: None,
-                                                                    html: None,
-                                                                    app: None,
-                                                                });
-                                                            }
-                                                            if assets.get_asset_size("video#end#img") > 0 && video.end_url.is_some() {
-                                                                asset_vec.push(Asset {
-                                                                    id: assets.consume_asset("video#end#img"),
-                                                                    req: 0,
-                                                                    img: Some(ImageAsset {
-                                                                        url: video.end_url.clone().unwrap(),
-                                                                        mime: None,
-                                                                        w: None,
-                                                                        h: None,
-                                                                        imagetype: Some(3),
-                                                                    }),
-                                                                    title: None,
-                                                                    video: None,
-                                                                    data: None,
-                                                                    html: None,
-                                                                    app: None,
-                                                                });
-                                                            }
-                                                            if assets.get_asset_size("video#end#title") > 0 && video.ad_text.is_some() {
-                                                                asset_vec.push(Asset {
-                                                                    id: assets.consume_asset("video#end#title"),
-                                                                    req: 0,
-                                                                    title: Some(TitleAsset {
-                                                                        text: video.ad_text.clone().unwrap(),
-                                                                        subtitle: None,
-                                                                        desc: video.ad_description.clone(),
-                                                                        len: Some(video.ad_text.clone().unwrap().clone().len() as i32),
-                                                                    }),
-                                                                    img: None,
-                                                                    video: None,
-                                                                    data: None,
-                                                                    html: None,
-                                                                    app: None,
-                                                                });
-                                                            }
-                                                            if assets.get_asset_size("video#end#button#text") > 0 && video.button_text.is_some() {
-                                                                asset_vec.push(Asset {
-                                                                    id: assets.consume_asset("video#end#button#text"),
-                                                                    req: 0,
-                                                                    data: Some(DataAsset {
-                                                                        value: video.button_text.clone().unwrap(),
-                                                                        len: Some(video.button_text.clone().unwrap().len() as i32),
-                                                                        datatype: Some(12),
-                                                                    }),
-                                                                    title: None,
-                                                                    img: None,
-                                                                    video: None,
-                                                                    html: None,
-                                                                    app: None,
-                                                                });
-                                                            }
-                                                            if assets.get_asset_size("video#end#html") > 0 && video.end_html.is_some() {
-                                                                asset_vec.push(Asset {
-                                                                    id: assets.consume_asset("video#end#html"),
-                                                                    req: 0,
-                                                                    html: Some(HtmlAsset {
-                                                                        html: video.end_html.clone(),
-                                                                        link: None,
-                                                                        len: Some(video.end_html.clone().unwrap().len() as i32),
-                                                                    }),
-                                                                    title: None,
-                                                                    img: None,
-                                                                    video: None,
-                                                                    data: None,
-                                                                    app: None,
-                                                                });
-                                                            }
-                                                        },
-                                                        None => (),
-                                                    }
-                                                    match &bid.feed {
-                                                        Some(feed) => {
-                                                            if assets.get_asset_size("title") > 0 {
-                                                                asset_vec.push(Asset {
-                                                                    id: assets.consume_asset("title"),
-                                                                    req: 1,
-                                                                    title: Some(TitleAsset {
-                                                                        text: feed.title.clone(),
-                                                                        subtitle: None,
-                                                                        desc: Some(feed.desc.clone()),
-                                                                        len: Some(feed.title.clone().len() as i32),
-                                                                    }),
-                                                                    img: None,
-                                                                    video: None,
-                                                                    data: None,
-                                                                    html: None,
-                                                                    app: None,
-                                                                });
-                                                            }
-                                                            for img in feed.imgs.iter() {
-                                                                asset_vec.push(Asset {
-                                                                    id: assets.consume_asset("img"),
-                                                                    req: 1,
-                                                                    img: {
-                                                                        Some(ImageAsset {
-                                                                            url: img.iurl.clone(),
-                                                                            mime: img.mimes.clone(),
-                                                                            w: img.w,
-                                                                            h: img.h,
-                                                                            imagetype: Some(501),
-                                                                        })
-                                                                    },
-                                                                    title: None,
-                                                                    video: None,
-                                                                    data: None,
-                                                                    html: None,
-                                                                    app: None,
-                                                                });
-                                                            }
-                                                        },
-                                                        None => (),
-                                                    }
+                                                match &bid.video {
+                                                    Some(video) => {
+                                                        asset_vec.push(Asset {
+                                                            id: assets.consume_asset("video"),
+                                                            req: 1,
+                                                            video: Some(VideoAsset {
+                                                                url: video.iurl.clone(),
+                                                                mime: None,
+                                                                w: video.w,
+                                                                h: video.h,
+                                                                dur: video.duration,
+                                                                skipoffset: video.keep_duration,
+                                                                size: video.size,
+                                                                delivery: None,
+                                                                orientation: None,
+                                                                autolanding: video.is_auto_langding,
+                                                                clickable: video.clickable,
+                                                            }),
+                                                            title: None,
+                                                            img: None,
+                                                            data: None,
+                                                            html: None,
+                                                            app: None,
+                                                        });
+                                                        if video.cover_url.is_some() {
+                                                            asset_vec.push(Asset {
+                                                                id: assets.consume_asset("video#cover"),
+                                                                req: 0,
+                                                                img: Some(ImageAsset {
+                                                                    url: video.cover_url.clone().unwrap(),
+                                                                    mime: None,
+                                                                    w: video.cover_w,
+                                                                    h: video.cover_h,
+                                                                    imagetype: Some(3),
+                                                                }),
+                                                                title: None,
+                                                                video: None,
+                                                                data: None,
+                                                                html: None,
+                                                                app: None,
+                                                            });
+                                                        }
+                                                        if video.ad_icon.is_some() {
+                                                            asset_vec.push(Asset {
+                                                                id: assets.consume_asset("video#icon"),
+                                                                req: 0,
+                                                                img: Some(ImageAsset {
+                                                                    url: video.ad_icon.clone().unwrap(),
+                                                                    mime: None,
+                                                                    w: None,
+                                                                    h: None,
+                                                                    imagetype: Some(1),
+                                                                }),
+                                                                title: None,
+                                                                video: None,
+                                                                data: None,
+                                                                html: None,
+                                                                app: None,
+                                                            });
+                                                        }
+                                                        if video.end_url.is_some() {
+                                                            asset_vec.push(Asset {
+                                                                id: assets.consume_asset("video#end#img"),
+                                                                req: 0,
+                                                                img: Some(ImageAsset {
+                                                                    url: video.end_url.clone().unwrap(),
+                                                                    mime: None,
+                                                                    w: None,
+                                                                    h: None,
+                                                                    imagetype: Some(3),
+                                                                }),
+                                                                title: None,
+                                                                video: None,
+                                                                data: None,
+                                                                html: None,
+                                                                app: None,
+                                                            });
+                                                        }
+                                                        if video.ad_text.is_some() {
+                                                            asset_vec.push(Asset {
+                                                                id: assets.consume_asset("video#end#title"),
+                                                                req: 0,
+                                                                title: Some(TitleAsset {
+                                                                    text: video.ad_text.clone().unwrap(),
+                                                                    subtitle: None,
+                                                                    desc: video.ad_description.clone(),
+                                                                    len: Some(video.ad_text.clone().unwrap().clone().len() as i32),
+                                                                }),
+                                                                img: None,
+                                                                video: None,
+                                                                data: None,
+                                                                html: None,
+                                                                app: None,
+                                                            });
+                                                        }
+                                                        if video.button_text.is_some() {
+                                                            asset_vec.push(Asset {
+                                                                id: assets.consume_asset("video#end#button#text"),
+                                                                req: 0,
+                                                                data: Some(DataAsset {
+                                                                    value: video.button_text.clone().unwrap(),
+                                                                    len: Some(video.button_text.clone().unwrap().len() as i32),
+                                                                    datatype: Some(12),
+                                                                }),
+                                                                title: None,
+                                                                img: None,
+                                                                video: None,
+                                                                html: None,
+                                                                app: None,
+                                                            });
+                                                        }
+                                                        if video.end_html.is_some() {
+                                                            asset_vec.push(Asset {
+                                                                id: assets.consume_asset("video#end#html"),
+                                                                req: 0,
+                                                                html: Some(HtmlAsset {
+                                                                    html: video.end_html.clone(),
+                                                                    link: None,
+                                                                    len: Some(video.end_html.clone().unwrap().len() as i32),
+                                                                }),
+                                                                title: None,
+                                                                img: None,
+                                                                video: None,
+                                                                data: None,
+                                                                app: None,
+                                                            });
+                                                        }
+                                                    },
+                                                    None => (),
+                                                }
+                                                match &bid.feed {
+                                                    Some(feed) => {
+                                                        asset_vec.push(Asset {
+                                                            id: assets.consume_asset("title"),
+                                                            req: 1,
+                                                            title: Some(TitleAsset {
+                                                                text: {
+                                                                    match &feed.title {
+                                                                        Some(title) => title.clone(),
+                                                                        None => "".to_string(),
+                                                                    }
+                                                                },
+                                                                subtitle: None,
+                                                                desc: feed.desc.clone(),
+                                                                len: {
+                                                                    match &feed.title {
+                                                                        Some(title) => Some(title.len() as i32),
+                                                                        None => None,
+                                                                    }
+                                                                },
+                                                            }),
+                                                            img: None,
+                                                            video: None,
+                                                            data: None,
+                                                            html: None,
+                                                            app: None,
+                                                        });
+                                                        match &feed.imgs {
+                                                            Some(imgs) => {
+                                                                for img in imgs.iter() {
+                                                                    asset_vec.push(Asset {
+                                                                        id: assets.consume_asset("img"),
+                                                                        req: 1,
+                                                                        img: {
+                                                                            Some(ImageAsset {
+                                                                                url: img.iurl.clone(),
+                                                                                mime: img.mimes.clone(),
+                                                                                w: img.w,
+                                                                                h: img.h,
+                                                                                imagetype: Some(501),
+                                                                            })
+                                                                        },
+                                                                        title: None,
+                                                                        video: None,
+                                                                        data: None,
+                                                                        html: None,
+                                                                        app: None,
+                                                                    });
+                                                                }
+                                                            },
+                                                            None => (),
+                                                        }
+                                                    },
+                                                    None => (),
+                                                }
 
-                                                    match &bid.app {
-                                                        Some(app) => {
+                                                match &bid.app {
+                                                    Some(app) => {
+                                                        if app.name.is_some() || app.pack.is_some() {
                                                             asset_vec.push(Asset {
                                                                 id: assets.consume_asset("app"),
                                                                 req: 0,
                                                                 app: Some(AppAsset {
-                                                                    name: app.name.clone(),
+                                                                    name: {
+                                                                        match &app.name {
+                                                                            Some(name) => name.clone(),
+                                                                            None => {
+                                                                                match &app.pack {
+                                                                                    Some(pack) => pack.clone(),
+                                                                                    None => "".to_string(),
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    },
                                                                     desc: None,
-                                                                    descurl: None,
+                                                                    descurl: app.description_url.clone(),
                                                                     domain: None,
-                                                                    bundle: Some(app.pack.clone()),
+                                                                    bundle: app.pack.clone(),
                                                                     ver: app.vers.clone(),
-                                                                    developer: None,
+                                                                    developer: app.author.clone(),
                                                                     icon: app.icon.clone(),
                                                                     storeid: app.itunesid.clone(),
                                                                     storeurl: None,
@@ -1404,9 +1212,9 @@ impl Client for Adwanji {
                                                                     md5: app.md5.clone(),
                                                                     registration: None,
                                                                     privacy: None,
-                                                                    privacyurl: None,
+                                                                    privacyurl: app.privacy_agreement.clone(),
                                                                     permission: None,
-                                                                    permissionurl: None,
+                                                                    permissionurl: app.permissions_url.clone(),
                                                                 }),
                                                                 title: None,
                                                                 img: None,
@@ -1414,17 +1222,15 @@ impl Client for Adwanji {
                                                                 data: None,
                                                                 html: None,
                                                             });
-                                                        },
-                                                        None => (),
-                                                    }
-
-                                                    Some(Native {
-                                                        asset: asset_vec,
-                                                        link: Some(link_asset.clone()),
-                                                    })
-                                                } else {
-                                                    None
+                                                        }
+                                                    },
+                                                    None => (),
                                                 }
+
+                                                Some(Native {
+                                                    asset: asset_vec,
+                                                    link: Some(link_asset.clone()),
+                                                })
                                             },
                                             event: {
                                                 let mut event_vec = vec![];
@@ -1437,7 +1243,21 @@ impl Client for Adwanji {
                                                                     event_vec.push(Event {
                                                                         eventtype: 501,
                                                                         method: 1,
-                                                                        url: replace_macro(event),
+                                                                        url: {
+                                                                            let url = replace_macro(event);
+                                                                            let price = match bid.price {
+                                                                                Some(price) => {
+                                                                                    if price > 0 {
+                                                                                        price as i32
+                                                                                    } else {
+                                                                                        connection.default_price
+                                                                                    }
+                                                                                },
+                                                                                None => connection.default_price,
+                                                                            };
+                                                                            let encrypt_price = Self::encrypt_price(price, &"".to_string(), connection);
+                                                                            url.replace("__PRICE__", &encode(encrypt_price.as_str()))
+                                                                        },
                                                                         header: None,
                                                                         content: None,
                                                                     });
@@ -1450,6 +1270,56 @@ impl Client for Adwanji {
                                                                 for event in cls {
                                                                     event_vec.push(Event {
                                                                         eventtype: 502,
+                                                                        method: 1,
+                                                                        url: replace_macro(event),
+                                                                        header: None,
+                                                                        content: None,
+                                                                    });
+                                                                }
+                                                            },
+                                                            None => (),
+                                                        }
+                                                        match &events.click_area_report_url {
+                                                            Some(click_area_report_urls) => {
+                                                                for click_area_report_url in click_area_report_urls {
+                                                                    let parsed_url = Url::parse(click_area_report_url.as_str());
+                                                                    match parsed_url {
+                                                                        Ok(parsed_url) => {
+                                                                            let hash_query: HashMap<_, _> = parsed_url.query_pairs().into_owned().collect();
+                                                                            let sid = hash_query.get("sid");
+                                                                            let creative_id = hash_query.get("creative_id");
+                                                                            if sid.is_some() && creative_id.is_some() {
+                                                                                event_vec.push(Event {
+                                                                                    eventtype: 502,
+                                                                                    method: 502,
+                                                                                    url: replace_macro(click_area_report_url),
+                                                                                    header: None,
+                                                                                    content: Some(format!("{{\
+                                                                                        \"sld\":\"__SLD__\",\
+                                                                                        \"width\":\"__WIDTH__\",\
+                                                                                        \"height\":\"__HEIGHT__\",\
+                                                                                        \"down_x\":\"__R_DOWN_X__\",\
+                                                                                        \"down_y\":\"__R_DOWN_Y__\",\
+                                                                                        \"up_x\":\"__R_UP_X__\",\
+                                                                                        \"up_y\":\"__R_UP_Y__\",\
+                                                                                        \"click_element\":\"__CLICKELEMENT__\",\
+                                                                                        \"sid\":\"{}\",\
+                                                                                        \"creative_id\":\"{}\"\
+                                                                                    }}", sid.unwrap(), creative_id.unwrap()).to_string()),
+                                                                                });
+                                                                            }
+                                                                        },
+                                                                        Err(_) => (),
+                                                                    }
+                                                                }
+                                                            },
+                                                            None => (),
+                                                        }
+                                                        match &events.clo {
+                                                            Some(clo) => {
+                                                                for event in clo {
+                                                                    event_vec.push(Event {
+                                                                        eventtype: 509,
                                                                         method: 1,
                                                                         url: replace_macro(event),
                                                                         header: None,
@@ -1891,16 +1761,52 @@ impl Client for Adwanji {
         Ok(response)
     }
 
-    async fn bidding_notify_win(_url: String, _win_price: i32, _next_price: i32, _iv: &String, _connection: &Connection, _pool: &HttpPool) {
+    async fn bidding_notify_win(url: String, win_price: i32, next_price: i32, iv: &String, connection: &Connection, pool: &HttpPool) {
+        let encrypt_win_price = Self::encrypt_price(win_price, iv, connection);
+        let replaced_url = url
+            .replace("__WIN_PRICE__", &encrypt_win_price)
+            .replace("__PRICE__", &encrypt_win_price)
+            .replace("__2ND_PRICE__", &next_price.to_string());
 
+        let client = {
+            let pool_adwanji_lock = pool.pool_adwanji.clone();
+            let pool_adwanji = pool_adwanji_lock.read().unwrap();
+            pool_adwanji.clone()
+        };
+        let _ = client.get(replaced_url).send().await;
     }
 
-    async fn bidding_notify_lose(_url: String, _lose_price: i32, _lose_reason: i32, _lose_adn_name: &String, _iv: &String, _connection: &Connection, _pool: &HttpPool) {
+    async fn bidding_notify_lose(url: String, lose_price: i32, lose_reason: i32, lose_adn_name: &String, _iv: &String, _connection: &Connection, pool: &HttpPool) {
+        let replaced_url = url
+            .replace("__LOSE_PRICE__", &lose_price.to_string())
+            .replace("__BID_ECPM__", &lose_price.to_string())
+            .replace("__AD_ECPM__", &lose_price.to_string())
+            .replace("__BID_FAIL_REASON__", &lose_reason.to_string())
+            .replace("__LOSE_REASON__", &lose_reason.to_string())
+            .replace("__LOSE_ADN_NAME__", lose_adn_name)
+            .replace("__ADN_NAME__", lose_adn_name);
 
+        let client = {
+            let pool_adwanji_lock = pool.pool_adwanji.clone();
+            let pool_adwanji = pool_adwanji_lock.read().unwrap();
+            pool_adwanji.clone()
+        };
+        let _ = client.get(replaced_url).send().await;
     }
 
-    fn encrypt_price(price: i32, _iv: &String, _connection: &Connection) -> String {
-        price.to_string()
+    fn encrypt_price(price: i32, _iv: &String, connection: &Connection) -> String {
+        let message = format!("{}", price);
+        let plaintext = message.as_bytes();
+        let pos = plaintext.len();
+        let mut buffer = [0u8; 32];
+        buffer[..pos].copy_from_slice(plaintext);
+
+        let key = connection.client_tag_id.split("|").nth(1).unwrap().as_bytes();
+        let cipher = Aes256EcbEnc::new(key[0..32].into())
+            .encrypt_padded_mut::<Pkcs7>(&mut buffer, pos)
+            .unwrap();
+
+        BASE64_STANDARD.encode(cipher).replace("+", "-").replace("/", "_").replace("=", "")
     }
 
 }

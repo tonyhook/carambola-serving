@@ -19,6 +19,8 @@ pub struct AdwanjiVideoAsset {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub duration: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub reward_duration: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub keep_duration: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cover_url: Option<String>,

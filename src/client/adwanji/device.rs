@@ -1,29 +1,39 @@
 use serde::{Deserialize, Serialize};
 
-use super::AdwanjiGeo;
+use super::{AdwanjiCaid, AdwanjiGeo};
 
 #[derive(Serialize)]
 #[derive(Deserialize)]
 pub struct AdwanjiDevice {
     pub ua: String,
     pub geo: AdwanjiGeo,
-    pub ip: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ip: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ipv6: Option<String>,
     pub devicetype: i32,
-    pub make: String,
-    pub brand: String,
-    pub model: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub make: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub brand: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
     pub os: i32,
-    pub osv: String,
-    pub oslevel: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub osv: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub oslevel: Option<i32>,
     pub resolution: String,
-    pub sh: i32,
-    pub sw: i32,
-    pub ppi: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sh: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sw: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ppi: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dpi: Option<i32>,
-    pub density: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub density: Option<f64>,
     pub orientation: i32,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub idfa: Option<String>,
@@ -52,12 +62,17 @@ pub struct AdwanjiDevice {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub caidver: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub caids: Option<Vec<AdwanjiCaid>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub aaid: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub mac: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub macmd5: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub meid: Option<String>,
-    pub carrier: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub carrier: Option<String>,
     pub conn: i32,
     pub imsi: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -72,8 +87,10 @@ pub struct AdwanjiDevice {
     pub wifimac: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub serialno: Option<String>,
-    pub language: String,
-    pub countrycode: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub language: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub countrycode: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub uiver: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -84,24 +101,44 @@ pub struct AdwanjiDevice {
     pub hwagver: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub compilingtime: Option<String>,
-    pub starttime: String,
-    pub startnanotime: String,
-    pub startmilltime: String,
-    pub birthtime: String,
-    pub osupdatetime: String,
-    pub osupdatenanotime: String,
-    pub hwname: String,
-    pub hwmodel: String,
-    pub hwmachine: String,
-    pub sysmemory: String,
-    pub sysdisksize: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub starttime: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub startnanotime: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub startmilltime: Option<String>,
+    #[serde(rename(deserialize = "mntId", serialize = "mntId"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mnt_id: Option<String>,
+    #[serde(rename(deserialize = "clientTime", serialize = "clientTime"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub client_time: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub birthtime: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub osupdatetime: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub osupdatenanotime: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hwname: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hwmodel: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hwmachine: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sysmemory: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sysdisksize: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cpunum: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cpufreq: Option<String>,
-    pub timezone: String,
-    pub updatemark: String,
-    pub bootmark: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timezone: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub updatemark: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bootmark: Option<String>,
     #[serde(rename(deserialize = "batteryStatus", serialize = "batteryStatus"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub battery_status: Option<i32>,
