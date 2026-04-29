@@ -1,0 +1,83 @@
+use serde::{Deserialize, Serialize};
+
+use super::{TianzhuoAdvertiser, TianzhuoAttachDetail, TianzhuoBidApp, TianzhuoCheckVideoUrls, TianzhuoExt, TianzhuoImage, TianzhuoMacros, TianzhuoNativeResponse, TianzhuoVideo};
+
+#[derive(Serialize, Deserialize)]
+pub struct TianzhuoBid {
+    pub id: Option<String>,
+    pub impid: Option<String>,
+    pub price: Option<f64>,
+    pub adid: Option<String>,
+    pub nurl: Option<Vec<String>>,
+    pub adm: Option<String>,
+    pub adomain: Option<Vec<String>>,
+    pub iurl: Option<String>,
+    pub cid: Option<String>,
+    pub crid: Option<String>,
+    pub cat: Option<Vec<String>>,
+    pub attr: Option<Vec<String>>,
+    pub dealid: Option<String>,
+    pub h: Option<i32>,
+    pub w: Option<i32>,
+    pub title: Option<String>,
+    pub sub_title: Option<String>,
+    pub desc: Option<String>,
+    pub style_id: Option<String>,
+    pub download_url: Option<String>,
+    pub download_md5: Option<String>,
+    pub click_url: Option<String>,
+    pub deeplink_url: Option<String>,
+    pub clicktype: Option<String>,
+    pub fallback: Option<String>,
+    #[serde(rename(deserialize = "aptAppId", serialize = "aptAppId"))]
+    pub apt_app_id: Option<String>,
+    #[serde(rename(deserialize = "aptOrgId", serialize = "aptOrgId"))]
+    pub apt_org_id: Option<String>,
+    #[serde(rename(deserialize = "aptPath", serialize = "aptPath"))]
+    pub apt_path: Option<String>,
+    #[serde(rename(deserialize = "aptType", serialize = "aptType"))]
+    pub apt_type: Option<String>,
+    #[serde(rename(deserialize = "aptUL", serialize = "aptUL"))]
+    pub apt_ul: Option<String>,
+    pub ad_type: Option<i32>,
+    #[serde(rename(deserialize = "as", serialize = "as"))]
+    pub ad_size: Option<String>,
+    pub xs: Option<String>,
+    pub index: Option<String>,
+    pub source: Option<String>,
+    pub valid_time: Option<i32>,
+    pub check_views: Option<Vec<String>>,
+    pub check_clicks: Option<Vec<String>>,
+    pub check_start_downloads: Option<Vec<String>>,
+    pub check_end_downloads: Option<Vec<String>>,
+    pub check_start_installs: Option<Vec<String>>,
+    pub check_end_installs: Option<Vec<String>>,
+    pub check_activations: Option<Vec<String>>,
+    pub check_success_deeplinks: Option<Vec<String>>,
+    pub check_fail_deeplinks: Option<Vec<String>>,
+    pub deeplink_installed: Option<Vec<String>>,
+    pub deeplink_not_installed: Option<Vec<String>>,
+    pub aic: Option<String>,
+    pub ate: Option<String>,
+    pub abi: Option<String>,
+    #[serde(rename(deserialize = "adLogo", serialize = "adLogo"))]
+    pub ad_logo: Option<String>,
+    pub replaced_ua: Option<String>,
+    pub images: Option<Vec<TianzhuoImage>>,
+    pub video: Option<TianzhuoVideo>,
+    pub native: Option<TianzhuoNativeResponse>,
+    pub check_video_urls: Option<Vec<TianzhuoCheckVideoUrls>>,
+    pub check_video_start: Option<Vec<String>>,
+    pub check_video_25: Option<Vec<String>>,
+    pub check_video_middle: Option<Vec<String>>,
+    pub check_video_75: Option<Vec<String>>,
+    pub check_video_end: Option<Vec<String>>,
+    pub advertiser: Option<TianzhuoAdvertiser>,
+    pub app: Option<TianzhuoBidApp>,
+    pub attach_detail: Option<TianzhuoAttachDetail>,
+    pub ext: Option<TianzhuoExt>,
+    pub macros: Option<Vec<TianzhuoMacros>>,
+    #[serde(rename(deserialize = "marketUrl", serialize = "marketUrl"))]
+    pub market_url: Option<String>,
+    pub click_area_report_url: Option<String>,
+}
