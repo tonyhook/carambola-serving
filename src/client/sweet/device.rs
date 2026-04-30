@@ -5,7 +5,8 @@ use super::{SweetCaidList, SweetGeo, SweetNetwork};
 #[derive(Serialize)]
 #[derive(Deserialize)]
 pub struct SweetDevice {
-    pub ip: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ip: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ipv6: Option<String>,
     pub ua: String,
@@ -20,10 +21,14 @@ pub struct SweetDevice {
     #[serde(rename(deserialize = "modelCode", serialize = "modelCode"))]
     pub model_code: String,
     pub orientation: i32,
-    pub dw: i32,
-    pub dh: i32,
-    pub density: f64,
-    pub ppi: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dw: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dh: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub density: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ppi: Option<i32>,
     #[serde(rename(deserialize = "screenSize", serialize = "screenSize"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub screen_size: Option<f64>,

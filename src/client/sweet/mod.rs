@@ -66,19 +66,13 @@ impl Client for Sweet {
                 w: {
                     match request.item[0].spec.display.w {
                         Some(w) => w,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.item[0].spec.display.w is required for upstream".to_string(),
-                        }),
+                        None => 0,
                     }
                 },
                 h: {
                     match request.item[0].spec.display.h {
                         Some(h) => h,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.item[0].spec.display.h is required for upstream".to_string(),
-                        }),
+                        None => 0,
                     }
                 },
                 imptype: {
@@ -120,10 +114,7 @@ impl Client for Sweet {
                                 6 // rewarded video
                             }
                         } else {
-                            return Err(ResultMessage {
-                                code: 998,
-                                message: "request.item[0].spec.display is not a proper type for upstream".to_string(),
-                            });
+                            2 // feeds
                         }
                     }
                 },
@@ -168,14 +159,28 @@ impl Client for Sweet {
                     Some(app) => {
                         SweetApp {
                             name: {
-                                app.name.clone()
+                                match &connection.client_media_appname {
+                                    Some(client_media_appname) => client_media_appname.clone(),
+                                    None => {
+                                        match &request.context.app {
+                                            Some(app) => app.name.clone(),
+                                            None => "".to_string(),
+                                        }
+                                    },
+                                }
                             },
                             bundle: {
-                                match &app.bundle {
-                                    Some(bundle) => {
-                                        bundle.clone()
+                                match &connection.client_media_apppackage {
+                                    Some(client_media_apppackage) => client_media_apppackage.clone(),
+                                    None => {
+                                        match &request.context.app {
+                                            Some(app) => match &app.bundle {
+                                                Some(bundle) => bundle.clone(),
+                                                None => "".to_string(),
+                                            },
+                                            None => "".to_string(),
+                                        }
                                     },
-                                    None => "".to_string(),
                                 }
                             },
                             ver: {
@@ -196,11 +201,21 @@ impl Client for Sweet {
                             },
                         }
                     },
-                    None => {
-                        return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.app is required for upstream".to_string(),
-                        });
+                    None => SweetApp {
+                        name: {
+                            match &connection.client_media_appname {
+                                Some(client_media_appname) => client_media_appname.clone(),
+                                None => "".to_string(),
+                            }
+                        },
+                        bundle: {
+                            match &connection.client_media_apppackage {
+                                Some(client_media_apppackage) => client_media_apppackage.clone(),
+                                None => "".to_string(),
+                            }
+                        },
+                        ver: "".to_string(),
+                        store_url: "".to_string(),
                     }
                 }
             },
@@ -228,13 +243,7 @@ impl Client for Sweet {
             }),
             device: SweetDevice {
                 ip: {
-                    match &request.context.device.ip {
-                        Some(ip) => ip.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.ip is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.ip.clone()
                 },
                 ipv6: {
                     request.context.device.ipv6.clone()
@@ -248,25 +257,16 @@ impl Client for Sweet {
                             match os {
                                 2 => "Android".to_string(),
                                 13 => "iOS".to_string(),
-                                _ => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.os should be 2/13 for upstream".to_string(),
-                                }),
+                                _ => "UNKNOWN".to_string(),
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.os is required for upstream".to_string(),
-                        }),
+                        None => "UNKNOWN".to_string(),
                     }
                 },
                 osv: {
                     match &request.context.device.osv {
                         Some(osv) => osv.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.osv is required for upstream".to_string(),
-                        }),
+                        None => "".to_string(),
                     }
                 },
                 device_type: {
@@ -305,10 +305,14 @@ impl Client for Sweet {
                                 city: geo.city.clone(),
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.geo is required for upstream".to_string(),
-                        }),
+                        None => SweetGeo {
+                            lat: 0.0,
+                            lon: 0.0,
+                            geotype: 1,
+                            country: None,
+                            province: None,
+                            city: None,
+                        }
                     }
                 },
                 network: SweetNetwork {
@@ -332,10 +336,7 @@ impl Client for Sweet {
                                     _ => 0,
                                 }
                             },
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.device.carrier is required for upstream".to_string(),
-                            }),
+                            None => 0,
                         }
                     },
                     imsi: {
@@ -441,40 +442,16 @@ impl Client for Sweet {
                     }
                 },
                 dw: {
-                    match request.context.device.w {
-                        Some(w) => w,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.w is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.w.clone()
                 },
                 dh: {
-                    match request.context.device.h {
-                        Some(h) => h,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.h is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.h.clone()
                 },
                 density: {
-                    match request.context.device.pxratio {
-                        Some(pxratio) => pxratio,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.pxratio is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.pxratio.clone()
                 },
                 ppi: {
-                    match request.context.device.ppi {
-                        Some(ppi) => ppi,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.ppi is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.ppi.clone()
                 },
                 screen_size: {
                     request.context.device.size.clone()

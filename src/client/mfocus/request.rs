@@ -20,11 +20,13 @@ pub struct MfocusRequest {
     pub androidid_md5: String,
     pub ua: String,
     pub mac: String,
-    pub model: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
     pub sc_w: String,
     pub sc_h: String,
     pub mid: String,
     pub imsi: String,
     pub network: String,
-    pub brand: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub brand: Option<String>,
 }

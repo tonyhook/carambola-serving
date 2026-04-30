@@ -50,19 +50,13 @@ impl Client for Mfocus {
                             _ => 3,
                         }
                     },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.os is required for upstream".to_string(),
-                    }),
+                    None => 3,
                 }
             },
             ip: {
                 match &request.context.device.ip {
                     Some(ip) => ip.clone(),
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.ip is required for upstream".to_string(),
-                    }),
+                    None => "".to_string(),
                 }
             },
             av: {
@@ -134,39 +128,24 @@ impl Client for Mfocus {
                 }
             },
             model: {
-                match &request.context.device.model {
-                    Some(model) => model.clone(),
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.model is required for upstream".to_string(),
-                    }),
-                }
+                request.context.device.model.clone()
             },
             sc_w: {
                 match request.context.device.w {
                     Some(w) => w.to_string(),
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.w is required for upstream".to_string(),
-                    }),
+                    None => "0".to_string(),
                 }
             },
             sc_h: {
                 match request.context.device.h {
                     Some(h) => h.to_string(),
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.h is required for upstream".to_string(),
-                    }),
+                    None => "0".to_string(),
                 }
             },
             mid: {
                 match &request.context.device.osv {
                     Some(osv) => osv.clone(),
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.osv is required for upstream".to_string(),
-                    }),
+                    None => "".to_string(),
                 }
             },
             imsi: {
@@ -179,10 +158,7 @@ impl Client for Mfocus {
                             _ => "-1".to_string(),
                         }
                     },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.carrier is required for upstream".to_string(),
-                    }),
+                    None => "-1".to_string(),
                 }
             },
             network: {
@@ -196,26 +172,14 @@ impl Client for Mfocus {
                             5 => "3".to_string(),
                             6 => "2".to_string(),
                             7 => "6".to_string(),
-                            _ => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.device.contype should be 1-7 for upstream".to_string(),
-                            }),
+                            _ => "-1".to_string(),
                         }
                     },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.contype is required for upstream".to_string(),
-                    }),
+                    None => "-1".to_string(),
                 }
             },
             brand: {
-                match &request.context.device.brand {
-                    Some(brand) => brand.clone(),
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.brand is required for upstream".to_string(),
-                    }),
-                }
+                request.context.device.brand.clone()
             },
         };
 

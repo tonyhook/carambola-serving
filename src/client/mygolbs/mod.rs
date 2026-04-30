@@ -75,16 +75,10 @@ impl Client for Mygolbs {
                         }
                         match boottime.split(".").nth(0).unwrap().parse::<i32>() {
                             Ok(boottime) => Some(boottime),
-                            Err(_) => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.device.boottime is malformatted for upstream".to_string(),
-                            }),
+                            Err(_) => None,
                         }
                     },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.boottime is required for upstream".to_string(),
-                    }),
+                    None => None,
                 }
             },
             ver_code_of_ag: request.context.device.storev.clone(),
@@ -92,19 +86,13 @@ impl Client for Mygolbs {
             ppi: {
                 match request.context.device.ppi {
                     Some(ppi) => ppi,
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.ppi is required for upstream".to_string(),
-                    }),
+                    None => 0,
                 }
             },
             screendensity: {
                 match request.context.device.pxratio {
                     Some(pxratio) => pxratio,
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.pxratio is required for upstream".to_string(),
-                    }),
+                    None => 0.0,
                 }
             },
             nw: {
@@ -203,36 +191,17 @@ impl Client for Mygolbs {
                 }
             },
             vendor: {
-                match &request.context.device.brand {
-                    Some(brand) => {
-                        brand.clone()
-                    },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.brand is required for upstream".to_string(),
-                    }),
-                }
+                request.context.device.brand.clone()
             },
             devicetype: {
-                match &request.context.device.model {
-                    Some(model) => {
-                        model.clone()
-                    },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.model is required for upstream".to_string(),
-                    }),
-                }
+                request.context.device.model.clone()
             },
             sv: {
                 match &request.context.device.osv {
                     Some(osv) => {
                         osv.clone()
                     },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.osv is required for upstream".to_string(),
-                    }),
+                    None => "".to_string(),
                 }
             },
             s: {
@@ -243,10 +212,7 @@ impl Client for Mygolbs {
                     Some(13) => {
                         "ios".to_string()
                     },
-                    _ => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.os is required for upstream".to_string(),
-                    }),
+                    _ => "unknown".to_string()
                 }
             },
             w: {
@@ -254,10 +220,7 @@ impl Client for Mygolbs {
                     Some(w) => {
                         w
                     },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.w is required for upstream".to_string(),
-                    }),
+                    None => 0,
                 }
             },
             h: {
@@ -265,10 +228,7 @@ impl Client for Mygolbs {
                     Some(h) => {
                         h
                     },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.h is required for upstream".to_string(),
-                    }),
+                    None => 0,
                 }
             },
             adw: {
@@ -284,15 +244,7 @@ impl Client for Mygolbs {
                 }
             },
             ip: {
-                match &request.context.device.ip {
-                    Some(ip) => {
-                        ip.clone()
-                    },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.ip is required for upstream".to_string(),
-                    }),
-                }
+                request.context.device.ip.clone()
             },
             lng: {
                 match &request.context.device.geo {
@@ -327,10 +279,7 @@ impl Client for Mygolbs {
                             _ => "-1".to_string(),
                         }
                     },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.carrier is required for upstream".to_string(),
-                    }),
+                    None => "-1".to_string(),
                 }
             },
             imsi: {
@@ -372,10 +321,7 @@ impl Client for Mygolbs {
                                 let utc = chrono_tz::UTC.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap();
                                 Some((t.timestamp() - utc.timestamp()).to_string())
                             },
-                            Err(_) => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.device.timezone is malformat for upstream, should be like Asia/Shanghai".to_string(),
-                            }),
+                            Err(_) => None,
                         }
                     },
                     None => None,

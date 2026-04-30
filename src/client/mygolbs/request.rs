@@ -69,8 +69,10 @@ pub struct MygolbsRequest {
     pub ua: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mac: Option<String>,
-    pub vendor: String,
-    pub devicetype: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vendor: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub devicetype: Option<String>,
     pub sv: String,
     pub s: String,
     pub w: i32,
@@ -79,7 +81,8 @@ pub struct MygolbsRequest {
     pub adw: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub adh: Option<i32>,
-    pub ip: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ip: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub lng: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
