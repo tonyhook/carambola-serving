@@ -56,19 +56,13 @@ impl Client for Fanglin {
                 width: {
                     match request.item[0].spec.display.w {
                         Some(w) => w,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.item[0].spec.display.w is required for upstream".to_string(),
-                        })
+                        None => 0,
                     }
                 },
                 height: {
                     match request.item[0].spec.display.h {
                         Some(h) => h,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.item[0].spec.display.h is required for upstream".to_string(),
-                        }),
+                        None => 0,
                     }
                 },
                 bid_floor: {
@@ -85,10 +79,7 @@ impl Client for Fanglin {
                                 None => {
                                     match &app.bundle {
                                         Some(bundle) => bundle.clone(),
-                                        None => return Err(ResultMessage {
-                                            code: 998,
-                                            message: "request.context.app.bundle is required for upstream".to_string(),
-                                        }),
+                                        None => "".to_string(),
                                     }
                                 },
                             }
@@ -96,10 +87,7 @@ impl Client for Fanglin {
                         app_ver: {
                             match &app.ver {
                                 Some(ver) => ver.clone(),
-                                None => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.app.ver is required for upstream".to_string(),
-                                }),
+                                None => "".to_string(),
                             }
                         },
                         app_name: {
@@ -109,10 +97,11 @@ impl Client for Fanglin {
                             }
                         },
                     },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.app is required for upstream".to_string(),
-                    }),
+                    None => FanglinApp {
+                        bundle: "".to_string(),
+                        app_ver: "".to_string(),
+                        app_name: "".to_string(),
+                    },
                 }
             },
             device: FanglinDevice {
@@ -125,16 +114,10 @@ impl Client for Fanglin {
                                 4 => 1,
                                 5 => 2,
                                 7 => 3,
-                                _ => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.type should be 1/3/4/5/7 for upstream".to_string(),
-                                }),
+                                _ => 1,
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.type is required for upstream".to_string(),
-                        }),
+                        None => 1,
                     }
                 },
                 os: {
@@ -144,101 +127,41 @@ impl Client for Fanglin {
                                 2 => 1,
                                 13 => 2,
                                 501 => 3,
-                                _ => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.os should be 2/13/501 for upstream".to_string(),
-                                }),
+                                _ => 1,
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.os is required for upstream".to_string(),
-                        }),
+                        None => 1,
                     }
                 },
                 os_ver: {
-                    match &request.context.device.osv {
-                        Some(osv) => osv.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.osv is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.osv.clone()
                 },
                 brand: {
-                    match &request.context.device.brand {
-                        Some(brand) => brand.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.brand is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.brand.clone()
                 },
                 vendor: {
-                    match &request.context.device.make {
-                        Some(make) => make.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.make is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.make.clone()
                 },
                 model: {
-                    match &request.context.device.model {
-                        Some(model) => model.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.model is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.model.clone()
                 },
                 screen_width: {
-                    match request.context.device.w {
-                        Some(w) => w,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.w is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.w.clone()
                 },
                 screen_height: {
-                    match request.context.device.h {
-                        Some(h) => h,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.h is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.h.clone()
                 },
                 ua: {
                     request.context.device.ua.clone()
                 },
                 density: {
-                    match request.context.device.pxratio {
-                        Some(pxratio) => pxratio,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.pxratio is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.pxratio.clone()
                 },
                 dpi: {
-                    match request.context.device.ppi {
-                        Some(ppi) => ppi,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.ppi is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.ppi.clone()
                 },
                 ppi: {
-                    match request.context.device.ppi {
-                        Some(ppi) => ppi,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.ppi is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.ppi.clone()
                 },
                 imei: {
                     match identifiers.get_id(501, 0) {
@@ -288,16 +211,10 @@ impl Client for Fanglin {
                             match orientation {
                                 501 => 1,
                                 502 => 2,
-                                _ => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.orientation should be 501/502 for upstream".to_string(),
-                                }),
+                                _ => 1,
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.orientation is required for upstream".to_string(),
-                        }),
+                        None => 1,
                     }
                 },
                 open_id: {
@@ -334,16 +251,10 @@ impl Client for Fanglin {
                     }
                 },
                 boot_mark: {
-                    match &request.context.device.bootmark {
-                        Some(bootmark) => bootmark.clone(),
-                        None => "".to_string(),
-                    }
+                    request.context.device.bootmark.clone()
                 },
                 update_mark: {
-                    match &request.context.device.updatemark {
-                        Some(updatemark) => updatemark.clone(),
-                        None => "".to_string(),
-                    }
+                    request.context.device.updatemark.clone()
                 },
                 device_name_md5: {
                     match identifiers.get_id(528, 0) {
@@ -352,22 +263,10 @@ impl Client for Fanglin {
                     }
                 },
                 hardware_machine: {
-                    match &request.context.device.hwmachine {
-                        Some(hwmachine) => hwmachine.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.hwmachine is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.hwmachine.clone()
                 },
                 hardware_model: {
-                    match &request.context.device.hwmodel {
-                        Some(hwmodel) => hwmodel.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.hwmodel is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.hwmodel.clone()
                 },
                 time_zone: {
                     match &request.context.device.timezone {
@@ -377,36 +276,24 @@ impl Client for Fanglin {
                                 Ok(tz) => {
                                     let t = tz.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap();
                                     let utc = chrono_tz::UTC.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap();
-                                    (t.timestamp() - utc.timestamp()).to_string()
+                                    Some((t.timestamp() - utc.timestamp()).to_string())
                                 },
-                                Err(_) => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.timezone is malformat for upstream, should be like Asia/Shanghai".to_string(),
-                                }),
+                                Err(_) => None,
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.timezone is required for upstream".to_string(),
-                        }),
+                        None => None,
                     }
                 },
                 disk_size: {
                     match &request.context.device.sysdisksize {
-                        Some(sysdisksize) => sysdisksize.to_string(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.sysdisksize is required for upstream".to_string(),
-                        }),
+                        Some(sysdisksize) => Some(sysdisksize.to_string()),
+                        None => None,
                     }
                 },
                 memory_size: {
                     match &request.context.device.sysmemory {
-                        Some(sysmemory) => sysmemory.to_string(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.sysmemory is required for upstream".to_string(),
-                        }),
+                        Some(sysmemory) => Some(sysmemory.to_string()),
+                        None => None,
                     }
                 },
                 country: {
@@ -416,31 +303,13 @@ impl Client for Fanglin {
                     request.context.device.lang.clone()
                 },
                 os_update_time: {
-                    match &request.context.device.updatetime {
-                        Some(updatetime) => updatetime.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.updatetime is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.updatetime.clone()
                 },
                 boot_time_sec: {
-                    match &request.context.device.boottime {
-                        Some(boottime) => boottime.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.boottime is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.boottime.clone()
                 },
                 birth_time: {
-                    match &request.context.device.inittime {
-                        Some(inittime) => inittime.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.inittime is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.inittime.clone()
                 },
                 os_com_time: {
                     request.context.device.romtime.clone()
@@ -475,13 +344,7 @@ impl Client for Fanglin {
             },
             network: FanglinNetwork {
                 ip: {
-                    match &request.context.device.ip {
-                        Some(ip) => ip.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.ip is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.ip.clone()
                 },
                 conn_type: {
                     match &request.context.device.contype {
@@ -494,16 +357,10 @@ impl Client for Fanglin {
                                 5 => 3,
                                 6 => 4,
                                 7 => 5,
-                                _ => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.contype should be 1-7 for upstream".to_string(),
-                                }),
+                                _ => 100,
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.contype is required for upstream".to_string(),
-                        }),
+                        None => 100,
                     }
                 },
                 operator_type: {
@@ -516,10 +373,7 @@ impl Client for Fanglin {
                                 _ => 100,
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.carrier is required for upstream".to_string(),
-                        }),
+                        None => 1,
                     }
                 },
             },

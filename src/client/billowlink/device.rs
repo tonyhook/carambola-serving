@@ -10,11 +10,14 @@ pub struct BillowlinkDevice {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dnt: Option<i32>,
     pub ua: String,
-    pub ip: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ip: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ipv6: Option<String>,
-    pub make: String,
-    pub model: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub make: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
     pub os: i32,
     pub osv: String,
     pub w: i32,
@@ -92,9 +95,11 @@ pub struct BillowlinkDevice {
     #[serde(rename(deserialize = "hwMachine", serialize = "hwMachine"))]
     pub hw_machine: String,
     #[serde(rename(deserialize = "sysMemory", serialize = "sysMemory"))]
-    pub sys_memory: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sys_memory: Option<String>,
     #[serde(rename(deserialize = "sysDisksize", serialize = "sysDisksize"))]
-    pub sys_disksize: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sys_disksize: Option<String>,
     #[serde(rename(deserialize = "deviceName", serialize = "deviceName"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub device_name: Option<String>,
@@ -108,9 +113,12 @@ pub struct BillowlinkDevice {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub update_mark: Option<String>,
     #[serde(rename(deserialize = "deviceInitializeTime", serialize = "deviceInitializeTime"))]
-    pub device_initialize_time: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub device_initialize_time: Option<String>,
     #[serde(rename(deserialize = "bootTimeSec", serialize = "bootTimeSec"))]
-    pub boot_time_sec: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub boot_time_sec: Option<String>,
     #[serde(rename(deserialize = "osUpdateTimeSec", serialize = "osUpdateTimeSec"))]
-    pub os_update_time_sec: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub os_update_time_sec: Option<String>,
 }

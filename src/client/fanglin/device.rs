@@ -5,16 +5,25 @@ use serde::{Deserialize, Serialize};
 pub struct FanglinDevice {
     pub device_type: i32,
     pub os: i32,
-    pub os_ver: String,
-    pub brand: String,
-    pub vendor: String,
-    pub model: String,
-    pub screen_width: i32,
-    pub screen_height: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub os_ver: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub brand: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vendor: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub screen_width: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub screen_height: Option<i32>,
     pub ua: String,
-    pub density: f64,
-    pub dpi: i32,
-    pub ppi: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub density: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dpi: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ppi: Option<i32>,
     pub imei: String,
     pub oaid: String,
     pub android_id: String,
@@ -37,21 +46,31 @@ pub struct FanglinDevice {
     pub aaid: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub paid: Option<String>,
-    pub boot_mark: String,
-    pub update_mark: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub boot_mark: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub update_mark: Option<String>,
     pub device_name_md5: String,
-    pub hardware_machine: String,
-    pub hardware_model: String,
-    pub time_zone: String,
-    pub disk_size: String,
-    pub memory_size: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hardware_machine: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hardware_model: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub time_zone: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub disk_size: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub memory_size: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub country: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub language: Option<String>,
-    pub os_update_time: String,
-    pub boot_time_sec: String,
-    pub birth_time: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub os_update_time: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub boot_time_sec: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub birth_time: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub os_com_time: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]

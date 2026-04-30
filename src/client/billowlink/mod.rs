@@ -116,19 +116,13 @@ impl Client for Billowlink {
                 w: {
                     match request.item[0].spec.display.w {
                         Some(w) => w,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.item[0].spec.display.w is required for upstream".to_string(),
-                        }),
+                        None => 0,
                     }
                 },
                 h: {
                     match request.item[0].spec.display.h {
                         Some(h) => h,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.item[0].spec.display.h is required for upstream".to_string(),
-                        }),
+                        None => 0,
                     }
                 },
                 creative_type: {
@@ -207,23 +201,27 @@ impl Client for Billowlink {
                     Some(app) => {
                         BillowlinkApp {
                             app_id: app_id.to_string(),
-                            name: app.name.clone(),
+                            name: {
+                                match &connection.client_media_appname {
+                                    Some(client_media_appname) => client_media_appname.clone(),
+                                    None => app.name.clone(),
+                                }
+                            },
                             bundle: {
-                                match &app.bundle {
-                                    Some(bundle) => bundle.clone(),
-                                    None => return Err(ResultMessage {
-                                        code: 998,
-                                        message: "request.context.app.bundle is required for upstream".to_string(),
-                                    }),
+                                match &connection.client_media_apppackage {
+                                    Some(client_media_apppackage) => client_media_apppackage.clone(),
+                                    None => {
+                                        match &app.bundle {
+                                            Some(bundle) => bundle.clone(),
+                                            None => "".to_string(),
+                                        }
+                                    },
                                 }
                             },
                             ver: {
                                 match &app.ver {
                                     Some(ver) => ver.clone(),
-                                    None => return Err(ResultMessage {
-                                        code: 998,
-                                        message: "request.context.app.ver is required for upstream".to_string(),
-                                    }),
+                                    None => "".to_string(),
                                 }
                             },
                             store_url: app.storeurl.clone(),
@@ -232,10 +230,28 @@ impl Client for Billowlink {
                             paid: Some(app.paid),
                         }
                     },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.app is required for upstream".to_string(),
-                    }),
+                    None => {
+                        BillowlinkApp {
+                            app_id: app_id.to_string(),
+                            name: {
+                            match &connection.client_media_appname {
+                                Some(client_media_appname) => client_media_appname.clone(),
+                                None => "".to_string(),
+                            }
+                        },
+                        bundle: {
+                            match &connection.client_media_apppackage {
+                                Some(client_media_apppackage) => client_media_apppackage.clone(),
+                                None => "".to_string(),
+                            }
+                            },
+                            ver: "".to_string(),
+                            store_url: None,
+                            cat: Some(app_cat.to_string()),
+                            keywords: None,
+                            paid: None,
+                        }
+                    },
                 }
             },
             device: BillowlinkDevice {
@@ -259,36 +275,16 @@ impl Client for Billowlink {
                     request.context.device.ua.clone()
                 },
                 ip: {
-                    match &request.context.device.ip {
-                        Some(ip) => {
-                            ip.clone()
-                        },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.ip is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.ip.clone()
                 },
                 ipv6: {
                     request.context.device.ipv6.clone()
                 },
                 make: {
-                    match &request.context.device.make {
-                        Some(make) => make.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.make is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.make.clone()
                 },
                 model: {
-                    match &request.context.device.model {
-                        Some(model) => model.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.model is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.model.clone()
                 },
                 os: {
                     match request.context.device.os {
@@ -296,16 +292,10 @@ impl Client for Billowlink {
                             match os {
                                 2 => 2,
                                 13 => 1,
-                                _ => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.os should be 2/13 for upstream".to_string(),
-                                }),
+                                _ => 2,
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.os is required for upstream".to_string(),
-                        }),
+                        None => 2,
                     }
                 },
                 osv: {
@@ -313,28 +303,19 @@ impl Client for Billowlink {
                         Some(osv) => {
                             osv.clone()
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.osv is required for upstream".to_string(),
-                        }),
+                        None => "".to_string(),
                     }
                 },
                 w: {
                     match request.context.device.w {
                         Some(w) => w,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.display.w is required for upstream".to_string(),
-                        }),
+                        None => 0,
                     }
                 },
                 h: {
                     match request.context.device.h {
                         Some(h) => h,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.display.h is required for upstream".to_string(),
-                        }),
+                        None => 0,
                     }
                 },
                 carrier: {
@@ -509,19 +490,13 @@ impl Client for Billowlink {
                                 lat: {
                                     match geo.lat {
                                         Some(lat) => lat,
-                                        None => return Err(ResultMessage {
-                                            code: 998,
-                                            message: "request.context.device.geo.lat is required for upstream".to_string(),
-                                        }),
+                                        None => 0.0,
                                     }
                                 },
                                 lon: {
                                     match geo.lon {
                                         Some(lon) => lon,
-                                        None => return Err(ResultMessage {
-                                            code: 998,
-                                            message: "request.context.device.geo.lon is required for upstream".to_string(),
-                                        }),
+                                        None => 0.0,
                                     }
                                 },
                                 city: geo.city.clone(),
@@ -585,20 +560,14 @@ impl Client for Billowlink {
                 },
                 sys_memory: {
                     match &request.context.device.sysmemory {
-                        Some(sysmemory) => sysmemory.to_string(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.sysmemory is required for upstream".to_string(),
-                        }),
+                        Some(sysmemory) => Some(sysmemory.to_string()),
+                        None => None,
                     }
                 },
                 sys_disksize: {
                     match &request.context.device.sysdisksize {
-                        Some(sysdisksize) => sysdisksize.to_string(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.sysdisksize is required for upstream".to_string(),
-                        }),
+                        Some(sysdisksize) => Some(sysdisksize.to_string()),
+                        None => None,
                     }
                 },
                 device_name: {
@@ -620,31 +589,13 @@ impl Client for Billowlink {
                     request.context.device.updatemark.clone()
                 },
                 device_initialize_time: {
-                    match &request.context.device.inittime {
-                        Some(inittime) => inittime.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.inittime is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.inittime.clone()
                 },
                 boot_time_sec: {
-                    match &request.context.device.boottime {
-                        Some(boottime) => boottime.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.boottime is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.boottime.clone()
                 },
                 os_update_time_sec: {
-                    match &request.context.device.updatetime {
-                        Some(updatetime) => updatetime.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.updatetime is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.updatetime.clone()
                 },
             },
             user: {
