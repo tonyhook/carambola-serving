@@ -65,60 +65,49 @@ impl Client for Zhanqing {
                         Some(app) => {
                             match &app.ver {
                                 Some(ver) => ver.clone(),
-                                None => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.app.ver is required for upstream".to_string(),
-                                }),
+                                None => "".to_string(),
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.app.ver is required for upstream".to_string(),
-                        }),
+                        None => "".to_string(),
                     }
                 },
                 appname: {
-                    match &request.context.app {
-                        Some(app) => app.name.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.app is required for upstream".to_string(),
-                        }),
+                    match &connection.client_media_appname {
+                        Some(client_media_appname) => client_media_appname.clone(),
+                        None => {
+                            match &request.context.app {
+                                Some(app) => app.name.clone(),
+                                None => "".to_string(),
+                            }
+                        },
                     }
                 },
                 pkgname: {
-                    match &request.context.app {
-                        Some(app) => {
-                            match &app.bundle {
-                                Some(bundle) => bundle.clone(),
-                                None => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.app.bundle is required for upstream".to_string(),
-                                }),
+                    match &connection.client_media_apppackage {
+                        Some(client_media_apppackage) => client_media_apppackage.clone(),
+                        None => {
+                            match &request.context.app {
+                                Some(app) => {
+                                    match &app.bundle {
+                                        Some(bundle) => bundle.clone(),
+                                        None => "".to_string(),
+                                    }
+                                },
+                                None => "".to_string(),
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.app.bundle is required for upstream".to_string(),
-                        }),
                     }
                 },
                 w: {
                     match request.item[0].spec.display.w {
                         Some(w) => w,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.item[0].spec.display.w is required for upstream".to_string(),
-                        }),
+                        None => 0,
                     }
                 },
                 h: {
                     match request.item[0].spec.display.h {
                         Some(h) => h,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.item[0].spec.display.h is required for upstream".to_string(),
-                        }),
+                        None => 0,
                     }
                 },
             },
@@ -126,10 +115,7 @@ impl Client for Zhanqing {
                 ip: {
                     match &request.context.device.ip {
                         Some(ip) => ip.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.ip is required for upstream".to_string(),
-                        }),
+                        None => "".to_string(),
                     }
                 },
                 net: {
@@ -153,10 +139,7 @@ impl Client for Zhanqing {
                                 _ => -1,
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.carrier is required for upstream".to_string(),
-                        }),
+                        None => -1,
                     }
                 },
                 ua: {
@@ -183,10 +166,7 @@ impl Client for Zhanqing {
                 osv: {
                     match &request.context.device.osv {
                         Some(osv) => osv.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.osv is required for upstream".to_string(),
-                        }),
+                        None => "".to_string(),
                     }
                 },
                 imsi: {
@@ -253,19 +233,13 @@ impl Client for Zhanqing {
                 brand: {
                     match &request.context.device.brand {
                         Some(brand) => brand.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.brand is required for upstream".to_string(),
-                        }),
+                        None => "".to_string(),
                     }
                 },
                 model: {
                     match &request.context.device.model {
                         Some(model) => model.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.model is required for upstream".to_string(),
-                        }),
+                        None => "".to_string(),
                     }
                 },
                 density: {
@@ -277,19 +251,13 @@ impl Client for Zhanqing {
                 sw: {
                     match request.context.device.w {
                         Some(w) => w,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.w is required for upstream".to_string(),
-                        }),
+                        None => 0,
                     }
                 },
                 sh: {
                     match request.context.device.h {
                         Some(h) => h,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.h is required for upstream".to_string(),
-                        }),
+                        None => 0,
                     }
                 },
                 so: {

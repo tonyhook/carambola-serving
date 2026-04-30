@@ -85,16 +85,23 @@ impl Client for Yiwei {
                     Some(app) => {
                         YiweiApp {
                             app_id: Some(app_id.to_string()),
-                            app_name: Some(app.name.clone()),
-                            pkg_name: app.bundle.clone(),
+                            app_name: {
+                                match &connection.client_media_appname {
+                                    Some(client_media_appname) => Some(client_media_appname.clone()),
+                                    None => Some(app.name.clone()),
+                                }
+                            },
+                            pkg_name: {
+                                match &connection.client_media_apppackage {
+                                    Some(client_media_apppackage) => Some(client_media_apppackage.clone()),
+                                    None => app.bundle.clone(),
+                                }
+                            },
                             itunes_id: app.storeid.clone(),
                             app_version: {
                                 match &app.ver {
                                     Some(ver) => ver.clone(),
-                                    None => return Err(ResultMessage {
-                                        code: 998,
-                                        message: "request.context.app.ver is required for upstream".to_string(),
-                                    }),
+                                    None => "".to_string(),
                                 }
                             },
                             store_url: app.storeurl.clone(),
@@ -107,10 +114,21 @@ impl Client for Yiwei {
                             country: None,
                         }
                     },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.app is required for upstream".to_string(),
-                    }),
+                    None => YiweiApp {
+                        app_id: Some(app_id.to_string()),
+                        app_name: connection.client_media_appname.clone(),
+                        pkg_name: connection.client_media_apppackage.clone(),
+                        itunes_id: None,
+                        app_version: "".to_string(),
+                        store_url: None,
+                        pub_id: pub_id.to_string(),
+                        developer_domain: None,
+                        is_paid: None,
+                        keywords: None,
+                        categories: None,
+                        language: None,
+                        country: None,
+                    },
                 }
             },
             web_site: {
@@ -122,19 +140,13 @@ impl Client for Yiwei {
                             domain: {
                                 match &site.domain {
                                     Some(domain) => domain.clone(),
-                                    None => return Err(ResultMessage {
-                                        code: 998,
-                                        message: "request.context.site.domain is required for upstream".to_string(),
-                                    }),
+                                    None => "".to_string(),
                                 }
                             },
                             url: {
                                 match &site.page {
                                     Some(page) => page.clone(),
-                                    None => return Err(ResultMessage {
-                                        code: 998,
-                                        message: "request.context.site.page is required for upstream".to_string(),
-                                    }),
+                                    None => "".to_string(),
                                 }
                             },
                             referrer: site.referrer.clone(),
@@ -294,10 +306,7 @@ impl Client for Yiwei {
                             Some(ip) => {
                                 ip.clone()
                             },
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.device.ip is required for upstream".to_string(),
-                            }),
+                            None => "".to_string(),
                         }
                     },
                     ipv6: {
@@ -317,46 +326,31 @@ impl Client for Yiwei {
                     osv: {
                         match &request.context.device.osv {
                             Some(osv) => osv.clone(),
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.device.osv is required for upstream".to_string(),
-                            }),
+                            None => "".to_string(),
                         }
                     },
                     manufacturer: {
                         match &request.context.device.make {
                             Some(make) => make.clone(),
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.device.make is required for upstream".to_string(),
-                            }),
+                            None => "".to_string(),
                         }
                     },
                     brand: {
                         match &request.context.device.brand {
                             Some(brand) => brand.clone(),
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.device.brand is required for upstream".to_string(),
-                            }),
+                            None => "".to_string(),
                         }
                     },
                     model: {
                         match &request.context.device.model {
                             Some(model) => model.clone(),
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.device.model is required for upstream".to_string(),
-                            }),
+                            None => "".to_string(),
                         }
                     },
                     language: {
                         match &request.context.device.lang {
                             Some(lang) => lang.clone(),
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.device.lang is required for upstream".to_string(),
-                            }),
+                            None => "".to_string(),
                         }
                     },
                     ro_locale: None,
@@ -379,19 +373,13 @@ impl Client for Yiwei {
                     width: {
                         match request.context.device.w {
                             Some(w) => w,
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.device.w is required for upstream".to_string(),
-                            }),
+                            None => 0,
                         }
                     },
                     height: {
                         match request.context.device.h {
                             Some(h) => h,
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.device.h is required for upstream".to_string(),
-                            }),
+                            None => 0,
                         }
                     },
                     density: {
@@ -413,10 +401,7 @@ impl Client for Yiwei {
                     store_version: {
                         match &request.context.device.storev {
                             Some(storev) => storev.clone(),
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.device.storev is required for upstream".to_string(),
-                            }),
+                            None => "".to_string(),
                         }
                     },
                     hms_version: {
@@ -610,16 +595,10 @@ impl Client for Yiwei {
                                             5 => 3,
                                             6 => 4,
                                             7 => 5,
-                                            _ => return Err(ResultMessage {
-                                                code: 998,
-                                                message: "request.context.device.contype should be 1-7 for upstream".to_string(),
-                                            }),
+                                            _ => 0,
                                         }
                                     },
-                                    None => return Err(ResultMessage {
-                                        code: 998,
-                                        message: "request.context.device.contype is required for upstream".to_string(),
-                                    }),
+                                    None => 0,
                                 }
                             },
                         }
@@ -829,19 +808,13 @@ impl Client for Yiwei {
                     width: {
                         match request.item[0].spec.display.w {
                             Some(w) => w,
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.item[0].spec.display.w is required for upstream".to_string(),
-                            })
+                            None => 0
                         }
                     },
                     height: {
                         match request.item[0].spec.display.h {
                             Some(h) => h,
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.item[0].spec.display.h is required for upstream".to_string(),
-                            }),
+                            None => 0,
                         }
                     },
                     interaction_types: {

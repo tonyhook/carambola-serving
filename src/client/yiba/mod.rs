@@ -58,29 +58,25 @@ impl Client for Yiba {
                             Some(app) => {
                                 app.name.clone()
                             },
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.app is required for upstream".to_string(),
-                            }),
+                            None => "".to_string(),
                         }
                     }
                 }
             },
             app_package: {
-                match &request.context.app {
-                    Some(app) => {
-                        match &app.bundle {
-                            Some(bundle) => bundle.clone(),
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.app.bundle is required for upstream".to_string(),
-                            }),
+                match &connection.client_media_apppackage {
+                    Some(client_media_apppackage) => client_media_apppackage.clone(),
+                    None => {
+                        match &request.context.app {
+                            Some(app) => {
+                                match &app.bundle {
+                                    Some(bundle) => bundle.clone(),
+                                    None => "".to_string(),
+                                }
+                            },
+                            None => "".to_string(),
                         }
-                    },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.app is required for upstream".to_string(),
-                    }),
+                    }
                 }
             },
             app_version: {
@@ -88,16 +84,10 @@ impl Client for Yiba {
                     Some(app) => {
                         match &app.ver {
                             Some(ver) => ver.clone(),
-                            None => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.app.ver is required for upstream".to_string(),
-                            }),
+                            None => "".to_string(),
                         }
                     },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.app is required for upstream".to_string(),
-                    }),
+                    None => "".to_string(),
                 }
             },
             os_type: {
@@ -109,19 +99,13 @@ impl Client for Yiba {
                             _ => "Unknown".to_string(),
                         }
                     },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.os is required for upstream".to_string(),
-                    }),
+                    None => "Unknown".to_string(),
                 }
             },
             os_version: {
                 match &request.context.device.osv {
                     Some(osv) => osv.clone(),
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.osv is required for upstream".to_string(),
-                    }),
+                    None => "".to_string(),
                 }
             },
             imei: {
@@ -214,10 +198,7 @@ impl Client for Yiba {
             brand: {
                 match &request.context.device.brand {
                     Some(brand) => brand.clone(),
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.brand is required for upstream".to_string(),
-                    }),
+                    None => "".to_string(),
                 }
             },
             vendor: {
@@ -226,10 +207,7 @@ impl Client for Yiba {
             model: {
                 match &request.context.device.model {
                     Some(model) => model.clone(),
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.model is required for upstream".to_string(),
-                    }),
+                    None => "".to_string(),
                 }
             },
             device_type: {
@@ -254,37 +232,25 @@ impl Client for Yiba {
             device_width: {
                 match request.context.device.w {
                     Some(w) => w,
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.w is required for upstream".to_string(),
-                    }),
+                    None => 0,
                 }
             },
             device_height: {
                 match request.context.device.h {
                     Some(h) => h,
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.h is required for upstream".to_string(),
-                    }),
+                    None => 0,
                 }
             },
             width: {
                 match request.item[0].spec.display.w {
                     Some(w) => w,
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.item[0].spec.display.w is required for upstream".to_string(),
-                    })
+                    None => 0
                 }
             },
             height: {
                 match request.item[0].spec.display.h {
                     Some(h) => h,
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.item[0].spec.display.h is required for upstream".to_string(),
-                    }),
+                    None => 0,
                 }
             },
             paid: {
@@ -302,10 +268,7 @@ impl Client for Yiba {
             ppi: {
                 match request.context.device.ppi {
                     Some(ppi) => ppi,
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.ppi is required for upstream".to_string(),
-                    }),
+                    None => 0,
                 }
             },
             density: {
@@ -330,10 +293,7 @@ impl Client for Yiba {
                             _ => "unknown".to_string(),
                         }
                     },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.carrier is required for upstream".to_string(),
-                    }),
+                    None => "unknown".to_string(),
                 }
             },
             connection_type: {
@@ -347,16 +307,10 @@ impl Client for Yiba {
                             5 => 3,
                             6 => 4,
                             7 => 5,
-                            _ => return Err(ResultMessage {
-                                code: 998,
-                                message: "request.context.device.contype should be 1-7 for upstream".to_string(),
-                            }),
+                            _ => 0,
                         }
                     },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.contype is required for upstream".to_string(),
-                    }),
+                    None => 0,
                 }
             },
             longitude: {
