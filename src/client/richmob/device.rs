@@ -38,10 +38,14 @@ pub struct RichmobDevice {
     pub device_type: i32,
     pub os: String,
     #[serde(rename(deserialize = "osVersion", serialize = "osVersion"))]
-    pub os_version: String,
-    pub brand: String,
-    pub model: String,
-    pub language: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub os_version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub brand: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub language: Option<String>,
     pub network: i32,
     #[serde(rename(deserialize = "operatorType", serialize = "operatorType"))]
     pub operator_type: i32,
@@ -52,33 +56,47 @@ pub struct RichmobDevice {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dpi: Option<f64>,
     #[serde(rename(deserialize = "romVersion", serialize = "romVersion"))]
-    pub rom_version: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rom_version: Option<String>,
     #[serde(rename(deserialize = "sysComplingTime", serialize = "sysComplingTime"))]
-    pub sys_compling_time: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sys_compling_time: Option<String>,
     #[serde(rename(deserialize = "bootTimeSec", serialize = "bootTimeSec"))]
-    pub boot_time_sec: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub boot_time_sec: Option<i32>,
     #[serde(rename(deserialize = "bootTimeNanoSec", serialize = "bootTimeNanoSec"))]
-    pub boot_time_nano_sec: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub boot_time_nano_sec: Option<String>,
     #[serde(rename(deserialize = "osUpdateTimeSec", serialize = "osUpdateTimeSec"))]
-    pub os_update_time_sec: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub os_update_time_sec: Option<i32>,
     #[serde(rename(deserialize = "osUpdateTimeNanoSec", serialize = "osUpdateTimeNanoSec"))]
-    pub os_update_time_nano_sec: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub os_update_time_nano_sec: Option<String>,
     #[serde(rename(deserialize = "diskSize", serialize = "diskSize"))]
-    pub disk_size: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub disk_size: Option<i32>,
     #[serde(rename(deserialize = "batteryStatus", serialize = "batteryStatus"))]
-    pub battery_status: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub battery_status: Option<i32>,
     #[serde(rename(deserialize = "batteryPower", serialize = "batteryPower"))]
-    pub battery_power: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub battery_power: Option<i32>,
     #[serde(rename(deserialize = "memorySize", serialize = "memorySize"))]
-    pub memory_size: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub memory_size: Option<i32>,
     #[serde(rename(deserialize = "cpuNum", serialize = "cpuNum"))]
-    pub cpu_num: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cpu_num: Option<i32>,
     #[serde(rename(deserialize = "cpuFrequency", serialize = "cpuFrequency"))]
-    pub cpu_frequency: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cpu_frequency: Option<f64>,
     #[serde(rename(deserialize = "modelCode", serialize = "modelCode"))]
-    pub model_code: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model_code: Option<String>,
     #[serde(rename(deserialize = "timeZone", serialize = "timeZone"))]
-    pub time_zone: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub time_zone: Option<String>,
     pub lmt: i32,
     pub laccu: i32,
     pub caid: String,
@@ -102,9 +120,11 @@ pub struct RichmobDevice {
     #[serde(rename(deserialize = "hmsVersion", serialize = "hmsVersion"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hms_version: Option<String>,
-    pub ppi: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ppi: Option<i32>,
     #[serde(rename(deserialize = "screenSize", serialize = "screenSize"))]
-    pub screen_size: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub screen_size: Option<f64>,
     pub idfv: String,
     pub mcc: String,
     pub mnc: String,

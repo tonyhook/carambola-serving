@@ -477,13 +477,7 @@ impl Client for Sweet {
                     }
                 },
                 screen_size: {
-                    match request.context.device.size {
-                        Some(size) => size,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.size is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.size.clone()
                 },
                 serialno: {
                     request.context.device.serial.clone()

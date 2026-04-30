@@ -25,7 +25,8 @@ pub struct SweetDevice {
     pub density: f64,
     pub ppi: i32,
     #[serde(rename(deserialize = "screenSize", serialize = "screenSize"))]
-    pub screen_size: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub screen_size: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub serialno: Option<String>,
     #[serde(rename(deserialize = "anId", serialize = "anId"))]

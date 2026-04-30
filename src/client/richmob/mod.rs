@@ -64,10 +64,7 @@ impl Client for Richmob {
             ip: {
                 match &request.context.device.ip {
                     Some(ip) => ip.clone(),
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.ip is required for upstream".to_string(),
-                    }),
+                    None => "".to_string(),
                 }
             },
             user: Some(RichmobUser {
@@ -110,17 +107,9 @@ impl Client for Richmob {
                             match &connection.client_media_apppackage {
                                 Some(client_media_apppackage) => client_media_apppackage.clone(),
                                 None => {
-                                    match &connection.client_media_apppackage {
-                                        Some(client_media_apppackage) => client_media_apppackage.clone(),
-                                        None => {
-                                            match &app.bundle {
-                                                Some(bundle) => bundle.clone(),
-                                                None => return Err(ResultMessage {
-                                                    code: 998,
-                                                    message: "request.context.app.bundle is required for upstream".to_string(),
-                                                }),
-                                            }
-                                        },
+                                    match &app.bundle {
+                                        Some(bundle) => bundle.clone(),
+                                        None => "".to_string(),
                                     }
                                 },
                             }
@@ -131,10 +120,7 @@ impl Client for Richmob {
                         version: {
                             match &app.ver {
                                 Some(ver) => ver.clone(),
-                                None => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.app.ver is required for upstream".to_string(),
-                                }),
+                                None => "".to_string(),
                             }
                         },
                         latitude: {
@@ -164,17 +150,29 @@ impl Client for Richmob {
                                 Some(storeurl) => {
                                     storeurl.clone()
                                 },
-                                None => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.app.storeurl is required for upstream".to_string(),
-                                }),
+                                None => "".to_string(),
                             }
                         },
                     },
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.app is required for upstream".to_string(),
-                    }),
+                    None => RichmobApp {
+                        app_name: {
+                            match &connection.client_media_appname {
+                                Some(client_media_appname) => client_media_appname.clone(),
+                                None => "".to_string(),
+                            }
+                        },
+                        package_name: {
+                            match &connection.client_media_apppackage {
+                                Some(client_media_apppackage) => client_media_apppackage.clone(),
+                                None => "".to_string(),
+                            }
+                        },
+                        app_category: None,
+                        version: "".to_string(),
+                        latitude: None,
+                        longitude: None,
+                        store_url: "".to_string(),
+                    },
                 }
             },
             device: RichmobDevice {
@@ -296,16 +294,10 @@ impl Client for Richmob {
                                 6 => 0,
                                 7 => 3,
                                 8 => 0,
-                                _ => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.type should be 1-8 for upstream".to_string(),
-                                }),
+                                _ => 0,
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.type is required for upstream".to_string(),
-                        }),
+                        None => 0,
                     }
                 },
                 os: {
@@ -314,53 +306,23 @@ impl Client for Richmob {
                             match os {
                                 2 => "Android".to_string(),
                                 13 => "IOS".to_string(),
-                                _ => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.os should be 2/13 for upstream".to_string(),
-                                }),
+                                _ => "Unknown".to_string(),
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.os is required for upstream".to_string(),
-                        }),
+                        None => "Unknown".to_string(),
                     }
                 },
                 os_version: {
-                    match &request.context.device.osv {
-                        Some(osv) => osv.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.osv is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.osv.clone()
                 },
                 brand: {
-                    match &request.context.device.brand {
-                        Some(brand) => brand.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.brand is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.brand.clone()
                 },
                 model: {
-                    match &request.context.device.model {
-                        Some(model) => model.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.model is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.model.clone()
                 },
                 language: {
-                    match &request.context.device.lang {
-                        Some(lang) => lang.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.lang is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.lang.clone()
                 },
                 network: {
                     match &request.context.device.contype {
@@ -373,16 +335,10 @@ impl Client for Richmob {
                                 5 => 3,
                                 6 => 4,
                                 7 => 5,
-                                _ => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.contype should be 1-7 for upstream".to_string(),
-                                }),
+                                _ => 0,
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.contype is required for upstream".to_string(),
-                        }),
+                        None => 0,
                     }
                 },
                 operator_type: {
@@ -392,34 +348,22 @@ impl Client for Richmob {
                                 "cmcc" => 1,
                                 "unicom" => 3,
                                 "telecom" => 2,
-                                _ => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.carrier should be cmcc/unicom/telecom for upstream".to_string(),
-                                }),
+                                _ => 0,
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.carrier is required for upstream".to_string(),
-                        }),
+                        None => 0,
                     }
                 },
                 swidth: {
                     match request.context.device.w {
                         Some(w) => w,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.w is required for upstream".to_string(),
-                        }),
+                        None => 0,
                     }
                 },
                 sheight: {
                     match request.context.device.h {
                         Some(h) => h,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.h is required for upstream".to_string(),
-                        }),
+                        None => 0,
                     }
                 },
                 orientation: {
@@ -435,143 +379,71 @@ impl Client for Richmob {
                     }
                 },
                 dpi: {
-                     match request.context.device.ppi {
+                    match request.context.device.ppi {
                         Some(ppi) => Some(ppi as f64),
                         None => None,
                     }
                 },
                 rom_version: {
-                    match &request.context.device.romv {
-                        Some(romv) => romv.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.romv is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.romv.clone()
                 },
                 sys_compling_time: {
-                    match &request.context.device.romtime {
-                        Some(romtime) => romtime.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.romtime is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.romtime.clone()
                 },
                 boot_time_sec: {
                     match &request.context.device.boottime {
                         Some(boottime) => {
                             match boottime.split(".").nth(0).unwrap().parse::<i32>() {
-                                Ok(boottime) => boottime,
-                                Err(_) => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.boottime is malformatted for upstream".to_string(),
-                                }),
+                                Ok(boottime) => Some(boottime),
+                                Err(_) => None,
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.boottime is required for upstream".to_string(),
-                        }),
+                        None => None,
                     }
                 },
                 boot_time_nano_sec: {
-                    match &request.context.device.boottime {
-                        Some(boottime) => boottime.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.boottime is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.boottime.clone()
                 },
                 os_update_time_sec: {
                     match &request.context.device.updatetime {
                         Some(updatetime) => {
                             match updatetime.split(".").nth(0).unwrap().parse::<i32>() {
-                                Ok(updatetime) => updatetime,
-                                Err(_) => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.updatetime is malformatted for upstream".to_string(),
-                                }),
+                                Ok(updatetime) => Some(updatetime),
+                                Err(_) => None,
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.updatetime is required for upstream".to_string(),
-                        }),
+                        None => None,
                     }
                 },
                 os_update_time_nano_sec: {
-                    match &request.context.device.updatetime {
-                        Some(updatetime) => updatetime.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.updatetime is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.updatetime.clone()
                 },
                 disk_size: {
                     match &request.context.device.sysdisksize {
-                        Some(sysdisksize) => (sysdisksize / 1024 / 1024 / 1024) as i32,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.sysdisksize is required for upstream".to_string(),
-                        }),
+                        Some(sysdisksize) => Some((sysdisksize / 1024 / 1024 / 1024) as i32),
+                        None => None,
                     }
                 },
                 battery_status: {
-                    match request.context.device.sysbatterystatus {
-                        Some(sysbatterystatus) => sysbatterystatus,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.sysbatterystatus is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.sysbatterystatus.clone()
                 },
                 battery_power: {
-                    match request.context.device.sysbatterypower {
-                        Some(sysbatterypower) => sysbatterypower,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.sysbatterypower is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.sysbatterypower.clone()
                 },
                 memory_size: {
                     match &request.context.device.sysmemory {
-                        Some(sysmemory) => (sysmemory / 1024 / 1024 / 1024) as i32,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.sysmemory is required for upstream".to_string(),
-                        }),
+                        Some(sysmemory) => Some((sysmemory / 1024 / 1024 / 1024) as i32),
+                        None => None,
                     }
                 },
                 cpu_num: {
-                    match request.context.device.syscpu {
-                        Some(syscpu) => syscpu,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.syscpu is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.syscpu.clone()
                 },
                 cpu_frequency: {
-                    match request.context.device.syscpufreq {
-                        Some(syscpufreq) => syscpufreq,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.syscpufreq is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.syscpufreq.clone()
                 },
                 model_code: {
-                    match &request.context.device.hwmodel {
-                        Some(hwmodel) => hwmodel.clone(),
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.hwmodel is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.hwmodel.clone()
                 },
                 time_zone: {
                     match &request.context.device.timezone {
@@ -581,27 +453,18 @@ impl Client for Richmob {
                                 Ok(tz) => {
                                     let t = tz.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap();
                                     let utc = chrono_tz::UTC.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap();
-                                    (t.timestamp() - utc.timestamp()).to_string()
+                                    Some((t.timestamp() - utc.timestamp()).to_string())
                                 },
-                                Err(_) => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.context.device.timezone is malformat for upstream, should be like Asia/Shanghai".to_string(),
-                                }),
+                                Err(_) => None,
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.timezone is required for upstream".to_string(),
-                        }),
+                        None => None,
                     }
                 },
                 lmt: {
                     match request.context.device.lmt {
                         Some(lmt) => lmt,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.lmt is required for upstream".to_string(),
-                        }),
+                        None => 0,
                     }
                 },
                 laccu: {
@@ -642,10 +505,7 @@ impl Client for Richmob {
                                 Some(vendor) => {
                                     match vendor.parse::<i32>() {
                                         Ok(vendor) => Some(vendor),
-                                        Err(_) => return Err(ResultMessage {
-                                            code: 998,
-                                            message: "caid_vendor should be 0/1/2 for upstream".to_string(),
-                                        }),
+                                        Err(_) => Some(0),
                                     }
                                 }
                                 None => None,
@@ -679,22 +539,10 @@ impl Client for Richmob {
                     }
                 },
                 ppi: {
-                    match request.context.device.ppi {
-                        Some(ppi) => ppi,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.ppi is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.ppi.clone()
                 },
                 screen_size: {
-                    match request.context.device.size {
-                        Some(size) => size,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.size is required for upstream".to_string(),
-                        }),
-                    }
+                    request.context.device.size.clone()
                 },
                 idfv: {
                     match identifiers.get_id(515, 0) {
@@ -726,23 +574,14 @@ impl Client for Richmob {
                                             "cmcc" => "00".to_string(),
                                             "unicom" => "01".to_string(),
                                             "telecom" => "11".to_string(),
-                                            _ => return Err(ResultMessage {
-                                                code: 998,
-                                                message: "request.context.device.carrier should be cmcc/unicom/telecom for upstream".to_string(),
-                                            }),
+                                            _ => "00".to_string(),
                                         }
                                     },
-                                    None => return Err(ResultMessage {
-                                        code: 998,
-                                        message: "request.context.device.carrier should be cmcc/unicom/telecom for upstream".to_string(),
-                                    }),
+                                    None => "00".to_string(),
                                 }
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.context.device.carrier should be cmcc/unicom/telecom for upstream".to_string(),
-                        }),
+                        None => "00".to_string(),
                     }
                 },
                 skadnetwork_versions: {
@@ -811,10 +650,7 @@ impl Client for Richmob {
                             ad_type = 6
                         }
                     } else {
-                        return Err(ResultMessage {
-                            code: 998,
-                            message: "request.item[0].spec.display.displayfmt or request.item[0].spec.display.nativefmt (feed / video) is required for upstream".to_string(),
-                        });
+                        ad_type = 2
                     }
                     ad_type
                 },
@@ -822,31 +658,19 @@ impl Client for Richmob {
                     match request.item[0].spec.display.pos {
                         Some(pos) => {
                             match pos {
-                                0 => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.item[0].spec.display.pos should be 1-5/7/501 for upstream".to_string(),
-                                }),
+                                0 => 1,
                                 1 => 1,
                                 2 => 4,
                                 3 => 2,
                                 4 => 1,
                                 5 => 2,
-                                6 => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.item[0].spec.display.pos should be 1-5/7/501 for upstream".to_string(),
-                                }),
+                                6 => 1,
                                 7 => 5,
                                 501 => 3,
-                                _ => return Err(ResultMessage {
-                                    code: 998,
-                                    message: "request.item[0].spec.display.pos should be 1-5/7/501 for upstream".to_string(),
-                                }),
+                                _ => 1,
                             }
                         },
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.item[0].spec.display.pos is required for upstream".to_string(),
-                        }),
+                        None => 1,
                     }
                 },
                 accepted_creative_types: {
@@ -858,19 +682,13 @@ impl Client for Richmob {
                 width: {
                     match request.item[0].spec.display.w {
                         Some(w) => w,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.item[0].spec.display.w is required for upstream".to_string(),
-                        }),
+                        None => 0,
                     }
                 },
                 height: {
                     match request.item[0].spec.display.h {
                         Some(h) => h,
-                        None => return Err(ResultMessage {
-                            code: 998,
-                            message: "request.item[0].spec.display.h is required for upstream".to_string(),
-                        }),
+                        None => 0,
                     }
                 },
                 price: {

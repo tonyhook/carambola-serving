@@ -97,20 +97,14 @@ impl Client for Ruiang {
             density: {
                 match request.context.device.pxratio {
                     Some(pxratio) => pxratio,
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.pxratio is required for upstream".to_string(),
-                    }),
+                    None => 0.0,
                 }
             },
             os: {
                 match request.context.device.os {
                     Some(2) => 1,
                     Some(13) => 2,
-                    _ => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.os should be 2/13 for upstream".to_string(),
-                    }),
+                    _ => 0,
                 }
             },
             os_ver: {
@@ -281,10 +275,7 @@ impl Client for Ruiang {
             ppi: {
                 match request.context.device.ppi {
                     Some(ppi) => ppi,
-                    None => return Err(ResultMessage {
-                        code: 998,
-                        message: "request.context.device.ppi is required for upstream".to_string(),
-                    }),
+                    None => 0,
                 }
             },
             lon: {
