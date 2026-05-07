@@ -679,6 +679,29 @@ impl Cache {
         }
     }
 
+    pub fn get_notification_cost(&self, request_id: &String) -> Option<String> {
+        let connection = self.nr.get();
+
+        match connection {
+            Ok(mut connection) => {
+                let key = format!("cost:{}", request_id);
+
+                let result = redis::cmd("GET").arg(&key).query::<Option<String>>(&mut connection);
+                match result {
+                    Ok(result) => {
+                        return result;
+                    },
+                    Err(_) => {
+                        return None;
+                    }
+                }
+            },
+            Err(_) => {
+                return None;
+            },
+        }
+    }
+
     pub fn set_notification_cost(&self, request_id: &String, client_id: i32, vendor_id: i32, income: i32, outcome_upstream: f64, outcome_rebate: f64, outcome_downstream: f64) {
         let cache = self.clone();
         let request_id = Arc::new(request_id.to_string());
