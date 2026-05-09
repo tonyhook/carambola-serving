@@ -93,8 +93,8 @@ impl Database {
                 ad_client.code,
                 ad_client_port.id,
                 ad_client_port.tag_id,
-                ad_client_media.apppackage,
-                ad_client_media.name,
+                ad_client_port.apppackage,
+                ad_client_port.appname,
                 ad_client_port.mode,
                 ad_client_port.ekey,
                 ad_client_port.ikey,
@@ -110,13 +110,12 @@ impl Database {
                 ad_connection.rebate_ratio,
                 ad_connection.downstream_ratio,
                 ad_connection.default_price
-            FROM ad_connection, ad_client, ad_client_media, ad_client_port, ad_vendor, ad_vendor_media, ad_vendor_port
+            FROM ad_connection, ad_client, ad_client_port, ad_vendor, ad_vendor_media, ad_vendor_port
             WHERE ad_connection.enabled AND NOT ad_connection.deleted
             AND ad_connection.valid_from <= NOW()
             AND ad_connection.valid_to >= NOW()
             AND ad_connection.client_port_id = ad_client_port.id
             AND ad_client_port.mode <> 3
-            AND ad_client_port.client_media_id = ad_client_media.id
             AND ad_client_port.client_id = ad_client.id
             AND ad_connection.vendor_port_id = ad_vendor_port.id
             AND ad_vendor_port.mode <> 3
